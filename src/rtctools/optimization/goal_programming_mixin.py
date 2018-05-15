@@ -396,15 +396,19 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
         # Call parent
         options = super().solver_options()
 
+        solver = options['solver']
+        assert solver in ['bonmin', 'ipopt']
+
         # Make sure constant states, such as min/max timeseries for violation variables,
         # are turned into parameters for the final optimization problem.
-        options['fixed_variable_treatment'] = 'make_parameter'
+        ipopt_options = options[solver]
+        ipopt_options['fixed_variable_treatment'] = 'make_parameter'
 
         if not self.goal_programming_options()['mu_reinit']:
-            options['mu_strategy'] = 'monotone'
-            options['gather_stats'] = True
+            ipopt_options['mu_strategy'] = 'monotone'
+            ipopt_options['gather_stats'] = True
             if not self.__first_run:
-                options['mu_init'] = self.solver_stats['iterations'][
+                ipopt_options['mu_init'] = self.solver_stats['iterations'][
                     'mu'][-1]
 
         # Done
@@ -437,9 +441,10 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
         than the specified tolerance. Violated goals are fixed.  Use of this option is normally not
         required.
 
-        The Ipopt barrier parameter ``mu`` is normally re-initialized a every iteration of the goal
-        programming algorithm, unless mu_reinit is set to ``False``.  Use of this option is normally
-        not required.
+        When using the default solver (IPOPT), its barrier parameter ``mu`` is
+        normally re-initialized a every iteration of the goal programming
+        algorithm, unless mu_reinit is set to ``False``.  Use of this option
+        is normally not required.
 
         If ``fix_minimized_values`` is set to ``True``, goal functions will be set to equal their
         optimized values in optimization problems generated during subsequent priorities.  Otherwise,

@@ -62,7 +62,8 @@ class Example(CSVMixin, ModelicaMixin, CollocatedIntegratedOptimizationProblem):
     def solver_options(self):
         options = super().solver_options()
         # Restrict solver output
-        options['print_level'] = 1
+        solver = options['solver']
+        options[solver]['print_level'] = 1
         return options
 
 

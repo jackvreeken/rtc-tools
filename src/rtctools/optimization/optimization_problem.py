@@ -79,13 +79,25 @@ class OptimizationProblem(metaclass=ABCMeta):
         # Iteration callback
         iteration_callback = options.pop('iteration_callback', None)
 
-        nlpsol_options = {my_solver: options}
+        # CasADi solver to use
+        casadi_solver = options.pop('casadi_solver')
+        if isinstance(casadi_solver, str):
+            casadi_solver = getattr(ca, casadi_solver)
+
+        nlpsol_options = {**options}
+
         if self.__mixed_integer:
             nlpsol_options['discrete'] = discrete
         if iteration_callback:
             nlpsol_options['iteration_callback'] = iteration_callback
 
-        solver = ca.nlpsol('nlp', my_solver, nlp, nlpsol_options)
+        # Remove ipopt and bonmin defaults if they are not used
+        if my_solver != 'ipopt':
+            nlpsol_options.pop('ipopt', None)
+        if my_solver != 'bonmin':
+            nlpsol_options.pop('bonmin', None)
+
+        solver = casadi_solver('nlp', my_solver, nlp, nlpsol_options)
 
         # Solve NLP
         logger.info("Calling solver")
@@ -97,29 +109,14 @@ class OptimizationProblem(metaclass=ABCMeta):
         self.__solver_output = np.array(results['x'])
         self.__solver_stats = solver.stats()
 
-        # Get the return status
-        successful_retvals = ['Solve_Succeeded', 'Solved_To_Acceptable_Level', 'User_Requested_Stop', 'SUCCESS']
-        if self.__solver_stats['return_status'] in successful_retvals:
-            logger.info("Solver succeeded with status {}".format(
-                self.__solver_stats['return_status']))
+        success, log_level = self.solver_success(self.__solver_stats, log_solver_failure_as_error)
 
-            success = True
-        elif self.__solver_stats['return_status'] in ['Not_Enough_Degrees_Of_Freedom']:
-            logger.warning("Solver failed with status {}".format(
+        if success:
+            logger.log(log_level, "Solver succeeded with status {}".format(
                 self.__solver_stats['return_status']))
-
-            success = False
         else:
-            if log_solver_failure_as_error:
-                logger.error("Solver failed with status {}".format(
-                    self.__solver_stats['return_status']))
-            else:
-                # In this case we expect some higher level process to deal
-                # with the solver failure, so we only log it as info here.
-                logger.info("Solver failed with status {}".format(
-                    self.__solver_stats['return_status']))
-
-            success = False
+            logger.log(log_level, "Solver failed with status {}".format(
+                self.__solver_stats['return_status']))
 
         # Do any postprocessing
         if postprocessing:
@@ -159,20 +156,64 @@ class OptimizationProblem(metaclass=ABCMeta):
         The default solver for continuous problems is `Ipopt <https://projects.coin-or.org/Ipopt/>`_.
         The default solver for mixed integer problems is `Bonmin <http://projects.coin-or.org/Bonmin/>`_.
 
-        :returns: A dictionary of CasADi :class:`NlpSolver` options.  See the CasADi,
-                  Ipopt, and Bonmin documentation for details.
+        :returns: A dictionary of solver options. See the CasADi and
+                  respective solver documentation for details.
         """
-        options = {'optimized_num_dir': 3}
+        options = {'optimized_num_dir': 3,
+                   'casadi_solver': ca.nlpsol}
+
         if self.__mixed_integer:
             options['solver'] = 'bonmin'
-            options['algorithm'] = 'B-BB'
-            options['nlp_solver'] = 'Ipopt'
-            options['nlp_log_level'] = 2
-            options['linear_solver'] = 'mumps'
+
+            bonmin_options = options['bonmin'] = {}
+            bonmin_options['algorithm'] = 'B-BB'
+            bonmin_options['nlp_solver'] = 'Ipopt'
+            bonmin_options['nlp_log_level'] = 2
+            bonmin_options['linear_solver'] = 'mumps'
         else:
             options['solver'] = 'ipopt'
-            options['linear_solver'] = 'mumps'
+
+            ipopt_options = options['ipopt'] = {}
+            ipopt_options['linear_solver'] = 'mumps'
         return options
+
+    def solver_success(self,
+                       solver_stats: Dict[str, Union[str, bool]],
+                       log_solver_failure_as_error: bool) -> Tuple[bool, int]:
+        """
+        Translates the returned solver statistics into a boolean and log level
+        to indicate whether the solve was succesful, and how to log it.
+
+        :param solver_stats: Dictionary containing information about the
+                             solver status. See explanation below.
+        :param log_solver_failure_as_error: Indicates whether a solve failure
+            Should be logged as an error or info message.
+
+        ``solver_stats`` typically consist of three fields:
+        * return_status: ``str``
+        * secondary_return_status: ``str``
+        * success: ``bool``
+
+        By default we rely on CasADi's interpretation of the return_status
+        (and secondary status) to the success variable, with an exception for
+        IPOPT (see below).
+
+        The logging level is typically logging.INFO for success, and
+        logging.ERROR for failure. Only for IPOPT an exception is made for
+        Not_Enough_Degrees_Of_Freedom, which return logging.WARNING instead.
+        For example, this can happen when too many goals are specified, and
+        lower priority goals cannot improve further on the current result.
+
+        :returns: A tuple indicating whether or not the solver has succeeded, and what level to log it with.
+        """
+        success = solver_stats['success']
+        log_level = logging.INFO if success else logging.ERROR
+
+        if (self.solver_options()['solver'].lower() in ['bonmin', 'ipopt']
+                and solver_stats['return_status'] in ['Not_Enough_Degrees_Of_Freedom']):
+            log_level = logging.WARNING
+
+        return success, log_level
 
     @abstractproperty
     def solver_input(self) -> ca.MX:

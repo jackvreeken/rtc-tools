@@ -128,8 +128,9 @@ class Example(GoalProgrammingMixin, ControlTreeMixin, CSVLookupTableMixin,
         # When mumps_scaling is not zero, errors occur. RTC-Tools does its own
         # scaling, so mumps scaling is not critical. Proprietary HSL solvers
         # do not exhibit this error.
-        options['mumps_scaling'] = 0
-        options['print_level'] = 1
+        solver = options['solver']
+        options[solver]['mumps_scaling'] = 0
+        options[solver]['print_level'] = 1
         return options
 
 

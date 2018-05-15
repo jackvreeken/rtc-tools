@@ -103,7 +103,8 @@ class Example(GoalProgrammingMixin, CSVLookupTableMixin, CSVMixin,
     # Any solver options can be set here
     def solver_options(self):
         options = super().solver_options()
-        options['print_level'] = 1
+        solver = options['solver']
+        options[solver]['print_level'] = 1
         return options
 
 
