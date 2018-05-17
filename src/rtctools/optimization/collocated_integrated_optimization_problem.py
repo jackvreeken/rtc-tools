@@ -7,7 +7,8 @@ import casadi as ca
 import numpy as np
 
 from rtctools._internal.alias_tools import AliasDict
-from rtctools._internal.casadi_helpers import interpolate, is_affine, nullvertcat, reduce_matvec, substitute_in_external
+from rtctools._internal.casadi_helpers import \
+    interpolate, is_affine, nullvertcat, reduce_matvec, substitute_in_external
 
 from .optimization_problem import OptimizationProblem
 from .timeseries import Timeseries
@@ -218,14 +219,14 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
             ensemble_data["parameters"] = parameter_values
 
             # Store constant inputs
-            constant_inputs = self.constant_inputs(ensemble_member)
+            raw_constant_inputs = self.constant_inputs(ensemble_member)
 
             def _interpolate_constant_inputs(variables):
                 constant_inputs_interpolated = {}
                 for variable in variables:
                     variable = variable.name()
                     try:
-                        constant_input = constant_inputs[variable]
+                        constant_input = raw_constant_inputs[variable]
                     except KeyError:
                         raise Exception(
                             "No values found for constant input {}".format(variable))
@@ -646,6 +647,19 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
             function_options)
         path_constraints_function = path_constraints_function.expand()
 
+        # Initialize a Function for the delayed feedback
+        delayed_feedback_function = ca.Function(
+            'delayed_feedback',
+            [symbolic_parameters,
+             ca.vertcat(
+                *integrated_variables, *collocated_variables, *integrated_derivatives,
+                *collocated_derivatives, *self.dae_variables['constant_inputs'],
+                *self.dae_variables['time'], *self.path_variables,
+                *self.__extra_constant_inputs)],
+            [t[0] if isinstance(t[0], ca.MX) else self.state(t[0]) for t in delayed_feedback],
+            function_options)
+        delayed_feedback_function = delayed_feedback_function.expand()
+
         # Set up accumulation over time (integration, and generation of
         # collocation constraints)
         if len(integrated_variables) > 0:
@@ -765,6 +779,19 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
             False, True))
 
         accumulated_Y.extend(path_constraints_function.call(
+            [symbolic_parameters,
+             ca.vertcat(
+                integrated_states_1,
+                collocated_states_1,
+                integrated_finite_differences,
+                collocated_finite_differences,
+                constant_inputs_1,
+                collocation_time_1 - t0,
+                path_variables_1,
+                extra_constant_inputs_1)],
+            False, True))
+
+        accumulated_Y.extend(delayed_feedback_function.call(
             [symbolic_parameters,
              ca.vertcat(
                 integrated_states_1,
@@ -980,12 +1007,17 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                     dae_residual_collocated_size:dae_residual_collocated_size + path_objective.size1(),
                     0:n_collocation_times - 1])
                 discretized_path_constraints = ca.vec(integrators_and_collocation_and_path_constraints[
-                    dae_residual_collocated_size + path_objective.size1():,
+                    dae_residual_collocated_size + path_objective.size1():dae_residual_collocated_size +
+                    path_objective.size1() + len(path_constraints),
                     0:n_collocation_times - 1])
+                discretized_delayed_feedback = integrators_and_collocation_and_path_constraints[
+                    dae_residual_collocated_size + path_objective.size1() + len(path_constraints):,
+                    0:n_collocation_times - 1]
             else:
                 collocation_constraints = ca.MX()
                 discretized_path_objective = ca.MX()
                 discretized_path_constraints = ca.MX()
+                discretized_delayed_feedback = ca.MX()
 
             logger.info("Composing NLP segment")
 
@@ -1006,7 +1038,71 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                 ubg.extend(zeros)
 
             # Delayed feedback
-            for (out_variable_name, in_variable_name, delay) in delayed_feedback:
+            # Make an array of all unique times in history series
+            history_times = np.unique([history_series.times for history_series in history.values()])
+            # By convention, the last timestep in history series is the initial time. We drop this index
+            history_times = history_times[:-1]
+
+            # Find the historical values of states, extrapolating backward if necessary
+            history_values = np.empty((history_times.shape[0], len(integrated_variables) + len(collocated_variables)))
+            if history_times.shape[0] > 0:
+                for j, var in enumerate(integrated_variables + collocated_variables):
+                    try:
+                        history_series = history[var.name()]
+                    except KeyError:
+                        history_values[:, j] = np.nan
+                    else:
+                        history_values[:, j] = self.interpolate(
+                            history_times, history_series.times, history_series.values, np.nan, np.nan)
+
+            # Calculate the historical derivatives of historical values
+            history_derivatives = ca.repmat(np.nan, 1, history_values.shape[1])
+            if history_times.shape[0] > 1:
+                history_derivatives = ca.vertcat(
+                    history_derivatives,
+                    (history_values[1:, :] - history_values[:-1, :]) / (history_times[1:] - history_times[:-1]))
+
+            # Find the historical values of constant inputs, extrapolating backward if necessary
+            constant_input_values = np.empty((history_times.shape[0], len(self.dae_variables['constant_inputs'])))
+            if history_times.shape[0] > 0:
+                for j, var in enumerate(self.dae_variables['constant_inputs']):
+                    try:
+                        constant_input_series = raw_constant_inputs[var.name()]
+                    except KeyError:
+                        constant_input_values[:, j] = np.nan
+                    else:
+                        constant_input_values[:, j] = self.interpolate(
+                            history_times, constant_input_series.times, constant_input_series.values, np.nan, np.nan)
+
+            if len(delayed_feedback) > 0:
+                delayed_feedback_history = np.zeros((history_times.shape[0], len(delayed_feedback)))
+                for i, time in enumerate(history_times):
+                    [history_delayed_feedback_res] = delayed_feedback_function.call(
+                        [parameters, ca.veccat(
+                            ca.transpose(history_values[i, :]),
+                            ca.transpose(history_derivatives[i, :]),
+                            ca.transpose(constant_input_values[i, :]),
+                            time,
+                            ca.repmat(np.nan, len(self.path_variables)),
+                            ca.repmat(np.nan, len(self.__extra_constant_inputs)))])
+                    delayed_feedback_history[i, :] = history_delayed_feedback_res
+
+                initial_delayed_feedback = delayed_feedback_function.call(
+                    [parameters, ca.vertcat(
+                        initial_state, initial_derivatives, initial_constant_inputs, 0.0,
+                        initial_path_variables, initial_extra_constant_inputs)],
+                    False, True)
+
+                nominal_delayed_feedback = delayed_feedback_function.call(
+                    [parameters, ca.vertcat(
+                        [self.variable_nominal(var.name()) for var in integrated_variables + collocated_variables],
+                        np.zeros((initial_derivatives.size1(), 1)),
+                        initial_constant_inputs,
+                        0.0,
+                        [self.variable_nominal(var.name()) for var in self.path_variables],
+                        initial_extra_constant_inputs)])
+
+            for i, (out_variable_name, in_variable_name, delay) in enumerate(delayed_feedback):
                 # Resolve aliases
                 in_canonical, in_sign = self.alias_relation.canonical_signed(
                     in_variable_name)
@@ -1018,31 +1114,38 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                 if in_sign < 0:
                     in_values *= in_sign
 
-                out_canonical, out_sign = self.alias_relation.canonical_signed(
-                    out_variable_name)
-                out_times = self.times(out_canonical)
-                out_nominal = self.variable_nominal(out_canonical)
-                try:
-                    out_values = constant_inputs[out_canonical]
-                except KeyError:
-                    out_values = out_nominal * \
-                        self.state_vector(
-                            out_canonical, ensemble_member=ensemble_member)
-                    try:
-                        history_timeseries = history[out_canonical]
-                        if np.any(np.isnan(history_timeseries.values[:-1])):
-                            raise Exception(
-                                'History for delayed variable {} contains NaN.'.format(out_variable_name))
-                        out_times = np.concatenate(
-                            [history_timeseries.times[:-1], out_times])
-                        out_values = ca.vertcat(
-                            history_timeseries.values[:-1], out_values)
-                    except KeyError:
-                        logger.warning(
-                            'No history available for delayed variable {}. Extrapolating '
-                            't0 value backwards in time.'.format(out_variable_name))
-                if out_sign < 0:
-                    out_values *= out_sign
+                # Resolve delay values
+                # First, substitute parameters for values
+                [delay] = ca.substitute([ca.MX(delay)], [symbolic_parameters], [parameters])
+
+                # Use mapped function to evaluate delay in terms of constant inputs
+                mapped_delay_function = ca.Function(
+                    'delay_values',
+                    self.dae_variables['time'] + self.dae_variables['constant_inputs'],
+                    [delay]
+                    ).map(len(collocation_times))
+
+                # Call mapped delay function with inputs as arrays
+                [delay] = mapped_delay_function.call(
+                    [collocation_times] +
+                    [constant_inputs[v.name()] for v in self.dae_variables['constant_inputs']])
+
+                # Cast delay from DM to np.array
+                delay = delay.toarray().flatten()
+
+                assert np.all(np.isfinite(delay)), (
+                    'Delay duration must be resolvable to real values at transcribe()')
+
+                out_times = np.concatenate([history_times, collocation_times])
+                out_values = ca.veccat(
+                    delayed_feedback_history[:, i],
+                    initial_delayed_feedback[i],
+                    ca.transpose(discretized_delayed_feedback[i, :]))
+                if len(history_times) == 1 or np.isnan(delayed_feedback_history[:, -1]):
+                    logger.warning(
+                        'No history available for delayed variable {}. '
+                        'Extrapolating t0 value backwards in time.'.format(
+                            out_variable_name))
 
                 # Set up delay constraints
                 if len(collocation_times) != len(in_times):
@@ -1052,11 +1155,11 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                                        collocation_times, self.equidistant, interpolation_method)
                 else:
                     x_in = in_values
-                interpolation_method = self.interpolation_method(out_canonical)
+                interpolation_method = self.interpolation_method()
                 x_out_delayed = interpolate(
                     out_times, out_values, collocation_times - delay, self.equidistant, interpolation_method)
 
-                nominal = 0.5 * (in_nominal + out_nominal)
+                nominal = nominal_delayed_feedback[i]
 
                 g.append((x_in - x_out_delayed) / nominal)
                 zeros = np.zeros(n_collocation_times)

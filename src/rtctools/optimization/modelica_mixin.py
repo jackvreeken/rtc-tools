@@ -65,11 +65,8 @@ class ModelicaMixin(OptimizationProblem):
         self.__mx['lookup_tables'] = []
 
         # Merge with user-specified delayed feedback
-        delayed_feedback_variables = list(map(lambda delayed_feedback: delayed_feedback[
-                                         1], self.delayed_feedback()))
-
         for v in self.__pymoca_model.inputs:
-            if v.symbol.name() in delayed_feedback_variables:
+            if v.symbol.name() in self.__pymoca_model.delay_states:
                 # Delayed feedback variables are local to each ensemble, and
                 # therefore belong to the collection of algebraic variables,
                 # rather than to the control inputs.
@@ -89,7 +86,7 @@ class ModelicaMixin(OptimizationProblem):
                     self.__pymoca_model.states, self.__pymoca_model.alg_states, self.__pymoca_model.inputs):
             self.__python_types[v.symbol.name()] = v.python_type
 
-        # Initialize dae and initial residuals
+        # Initialize dae, initial residuals, as well as delay arguments
         # These are not in @cached dictionary properties so that we need to create the list
         # of function arguments only once.
         variable_lists = ['states', 'der_states', 'alg_states', 'inputs', 'constants', 'parameters']
@@ -174,7 +171,11 @@ class ModelicaMixin(OptimizationProblem):
 
     def delayed_feedback(self):
         delayed_feedback = super().delayed_feedback()
-        delayed_feedback.extend([(dfb.origin, dfb.name, dfb.delay) for dfb in self.__pymoca_model.delayed_states])
+
+        # Create delayed feedback
+        for delay_state, delay_argument in zip(self.__pymoca_model.delay_states, self.__pymoca_model.delay_arguments):
+            delayed_feedback.append(
+                (delay_argument.expr, delay_state, delay_argument.duration))
         return delayed_feedback
 
     @property
