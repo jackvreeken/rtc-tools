@@ -5,5 +5,8 @@ coverage:
     project:
       default:
         threshold: 5
+    patch:
+      default:
+        only_pulls: true
 comment:
   layout: "header, tree"
