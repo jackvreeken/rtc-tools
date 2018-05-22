@@ -49,4 +49,10 @@ setup(
     test_suite = 'nose.collector',
     python_requires='>=3.5',
     cmdclass = versioneer.get_cmdclass(),
+    entry_points={
+        'console_scripts': [
+            'rtc-tools-download-examples = rtctools.rtctoolsapp:download_examples',
+            'rtc-tools-copy-libraries = rtctools.rtctoolsapp:copy_libraries',
+        ]
+    },
 )
