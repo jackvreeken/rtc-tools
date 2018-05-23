@@ -12,7 +12,13 @@ except ImportError:
 
 
 def is_affine(e, v):
-    Af = ca.Function('f', [v], [ca.jacobian(e, v)])
+    try:
+        Af = ca.Function('f', [v], [ca.jacobian(e, v)]).expand()
+    except RuntimeError as e:
+        if "'eval_sx' not defined for" in str(e):
+            Af = ca.Function('f', [v], [ca.jacobian(e, v)])
+        else:
+            raise
     return (Af.sparsity_jac(0, 0).nnz() == 0)
 
 
