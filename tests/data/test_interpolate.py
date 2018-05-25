@@ -1,13 +1,11 @@
-from unittest import TestCase, expectedFailure
+from unittest import TestCase
 
-from casadi import SX, Function, linspace
+from casadi import Function, SX, linspace
 
 import numpy as np
+
 import rtctools.data.interpolation.bspline1d
 import rtctools.data.interpolation.bspline2d
-
-import os
-import sys
 
 
 class TestBSpline1DFit(TestCase):
@@ -24,10 +22,12 @@ class TestBSpline1DFit(TestCase):
     def _y_list(self, monotonicity=0, curvature=0):
         y_list = np.empty(self.num_test_points - 1)
         tck = rtctools.data.interpolation.bspline1d.BSpline1D.fit(
-            self.x, self.y, monotonicity=monotonicity, curvature=curvature)
-        x = SX.sym('x')
-        f = Function('f', [x], [rtctools.data.interpolation.bspline1d.BSpline1D(
-                *tck)(x)])
+            self.x, self.y, monotonicity=monotonicity, curvature=curvature
+        )
+        x = SX.sym("x")
+        f = Function(
+            "f", [x], [rtctools.data.interpolation.bspline1d.BSpline1D(*tck)(x)]
+        )
         for xi in range(self.num_test_points - 1):
             y_list[xi] = f(self.testpoints[xi])[0]
         return y_list

@@ -1,15 +1,15 @@
-from .data_path import data_path
+import logging
+
+import numpy as np
+
+from rtctools.optimization.collocated_integrated_optimization_problem import (
+    CollocatedIntegratedOptimizationProblem
+)
+from rtctools.optimization.modelica_mixin import ModelicaMixin
+
 from test_case import TestCase
 
-from rtctools.optimization.collocated_integrated_optimization_problem import CollocatedIntegratedOptimizationProblem
-from rtctools.optimization.modelica_mixin import ModelicaMixin
-from rtctools.optimization.timeseries import Timeseries
-from casadi import MX
-import numpy as np
-import logging
-import time
-import sys
-import os
+from .data_path import data_path
 
 logger = logging.getLogger("rtctools")
 
@@ -17,8 +17,12 @@ logger = logging.getLogger("rtctools")
 class HybridShootingTestProblem(ModelicaMixin, CollocatedIntegratedOptimizationProblem):
 
     def __init__(self, integrated_states):
-        super().__init__(input_folder=data_path(
-        ), output_folder=data_path(), model_name='HybridShootingTestModel', model_folder=data_path())
+        super().__init__(
+            input_folder=data_path(),
+            output_folder=data_path(),
+            model_name="HybridShootingTestModel",
+            model_folder=data_path(),
+        )
 
         self._integrated_states = integrated_states
 
@@ -36,7 +40,7 @@ class HybridShootingTestProblem(ModelicaMixin, CollocatedIntegratedOptimizationP
 
     def bounds(self):
         # Variable bounds
-        return {'u': (-2.0, 2.0)}
+        return {"u": (-2.0, 2.0)}
 
     def seed(self, ensemble_member):
         # No particular seeding
@@ -44,9 +48,8 @@ class HybridShootingTestProblem(ModelicaMixin, CollocatedIntegratedOptimizationP
 
     def objective(self, ensemble_member):
         # Quadratic penalty on state 'x' at final time
-        xf = self.state_at('x', self.times(
-            'x')[-1], ensemble_member=ensemble_member)
-        return xf**2
+        xf = self.state_at("x", self.times("x")[-1], ensemble_member=ensemble_member)
+        return xf ** 2
 
     def constraints(self, ensemble_member):
         # No additional constraints
@@ -58,7 +61,7 @@ class HybridShootingTestProblem(ModelicaMixin, CollocatedIntegratedOptimizationP
 
     def compiler_options(self):
         compiler_options = super().compiler_options()
-        compiler_options['cache'] = False
+        compiler_options["cache"] = False
         return compiler_options
 
 
@@ -73,13 +76,14 @@ class TestHybridShooting(TestCase):
     def test_objective_value(self):
         objective_value_tol = 1e-6
         self.assertAlmostLessThan(
-            abs(self.problem.objective_value), 0.0, objective_value_tol)
+            abs(self.problem.objective_value), 0.0, objective_value_tol
+        )
 
 
 class TestHybridShootingX(TestHybridShooting):
 
     def setUp(self):
-        self.problem = HybridShootingTestProblem(['x'])
+        self.problem = HybridShootingTestProblem(["x"])
         self.problem.optimize()
         self.results = self.problem.extract_results()
         self.tolerance = 1e-6
@@ -88,7 +92,7 @@ class TestHybridShootingX(TestHybridShooting):
 class TestHybridShootingW(TestHybridShooting):
 
     def setUp(self):
-        self.problem = HybridShootingTestProblem(['w'])
+        self.problem = HybridShootingTestProblem(["w"])
         self.problem.optimize()
         self.results = self.problem.extract_results()
         self.tolerance = 1e-6
@@ -97,7 +101,7 @@ class TestHybridShootingW(TestHybridShooting):
 class TestSingleShooting(TestHybridShooting):
 
     def setUp(self):
-        self.problem = HybridShootingTestProblem(['x', 'w'])
+        self.problem = HybridShootingTestProblem(["x", "w"])
         self.problem.optimize()
         self.results = self.problem.extract_results()
         self.tolerance = 1e-6

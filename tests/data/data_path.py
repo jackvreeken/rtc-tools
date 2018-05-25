@@ -7,4 +7,6 @@ def local_function():
 
 
 def data_path():
-    return os.path.join(os.path.dirname(os.path.abspath(inspect.getsourcefile(local_function))), 'data')
+    return os.path.join(
+        os.path.dirname(os.path.abspath(inspect.getsourcefile(local_function))), "data"
+    )
