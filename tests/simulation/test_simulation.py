@@ -20,6 +20,11 @@ class SimulationTestProblem(SimulationProblem):
             model_folder=data_path(),
         )
 
+    def compiler_options(self):
+        compiler_options = super().compiler_options()
+        compiler_options["cache"] = False
+        return compiler_options
+
 
 class TestSimulation(TestCase):
 
