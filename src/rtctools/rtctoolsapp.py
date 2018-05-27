@@ -14,6 +14,9 @@ logger.setLevel(logging.INFO)
 def copy_libraries(*args):
 
     if not args:
+        args = sys.argv[1:]
+
+    if not args:
         path = input("Folder to put the Modelica libraries: [.] ") or "."
     else:
         path = args[0]
@@ -75,6 +78,9 @@ def copy_libraries(*args):
 
 
 def download_examples(*args):
+
+    if not args:
+        args = sys.argv[1:]
 
     if not args:
         path = input("Folder to download the examples to: [.] ") or "."
