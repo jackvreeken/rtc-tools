@@ -149,8 +149,7 @@ def run_simulation_problem(simulation_problem_class, base_folder='..', log_level
     logger.setLevel(log_level)
 
     logger.info(
-        'Using RTC-Tools {}, released as open source software'
-        'under the GNU General Public License.'.format(__version__))
+        'Using RTC-Tools {}'.format(__version__))
     logger.debug(
         'Using CasADi {}.'.format(casadi.__version__))
 
