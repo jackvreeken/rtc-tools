@@ -61,6 +61,8 @@ class OptimizationProblem(metaclass=ABCMeta):
             # NOTE: CasADi only supports the "expand" option for nlpsol. To
             # also be able to expand with e.g. qpsol, we do the expansion
             # ourselves here.
+            logger.debug("Expanding objective and constraints to SX")
+
             expand_f_g = ca.Function('f_g', [nlp['x']], [nlp['f'], nlp['g']]).expand()
             X_sx = ca.SX.sym('X', *nlp['x'].shape)
             f_sx, g_sx = expand_f_g(X_sx)
