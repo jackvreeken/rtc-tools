@@ -1,8 +1,12 @@
 import collections
 
 
-# From https://code.activestate.com/recipes/576694/
 class OrderedSet(collections.MutableSet):
+    """
+    Adapted from https://code.activestate.com/recipes/576694/
+    with some additional methods:
+    __getstate__, __setstate__, __getitem__
+    """
 
     def __init__(self, iterable=None):
         self.end = end = []
@@ -17,8 +21,15 @@ class OrderedSet(collections.MutableSet):
     def __contains__(self, key):
         return key in self.map
 
+    def __getstate__(self):
+        """ Avoids max depth RecursionError when using pickle """
+        return list(self)
+
+    def __setstate__(self, state):
+        """ Tells pickle how to restore instance """
+        self.__init__(state)
+
     def __getitem__(self, index):
-        # Method added by JB
         if isinstance(index, slice):
             start, stop, stride = index.indices(len(self))
             return [self.__getitem__(i) for i in range(start, stop, stride)]
