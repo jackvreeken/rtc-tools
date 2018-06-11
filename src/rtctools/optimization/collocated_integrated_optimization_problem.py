@@ -1060,7 +1060,7 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
             if history_times.shape[0] > 1:
                 history_derivatives = ca.vertcat(
                     history_derivatives,
-                    (history_values[1:, :] - history_values[:-1, :]) / (history_times[1:] - history_times[:-1]))
+                    np.diff(history_values, axis=0) / np.diff(history_times)[:, None])
 
             # Find the historical values of constant inputs, extrapolating backward if necessary
             constant_input_values = np.empty((history_times.shape[0], len(self.dae_variables['constant_inputs'])))
@@ -1077,7 +1077,7 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
             if len(delayed_feedback) > 0:
                 delayed_feedback_history = np.zeros((history_times.shape[0], len(delayed_feedback)))
                 for i, time in enumerate(history_times):
-                    [history_delayed_feedback_res] = delayed_feedback_function.call(
+                    history_delayed_feedback_res = delayed_feedback_function.call(
                         [parameters, ca.veccat(
                             ca.transpose(history_values[i, :]),
                             ca.transpose(history_derivatives[i, :]),
@@ -1141,7 +1141,7 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                     delayed_feedback_history[:, i],
                     initial_delayed_feedback[i],
                     ca.transpose(discretized_delayed_feedback[i, :]))
-                if len(history_times) == 1 or np.isnan(delayed_feedback_history[:, -1]):
+                if len(history_times) == 1 or np.any(np.isnan(delayed_feedback_history[:, -1])):
                     logger.warning(
                         'No history available for delayed variable {}. '
                         'Extrapolating t0 value backwards in time.'.format(
