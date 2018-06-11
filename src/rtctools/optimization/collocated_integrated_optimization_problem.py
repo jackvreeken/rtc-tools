@@ -1102,7 +1102,7 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                         [self.variable_nominal(var.name()) for var in self.path_variables],
                         initial_extra_constant_inputs)])
 
-            for i, (out_variable_name, in_variable_name, delay) in enumerate(delayed_feedback):
+            for i, (expression, in_variable_name, delay) in enumerate(delayed_feedback):
                 # Resolve aliases
                 in_canonical, in_sign = self.alias_relation.canonical_signed(
                     in_variable_name)
@@ -1146,9 +1146,9 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                     ca.transpose(discretized_delayed_feedback[i, :]))
                 if len(history_times) == 1 or np.any(np.isnan(delayed_feedback_history[:, -1])):
                     logger.warning(
-                        'No history available for delayed variable {}. '
+                        'No history available for delayed expression {}. '
                         'Extrapolating t0 value backwards in time.'.format(
-                            out_variable_name))
+                            expression))
 
                 # Set up delay constraints
                 if len(collocation_times) != len(in_times):
