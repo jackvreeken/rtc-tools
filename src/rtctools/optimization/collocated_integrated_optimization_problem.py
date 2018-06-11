@@ -1116,7 +1116,10 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
 
                 # Resolve delay values
                 # First, substitute parameters for values
-                [delay] = ca.substitute([ca.MX(delay)], [symbolic_parameters], [parameters])
+                [delay] = ca.substitute(
+                    [ca.MX(delay)],
+                    [ca.vertcat(symbolic_parameters, *constant_parameters)],
+                    [ca.vertcat(parameters, *constant_parameter_values)])
 
                 # Use mapped function to evaluate delay in terms of constant inputs
                 mapped_delay_function = ca.Function(
