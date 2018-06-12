@@ -993,19 +993,31 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
                     self.__add_goal_constraint(
                         goal, epsilon, ensemble_member, options)
 
+                # Handle path goal function evaluation in a grouped manner to
+                # save time with the call map_path_expression(). Repeated
+                # calls will make repeated CasADi Function objects, which can
+                # be slow.
+                goal_path_functions = OrderedDict()
                 for j, goal in enumerate(path_goals):
-                    if goal.critical:
-                        continue
-
                     if (
                             not goal.has_target_bounds or
                             goal.violation_timeseries_id is not None or
                             goal.function_value_timeseries_id is not None
                             ):
-                        # Compute path expression
-                        expr = self.map_path_expression(goal.function(self, ensemble_member), ensemble_member)
-                        f = ca.Function('f', [self.solver_input], [expr])
-                        function_value = np.array(f(self.solver_output)).ravel()
+                        goal_path_functions[j] = goal.function(self, ensemble_member)
+
+                expr = self.map_path_expression(ca.vertcat(*goal_path_functions.values()), ensemble_member)
+                f = ca.Function('f', [self.solver_input], [expr])
+                raw_function_values = np.array(f(self.solver_output))
+                goal_function_values = {k: raw_function_values[:, i].ravel()
+                                        for i, k in enumerate(goal_path_functions.keys())}
+
+                for j, goal in enumerate(path_goals):
+                    if goal.critical:
+                        continue
+
+                    if j in goal_function_values:
+                        function_value = goal_function_values[j]
 
                         # Store results
                         if goal.function_value_timeseries_id is not None:

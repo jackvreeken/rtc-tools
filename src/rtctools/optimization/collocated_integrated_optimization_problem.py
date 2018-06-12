@@ -619,16 +619,21 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
         else:
             dae_residual_collocated_size = 0
 
+        # Note that this list is stored, such that it can be reused in the
+        # map_path_expression() method.
+        self.__func_orig_inputs = [
+            symbolic_parameters,
+            ca.vertcat(
+                *integrated_variables, *collocated_variables, *integrated_derivatives,
+                *collocated_derivatives, *self.dae_variables['constant_inputs'],
+                *self.dae_variables['time'], *self.path_variables,
+                *self.__extra_constant_inputs)]
+
         # Initialize an Function for the path objective
         # Note that we assume that the path objective expression is the same for all ensemble members
         path_objective_function = ca.Function(
             'path_objective',
-            [symbolic_parameters,
-             ca.vertcat(
-                *integrated_variables, *collocated_variables, *integrated_derivatives,
-                *collocated_derivatives, *self.dae_variables['constant_inputs'],
-                *self.dae_variables['time'], *self.path_variables,
-                *self.__extra_constant_inputs)],
+            self.__func_orig_inputs,
             [path_objective],
             function_options)
         path_objective_function = path_objective_function.expand()
@@ -637,12 +642,7 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
         # Note that we assume that the path constraint expression is the same for all ensemble members
         path_constraints_function = ca.Function(
             'path_constraints',
-            [symbolic_parameters,
-             ca.vertcat(
-                *integrated_variables, *collocated_variables, *integrated_derivatives,
-                *collocated_derivatives, *self.dae_variables['constant_inputs'],
-                *self.dae_variables['time'], *self.path_variables,
-                *self.__extra_constant_inputs)],
+            self.__func_orig_inputs,
             [path_constraint_expressions],
             function_options)
         path_constraints_function = path_constraints_function.expand()
@@ -650,12 +650,7 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
         # Initialize a Function for the delayed feedback
         delayed_feedback_function = ca.Function(
             'delayed_feedback',
-            [symbolic_parameters,
-             ca.vertcat(
-                *integrated_variables, *collocated_variables, *integrated_derivatives,
-                *collocated_derivatives, *self.dae_variables['constant_inputs'],
-                *self.dae_variables['time'], *self.path_variables,
-                *self.__extra_constant_inputs)],
+            self.__func_orig_inputs,
             [t[0] if isinstance(t[0], ca.MX) else self.state(t[0]) for t in delayed_feedback],
             function_options)
         delayed_feedback_function = delayed_feedback_function.expand()
@@ -765,9 +760,9 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                 accumulated_Y.append(
                     (1 - theta) * dae_residual_0 + theta * dae_residual_1)
 
-        accumulated_Y.extend(path_objective_function.call(
-            [symbolic_parameters,
-             ca.vertcat(
+        self.__func_inputs_implicit = [
+            symbolic_parameters,
+            ca.vertcat(
                 integrated_states_1,
                 collocated_states_1,
                 integrated_finite_differences,
@@ -775,41 +770,26 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                 constant_inputs_1,
                 collocation_time_1 - t0,
                 path_variables_1,
-                extra_constant_inputs_1)],
-            False, True))
+                extra_constant_inputs_1)]
+
+        accumulated_Y.extend(path_objective_function.call(
+            self.__func_inputs_implicit, False, True))
 
         accumulated_Y.extend(path_constraints_function.call(
-            [symbolic_parameters,
-             ca.vertcat(
-                integrated_states_1,
-                collocated_states_1,
-                integrated_finite_differences,
-                collocated_finite_differences,
-                constant_inputs_1,
-                collocation_time_1 - t0,
-                path_variables_1,
-                extra_constant_inputs_1)],
-            False, True))
+            self.__func_inputs_implicit, False, True))
 
         accumulated_Y.extend(delayed_feedback_function.call(
-            [symbolic_parameters,
-             ca.vertcat(
-                integrated_states_1,
-                collocated_states_1,
-                integrated_finite_differences,
-                collocated_finite_differences,
-                constant_inputs_1,
-                collocation_time_1 - t0,
-                path_variables_1,
-                extra_constant_inputs_1)],
-            False, True))
+            self.__func_inputs_implicit, False, True))
+
+        # Save the accumulated inputs such that can be used later in map_path_expression()
+        self.__func_accumulated_inputs = (accumulated_X, accumulated_U, symbolic_parameters)
 
         # Use map/mapaccum to capture integration and collocation constraint generation over the
         # entire time horizon with one symbolic operation. This saves a lot of memory.
         if len(integrated_variables) > 0:
             accumulated = ca.Function(
                 'accumulated',
-                [accumulated_X, accumulated_U, symbolic_parameters],
+                self.__func_accumulated_inputs,
                 [accumulated_Y[0], ca.vertcat(*accumulated_Y[1:])],
                 function_options)
             accumulation = accumulated.mapaccum('accumulation', n_collocation_times - 1)
@@ -818,7 +798,7 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
             # parallelization along the time axis.
             accumulated = ca.Function(
                 'accumulated',
-                [accumulated_X, accumulated_U, symbolic_parameters],
+                self.__func_accumulated_inputs,
                 [ca.vertcat(*accumulated_Y)],
                 function_options)
             accumulation = accumulated.map(n_collocation_times - 1, 'openmp')
@@ -861,6 +841,11 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
         zeros = [0.0] * res.size1()
         lbg.extend(zeros)
         ubg.extend(zeros)
+
+        # The initial values and the interpolated mapped arguments are saved
+        # such that can be reused in map_path_expression().
+        self.__func_mapped_inputs = []
+        self.__func_initial_inputs = []
 
         # Process the objectives and constraints for each ensemble member separately.
         # Note that we don't use map here for the moment, so as to allow each ensemble member to define its own
@@ -994,8 +979,17 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
             # Map to all time steps
             logger.info("Mapping")
 
+            # Save these inputs such that can be used later in map_path_expression()
+            self.__func_mapped_inputs.append(
+                (accumulation_X0, accumulation_U, ca.repmat(parameters, 1, n_collocation_times - 1)))
+
+            self.__func_initial_inputs.append([parameters, ca.vertcat(
+                        initial_state, initial_derivatives, initial_constant_inputs, 0.0,
+                        initial_path_variables, initial_extra_constant_inputs)])
+
             integrators_and_collocation_and_path_constraints = accumulation(
-                accumulation_X0, accumulation_U, ca.repmat(parameters, 1, n_collocation_times - 1))
+                *self.__func_mapped_inputs[ensemble_member])
+
             if len(integrated_variables) > 0:
                 integrators = integrators_and_collocation_and_path_constraints[0]
                 integrators_and_collocation_and_path_constraints = integrators_and_collocation_and_path_constraints[1]
@@ -1088,10 +1082,7 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                     delayed_feedback_history[i, :] = history_delayed_feedback_res
 
                 initial_delayed_feedback = delayed_feedback_function.call(
-                    [parameters, ca.vertcat(
-                        initial_state, initial_derivatives, initial_constant_inputs, 0.0,
-                        initial_path_variables, initial_extra_constant_inputs)],
-                    False, True)
+                    self.__func_initial_inputs[ensemble_member], False, True)
 
                 nominal_delayed_feedback = delayed_feedback_function.call(
                     [parameters, ca.vertcat(
@@ -1173,10 +1164,7 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
             f_member = self.objective(ensemble_member)
             if path_objective.size1() > 0:
                 initial_path_objective = path_objective_function.call(
-                    [parameters,
-                     ca.vertcat(initial_state, initial_derivatives, initial_constant_inputs, 0.0,
-                                initial_path_variables, initial_extra_constant_inputs)],
-                    False, True)
+                    self.__func_initial_inputs[ensemble_member], False, True)
                 f_member += initial_path_objective[0] + \
                     ca.sum1(discretized_path_objective)
             f.append(self.ensemble_member_probability(
@@ -1213,10 +1201,7 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                 # We need to evaluate the path constraints at t0, as the initial time is not
                 # included in the accumulation.
                 [initial_path_constraints] = path_constraints_function.call(
-                    [parameters,
-                     ca.vertcat(initial_state, initial_derivatives, initial_constant_inputs, 0.0,
-                                initial_path_variables, initial_extra_constant_inputs)],
-                    False, True)
+                    self.__func_initial_inputs[ensemble_member], False, True)
                 g.append(initial_path_constraints)
                 g.append(discretized_path_constraints)
 
@@ -2007,87 +1992,18 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
         raise IndexError
 
     def map_path_expression(self, expr, ensemble_member):
-        # Expression as function of states and derivatives
-        states = self.dae_variables['states'] + \
-            self.dae_variables['algebraics'] + \
-            self.dae_variables['control_inputs']
-        states_and_path_variables = states + self.path_variables
-        derivatives = self.dae_variables['derivatives'] + \
-            self.__algebraic_and_control_derivatives
 
-        f = ca.Function('f', [
-            ca.vertcat(*states_and_path_variables),
-            ca.vertcat(*derivatives),
-            ca.vertcat(*self.dae_variables['constant_inputs']),
-            ca.vertcat(*self.dae_variables['parameters']),
-            self.dae_variables['time'][0]], [expr])
-        fmap = f.map(len(self.times()))
+        f = ca.Function('f', self.__func_orig_inputs, [expr]).expand()
+        initial_values = f(*self.__func_initial_inputs[ensemble_member])
 
-        # Discretization settings
-        collocation_times = self.times()
-        n_collocation_times = len(collocation_times)
-        dt = ca.transpose(collocation_times[1:] - collocation_times[:-1])
-        t0 = self.initial_time
-
-        # Prepare interpolated state and path variable vectors
-        accumulation_states = [None] * len(states_and_path_variables)
-        for i, state in enumerate(states_and_path_variables):
-            state = state.name()
-            times = self.times(state)
-            interpolation_method = self.interpolation_method(state)
-            values = self.state_vector(state, ensemble_member)
-            if len(times) != n_collocation_times:
-                accumulation_states[i] = interpolate(
-                    times, values, collocation_times, interpolation_method)
-            else:
-                accumulation_states[i] = values
-            nominal = self.variable_nominal(state)
-            if nominal != 1:
-                accumulation_states[i] *= nominal
-        accumulation_states = ca.transpose(ca.horzcat(*accumulation_states))
-
-        # Prepare derivatives (backwards differencing, consistent with the evaluation of path
-        # expressions during transcription)
-        accumulation_derivatives = [None] * len(derivatives)
-        for i, state in enumerate(states):
-            state = state.name()
-            accumulation_derivatives[i] = ca.horzcat(
-                self.der_at(state, t0, ensemble_member),
-                (accumulation_states[i, 1:] - accumulation_states[i, :-1]) / dt)
-        accumulation_derivatives = ca.vertcat(*accumulation_derivatives)
-
-        # Parameter symbols
-        symbolic_parameters = ca.vertcat(*self.dae_variables['parameters'])
-
-        # Prepare constant inputs
-        constant_inputs = self.constant_inputs(ensemble_member)
-        accumulation_constant_inputs = [None] * \
-            len(self.dae_variables['constant_inputs'])
-        for i, variable in enumerate(self.dae_variables['constant_inputs']):
-            try:
-                constant_input = constant_inputs[variable.name()]
-            except KeyError:
-                raise Exception(
-                    "No data specified for constant input {}".format(variable.name()))
-            else:
-                values = constant_input.values
-                if isinstance(values, ca.MX) and not values.is_constant():
-                    [values] = substitute_in_external(
-                        [values], symbolic_parameters, self.__parameter_values_ensemble_member_0)
-                elif np.any([isinstance(value, ca.MX) and not value.is_constant() for value in values]):
-                    values = ca.vertcat(*values)
-                    [values] = substitute_in_external(
-                        [values], symbolic_parameters, self.__parameter_values_ensemble_member_0)
-                    values = ca.vertsplit(values)
-                accumulation_constant_inputs[i] = self.interpolate(
-                    collocation_times, constant_input.times, values, 0.0, 0.0)
-
-        accumulation_constant_inputs = ca.transpose(
-            ca.horzcat(*accumulation_constant_inputs))
+        # Replace the original MX symbols with those that were mapped
+        [expr_impl] = f.call(self.__func_inputs_implicit)
+        f_impl = ca.Function('f_implicit', list(self.__func_accumulated_inputs), [expr_impl]).expand()
 
         # Map
-        values = fmap(accumulation_states, accumulation_derivatives,
-                      accumulation_constant_inputs, ca.repmat(
-                          self.__parameter_values_ensemble_member_0, 1, n_collocation_times),
-                      np.transpose(collocation_times))
-        return ca.transpose(values)
+        fmap = f_impl.map(len(self.times()) - 1)
+        values = fmap(*self.__func_mapped_inputs[ensemble_member])
+
+        all_values = ca.horzcat(initial_values, values)
+
+        return ca.transpose(all_values)
