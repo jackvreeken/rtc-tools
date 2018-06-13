@@ -517,6 +517,16 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
             if goal.target_min > goal.target_max:
                 raise Exception("Target minimum exceeds target maximum for goal {}".format(goal))
 
+        # Check consistency between target and function range
+        if goal.has_target_min:
+            if goal.has_target_min < goal.function_range[0]:
+                raise Exception(
+                    'Target minimum is smaller than the lower bound of the function range for goal {}'.format(goal))
+        elif goal.has_target_max:
+            if goal.has_target_max > goal.function_range[1]:
+                raise Exception(
+                    'Target maximum is greater than the upper bound of the functoin range for goal {}'.format(goal))
+
         if isinstance(epsilon, ca.MX):
             if goal.has_target_bounds:
                 # We use a violation variable formulation, with the violation
