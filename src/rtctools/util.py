@@ -68,8 +68,8 @@ def run_optimization_problem(optimization_problem_class, base_folder='..', log_l
 
     # Check for some common mistakes in inheritance order
     suggested_order = OrderedSet([
-        'HomotopyMixin', 'GoalProgrammingMixin', 'PIMixin', 'CSVMixin',
-        'ModelicaMixin', 'CollocatedIntegratedOptimizationProblem', 'OptimizationProblem'])
+        'HomotopyMixin', 'GoalProgrammingMixin', 'PIMixin', 'CSVMixin', 'ModelicaMixin',
+        'ControlTreeMixin', 'CollocatedIntegratedOptimizationProblem', 'OptimizationProblem'])
     base_names = OrderedSet([b.__name__ for b in optimization_problem_class.__bases__])
     if suggested_order & base_names != base_names & suggested_order:
         msg = 'Please inherit from base classes in the following order: {}'.format(list(base_names & suggested_order))
