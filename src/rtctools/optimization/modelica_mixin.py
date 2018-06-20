@@ -260,15 +260,15 @@ class ModelicaMixin(OptimizationProblem):
                 else:
                     (m, M) = (-np.inf, np.inf)
 
-            m_ = ca.MX(v.min)
-            if not m_.is_constant():
+            m_ = v.min
+            if isinstance(m_, ca.MX) and not m_.is_constant():
                 [m_] = substitute_in_external([m_], self.__mx['parameters'], parameter_values)
                 if not m_.is_constant():
                     raise Exception('Could not resolve lower bound for variable {}'.format(sym_name))
             m_ = float(m_)
 
-            M_ = ca.MX(v.max)
-            if not M_.is_constant():
+            M_ = v.max
+            if isinstance(M_, ca.MX) and not M_.is_constant():
                 [M_] = substitute_in_external([M_], self.__mx['parameters'], parameter_values)
                 if not M_.is_constant():
                     raise Exception('Could not resolve upper bound for variable {}'.format(sym_name))
@@ -348,33 +348,27 @@ class ModelicaMixin(OptimizationProblem):
         for v in itertools.chain(
                 self.__pymoca_model.states, self.__pymoca_model.alg_states, self.__pymoca_model.inputs):
             sym_name = v.symbol.name()
-            # For type consistency, cast to MX
-            nominal = ca.MX(v.nominal)
+            nominal = v.nominal
 
             # If nominal contains parameter symbols, substitute them
-            if not nominal.is_constant():
+            if isinstance(nominal, ca.MX) and not nominal.is_constant():
                 [nominal] = substitute_in_external([nominal], self.__mx['parameters'], parameter_values)
 
-            if nominal.is_constant():
+            if not isinstance(nominal, ca.MX) or nominal.is_constant():
+                nominal = float(nominal)
+
                 # Take absolute value (nominal sign is meaningless- a nominal is a magnitude)
-                nominal = ca.fabs(nominal)
+                nominal = abs(nominal)
 
                 # If nominal is 0 or 1, we just use the default (1.0)
-                if nominal.is_zero() or (nominal - 1).is_zero():
+                if nominal in (0.0, 1.0):
                     continue
 
-                # Cast to numpy array
-                nominal = nominal.to_DM().full().flatten()
-                try:
-                    # Attempt to cast to python scalar before storing
-                    nominal_dict[sym_name] = nominal.item()
-                except ValueError:
-                    # Nominal is numpy array- store it as such
-                    nominal_dict[sym_name] = nominal
+                nominal_dict[sym_name] = nominal
 
                 if logger.getEffectiveLevel() == logging.DEBUG:
                     logger.debug("ModelicaMixin: Set nominal value for variable {} to {}".format(
-                        sym_name, nominal_dict[sym_name]))
+                        sym_name, nominal))
             else:
                 logger.warning("ModelicaMixin: Could not set nominal value for {}".format(sym_name))
 
