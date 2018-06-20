@@ -1192,15 +1192,11 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                     logger.debug(
                         "Adding constraint {}, {}, {}".format(*constraint))
 
-            g_constraint = [f_constraint for (
-                f_constraint, lb, ub) in constraints]
-            g.extend(g_constraint)
-
-            lbg_constraint = [lb for (f_constraint, lb, ub) in constraints]
-            lbg.extend(lbg_constraint)
-
-            ubg_constraint = [ub for (f_constraint, lb, ub) in constraints]
-            ubg.extend(ubg_constraint)
+            if constraints:
+                g_constraint, lbg_constraint, ubg_constraint = list(zip(*constraints))
+                g.extend(g_constraint)
+                lbg.extend(lbg_constraint)
+                ubg.extend(ubg_constraint)
 
             # Path constraints
             # We need to call self.path_constraints() again here,
