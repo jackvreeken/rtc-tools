@@ -46,12 +46,16 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
             'states'] + self.dae_variables['algebraics'] + self.dae_variables['control_inputs']
 
         # Cache names of states
-        self.__differentiated_states = [
-            variable.name() for variable in self.dae_variables['states']]
+        self.__differentiated_states = [variable.name() for variable in self.dae_variables['states']]
+        self.__differentiated_states_map = {v: i for i, v in enumerate(self.__differentiated_states)}
+
         self.__algebraic_states = [variable.name()
                                    for variable in self.dae_variables['algebraics']]
+        self.__algebraic_states_map = {v: i for i, v in enumerate(self.__algebraic_states)}
+
         self.__controls = [variable.name()
                            for variable in self.dae_variables['control_inputs']]
+        self.__controls_map = {v: i for i, v in enumerate(self.__controls)}
 
         # DAE cache
         self.__integrator_step_function = None
@@ -1936,13 +1940,13 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
         # Look up the derivative variable for the given non-derivative variable
         canonical, sign = self.alias_relation.canonical_signed(variable)
         try:
-            i = self.differentiated_states.index(canonical)
+            i = self.__differentiated_states_map[canonical]
             return sign * self.dae_variables['derivatives'][i]
-        except ValueError:
+        except KeyError:
             try:
-                i = self.algebraic_states.index(canonical)
-            except ValueError:
-                i = len(self.algebraic_states) + self.controls.index(canonical)
+                i = self.__algebraic_states_map[canonical]
+            except KeyError:
+                i = len(self.algebraic_states) + self.__controls_map[canonical]
             return sign * self.__algebraic_and_control_derivatives[i]
 
     def der_at(self, variable, t, ensemble_member=0):
@@ -1955,8 +1959,8 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
 
             canonical, sign = self.alias_relation.canonical_signed(variable)
             try:
-                i = self.differentiated_states.index(canonical)
-            except ValueError:
+                i = self.__differentiated_states_map[canonical]
+            except KeyError:
                 # Fall through, in case 'variable' is not a differentiated state.
                 pass
             else:
