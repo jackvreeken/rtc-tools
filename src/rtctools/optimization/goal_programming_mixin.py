@@ -491,42 +491,8 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
         return []
 
     def __add_goal_constraint(self, goal, epsilon, ensemble_member, options):
-        # Check existing constraints for this state.
         constraints = self.__subproblem_constraints[
             ensemble_member].get(goal.get_function_key(self, ensemble_member), [])
-        for constraint in constraints:
-            if constraint.goal == goal:
-                continue
-            if constraint.min == constraint.max:
-                # This variable has already been fixed.  Don't add new
-                # constraints for it.
-                return
-            elif options['check_monotonicity']:
-                if constraint.goal.has_target_min:
-                    if goal.target_min < constraint.goal.target_min:
-                        raise Exception(
-                            'Target minimum of goal {} must be greater or equal than '
-                            'target minimum of goal {}.'.format(goal, constraint.goal))
-                if constraint.goal.has_target_max:
-                    if goal.target_max > constraint.goal.target_max:
-                        raise Exception(
-                            'Target maximum of goal {} must be less or equal than '
-                            'target maximum of goal {}'.format(goal, constraint.goal))
-
-        # Check goal consistency
-        if goal.has_target_min and goal.has_target_max:
-            if goal.target_min > goal.target_max:
-                raise Exception("Target minimum exceeds target maximum for goal {}".format(goal))
-
-        # Check consistency between target and function range
-        if goal.has_target_min:
-            if goal.target_min < goal.function_range[0]:
-                raise Exception(
-                    'Target minimum is smaller than the lower bound of the function range for goal {}'.format(goal))
-        if goal.has_target_max:
-            if goal.target_max > goal.function_range[1]:
-                raise Exception(
-                    'Target maximum is greater than the upper bound of the function range for goal {}'.format(goal))
 
         if isinstance(epsilon, ca.MX):
             if goal.has_target_bounds:
@@ -617,59 +583,31 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
             self.__subproblem_constraints[ensemble_member][
                 goal.get_function_key(self, ensemble_member)] = [constraint]
 
+    def __min_max_arrays(self, g):
+        times = self.times()
+
+        m, M = None, None
+        if isinstance(g.target_min, Timeseries):
+            m = self.interpolate(
+                times, g.target_min.times, g.target_min.values, -np.inf, -np.inf)
+        else:
+            m = g.target_min * np.ones(len(times))
+        if isinstance(g.target_max, Timeseries):
+            M = self.interpolate(
+                times, g.target_max.times, g.target_max.values, np.inf, np.inf)
+        else:
+            M = g.target_max * np.ones(len(times))
+
+        return m, M
+
     def __add_path_goal_constraint(self, goal, epsilon, ensemble_member, options, min_series=None, max_series=None):
         # Generate list of min and max values
         times = self.times()
 
-        def _min_max_arrays(g):
-            m, M = None, None
-            if isinstance(g.target_min, Timeseries):
-                m = self.interpolate(
-                    times, g.target_min.times, g.target_min.values, -np.inf, -np.inf)
-            else:
-                m = g.target_min * np.ones(len(times))
-            if isinstance(g.target_max, Timeseries):
-                M = self.interpolate(
-                    times, g.target_max.times, g.target_max.values, np.inf, np.inf)
-            else:
-                M = g.target_max * np.ones(len(times))
-            return m, M
+        goal_m, goal_M = self.__min_max_arrays(goal)
 
-        goal_m, goal_M = _min_max_arrays(goal)
-
-        # Check existing constraints for this state.
         constraints = self.__subproblem_path_constraints[
             ensemble_member].get(goal.get_function_key(self, ensemble_member), [])
-        for constraint in constraints:
-            if constraint.goal == goal or not constraint.optimized:
-                continue
-            constraint_m, constraint_M = _min_max_arrays(constraint.goal)
-            if np.all(constraint.min == constraint.max):
-                # This variable has already been fixed.  Don't add new
-                # constraints for it.
-                return
-            elif options['check_monotonicity']:
-                if constraint.goal.has_target_min:
-                    indices = np.where(np.logical_not(np.logical_or(
-                        np.isnan(goal_m), np.isnan(constraint_m))))
-                    if np.any(goal_m[indices] < constraint_m[indices]):
-                        raise Exception(
-                            'Minimum value of goal {} less than minimum of higher '
-                            'priority goal {}'.format(goal, constraint.goal))
-                if constraint.goal.has_target_max:
-                    indices = np.where(np.logical_not(np.logical_or(
-                        np.isnan(goal_M), np.isnan(constraint_M))))
-                    if np.any(goal_M[indices] > constraint_M[indices]):
-                        raise Exception(
-                            'Maximum value of goal {} greater than maximum of higher '
-                            'priority goal {}'.format(goal, constraint.goal))
-
-        # Check goal consistency
-        if goal.has_target_min and goal.has_target_max:
-            indices = np.where(np.logical_not(np.logical_or(
-                np.isnan(goal_m), np.isnan(goal_M))))
-            if np.any(goal_m[indices] > goal_M[indices]):
-                raise Exception("Target minimum exceeds target maximum for goal {}".format(goal))
 
         if isinstance(epsilon, ca.MX):
             if goal.has_target_bounds:
@@ -815,14 +753,63 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
                 [goal for goal in goals if int(goal.priority) == priority and not goal.is_empty],
                 [goal for goal in path_goals if int(goal.priority) == priority and not goal.is_empty]))
 
+        options = self.goal_programming_options()
+
+        # Check consistency and monotonicity of goals. Scalar target min/max
+        # of normal goals are also converted to arrays to unify checks with
+        # path goals.
+        for gs in (goals, path_goals):
+            sorted_goals = sorted(gs, key=lambda x: x.priority)
+
+            for i, goal in enumerate(sorted_goals):
+                goal_m, goal_M = self.__min_max_arrays(goal)
+
+                if options['check_monotonicity']:
+                    for other in sorted_goals[i+1:]:
+                        other_m, other_M = self.__min_max_arrays(other)
+
+                        indices = np.where(np.logical_not(np.logical_or(
+                            np.isnan(goal_m), np.isnan(other_m))))
+                        if goal.has_target_min:
+                            if np.any(other_m[indices] < goal_m[indices]):
+                                raise Exception(
+                                    'Target minimum of goal {} must be greater or equal than '
+                                    'target minimum of goal {}.'.format(other, goal))
+
+                        indices = np.where(np.logical_not(np.logical_or(
+                            np.isnan(goal_M), np.isnan(other_M))))
+                        if goal.has_target_max:
+                            if np.any(other_M[indices] > goal_m[indices]):
+                                raise Exception(
+                                    'Target maximum of goal {} must be less or equal than '
+                                    'target maximum of goal {}'.format(other, goal))
+
+                if goal.has_target_min and goal.has_target_max:
+                    indices = np.where(np.logical_not(np.logical_or(
+                        np.isnan(goal_m), np.isnan(goal_M))))
+
+                    if np.any(goal_m[indices] > goal_M[indices]):
+                        raise Exception("Target minimum exceeds target maximum for goal {}".format(goal))
+
+                if goal.has_target_min:
+                    indices = np.where(np.logical_not(np.isnan(goal_m)))
+                    if np.any(goal_m[indices] < goal.function_range[0]):
+                        raise Exception(
+                            'Target minimum is smaller than the lower bound of the function range for goal {}'.format(
+                                goal))
+                if goal.has_target_max:
+                    indices = np.where(np.logical_not(np.isnan(goal_M)))
+                    if np.any(goal_M[indices] > goal.function_range[1]):
+                        raise Exception(
+                            'Target maximum is greater than the upper bound of the function range for goal {}'.format(
+                                goal))
+
         # Solve the subproblems one by one
         logger.info("Starting goal programming")
 
         success = False
 
         times = self.times()
-
-        options = self.goal_programming_options()
 
         self.__subproblem_constraints = [OrderedDict() for ensemble_member in range(self.ensemble_size)]
         self.__subproblem_path_constraints = [OrderedDict() for ensemble_member in range(self.ensemble_size)]
