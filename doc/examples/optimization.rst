@@ -11,3 +11,4 @@ This section provides examples demonstrating key features of RTC-Tools optimizat
    optimization/goal_programming
    optimization/lookup_table
    optimization/ensemble
+   optimization/cascading_channels
