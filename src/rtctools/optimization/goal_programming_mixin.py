@@ -765,24 +765,28 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
                 goal_m, goal_M = self.__min_max_arrays(goal)
 
                 if options['check_monotonicity']:
-                    for other in sorted_goals[i+1:]:
-                        other_m, other_M = self.__min_max_arrays(other)
+                    for e in range(self.ensemble_size):
+                        other_goals = (other for other in sorted_goals[i+1:]
+                                       if goal.get_function_key(self, e) == other.get_function_key(self, e))
 
-                        indices = np.where(np.logical_not(np.logical_or(
-                            np.isnan(goal_m), np.isnan(other_m))))
-                        if goal.has_target_min:
-                            if np.any(other_m[indices] < goal_m[indices]):
-                                raise Exception(
-                                    'Target minimum of goal {} must be greater or equal than '
-                                    'target minimum of goal {}.'.format(other, goal))
+                        for other in other_goals:
+                            other_m, other_M = self.__min_max_arrays(other)
 
-                        indices = np.where(np.logical_not(np.logical_or(
-                            np.isnan(goal_M), np.isnan(other_M))))
-                        if goal.has_target_max:
-                            if np.any(other_M[indices] > goal_m[indices]):
-                                raise Exception(
-                                    'Target maximum of goal {} must be less or equal than '
-                                    'target maximum of goal {}'.format(other, goal))
+                            indices = np.where(np.logical_not(np.logical_or(
+                                np.isnan(goal_m), np.isnan(other_m))))
+                            if goal.has_target_min:
+                                if np.any(other_m[indices] < goal_m[indices]):
+                                    raise Exception(
+                                        'Target minimum of goal {} must be greater or equal than '
+                                        'target minimum of goal {}.'.format(other, goal))
+
+                            indices = np.where(np.logical_not(np.logical_or(
+                                np.isnan(goal_M), np.isnan(other_M))))
+                            if goal.has_target_max:
+                                if np.any(other_M[indices] > goal_M[indices]):
+                                    raise Exception(
+                                        'Target maximum of goal {} must be less or equal than '
+                                        'target maximum of goal {}'.format(other, goal))
 
                 if goal.has_target_min and goal.has_target_max:
                     indices = np.where(np.logical_not(np.logical_or(
