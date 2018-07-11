@@ -554,8 +554,8 @@ class Timeseries:
 
                 if self.__binary:
                     if f is not None:
-                        self.__values[ensemble_member][variable] = np.fromstring(
-                            f.read(self.__pi_dtype(0).itemsize * n_values), dtype=self.__pi_dtype)
+                        self.__values[ensemble_member][variable] = np.fromfile(
+                            f, count=n_values, dtype=self.__pi_dtype)
                     else:
                         self.__values[ensemble_member][variable] = np.empty(
                             n_values, dtype=self.__internal_dtype)
