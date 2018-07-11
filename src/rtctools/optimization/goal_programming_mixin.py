@@ -18,7 +18,7 @@ logger = logging.getLogger("rtctools")
 
 
 class Goal(metaclass=ABCMeta):
-    """
+    r"""
     Base class for lexicographic goal programming goals.
 
     A goal is defined by overriding the :func:`function` method, and setting at least the
@@ -43,25 +43,25 @@ class Goal(metaclass=ABCMeta):
 
        .. math::
 
-            \\min f
+            \min f
 
     2. Lower bound goal if ``target_min`` is set:
 
         .. math::
 
-            m \\leq f
+            m \leq f
 
     3. Upper bound goal if ``target_max`` is set:
 
         .. math::
 
-            f \\leq M
+            f \leq M
 
     4. Combined lower and upper bound goal if ``target_min`` and ``target_max`` are both set:
 
         .. math::
 
-            m \\leq f \\leq M
+            m \leq f \leq M
 
     Lower priority goals take precedence over higher priority goals.
 
@@ -202,7 +202,7 @@ class Goal(metaclass=ABCMeta):
 
 
 class StateGoal(Goal, metaclass=ABCMeta):
-    """
+    r"""
     Base class for lexicographic goal programming path goals that act on a single model state.
 
     A state goal is defined by setting at least the ``state`` class variable.

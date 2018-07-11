@@ -104,26 +104,26 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
 
     @property
     def theta(self):
-        """
+        r"""
         RTC-Tools discretizes differential equations of the form
 
         .. math::
 
             \dot{x} = f(x, u)
 
-        using the :math:`\\theta`-method
+        using the :math:`\theta`-method
 
         .. math::
 
-            x_{i+1} = x_i + \Delta t \\left[\\theta f(x_{i+1}, u_{i+1}) + (1 - \\theta) f(x_i, u_i)\\right]
+            x_{i+1} = x_i + \Delta t \left[\theta f(x_{i+1}, u_{i+1}) + (1 - \theta) f(x_i, u_i)\right]
 
-        The default is :math:`\\theta = 1`, resulting in the implicit or backward Euler method.  Note that in this
+        The default is :math:`\theta = 1`, resulting in the implicit or backward Euler method.  Note that in this
         case, the control input at the initial time step is not used.
 
-        Set :math:`\\theta = 0` to use the explicit or forward Euler method.  Note that in this
+        Set :math:`\theta = 0` to use the explicit or forward Euler method.  Note that in this
         case, the control input at the final time step is not used.
 
-        .. warning:: This is an experimental feature for :math:`0 < \\theta < 1`.
+        .. warning:: This is an experimental feature for :math:`0 < \theta < 1`.
         """
 
         # Default to implicit Euler collocation, which is cheaper to evaluate
