@@ -11,7 +11,7 @@ from test_case import TestCase
 from .data_path import data_path
 
 
-class TestProblem(PIMixin, ModelicaMixin, CollocatedIntegratedOptimizationProblem):
+class Model(PIMixin, ModelicaMixin, CollocatedIntegratedOptimizationProblem):
 
     pi_parameter_config_basenames = ["rtcParameterConfig", "rtcParameterConfig_extra"]
     pi_check_for_duplicate_parameters = True
@@ -23,7 +23,7 @@ class TestProblem(PIMixin, ModelicaMixin, CollocatedIntegratedOptimizationProble
         super().__init__(
             input_folder=data_path(),
             output_folder=data_path(),
-            model_name="TestModel",
+            model_name="Model",
             model_folder=data_path(),
         )
 
@@ -46,7 +46,7 @@ class TestProblem(PIMixin, ModelicaMixin, CollocatedIntegratedOptimizationProble
 class TestPIMixin(TestCase):
 
     def setUp(self):
-        self.problem = TestProblem()
+        self.problem = Model()
         self.problem.optimize()
         self.results = self.problem.extract_results()
         self.tolerance = 1e-6

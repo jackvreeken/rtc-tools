@@ -14,13 +14,13 @@ from .data_path import data_path
 logger = logging.getLogger("rtctools")
 
 
-class HybridShootingTestProblem(ModelicaMixin, CollocatedIntegratedOptimizationProblem):
+class HybridShootingModel(ModelicaMixin, CollocatedIntegratedOptimizationProblem):
 
     def __init__(self, integrated_states):
         super().__init__(
             input_folder=data_path(),
             output_folder=data_path(),
-            model_name="HybridShootingTestModel",
+            model_name="HybridShootingModel",
             model_folder=data_path(),
         )
 
@@ -68,7 +68,7 @@ class HybridShootingTestProblem(ModelicaMixin, CollocatedIntegratedOptimizationP
 class TestHybridShooting(TestCase):
 
     def setUp(self):
-        self.problem = HybridShootingTestProblem([])
+        self.problem = HybridShootingModel([])
         self.problem.optimize()
         self.results = self.problem.extract_results()
         self.tolerance = 1e-6
@@ -83,7 +83,7 @@ class TestHybridShooting(TestCase):
 class TestHybridShootingX(TestHybridShooting):
 
     def setUp(self):
-        self.problem = HybridShootingTestProblem(["x"])
+        self.problem = HybridShootingModel(["x"])
         self.problem.optimize()
         self.results = self.problem.extract_results()
         self.tolerance = 1e-6
@@ -92,7 +92,7 @@ class TestHybridShootingX(TestHybridShooting):
 class TestHybridShootingW(TestHybridShooting):
 
     def setUp(self):
-        self.problem = HybridShootingTestProblem(["w"])
+        self.problem = HybridShootingModel(["w"])
         self.problem.optimize()
         self.results = self.problem.extract_results()
         self.tolerance = 1e-6
@@ -101,7 +101,7 @@ class TestHybridShootingW(TestHybridShooting):
 class TestSingleShooting(TestHybridShooting):
 
     def setUp(self):
-        self.problem = HybridShootingTestProblem(["x", "w"])
+        self.problem = HybridShootingModel(["x", "w"])
         self.problem.optimize()
         self.results = self.problem.extract_results()
         self.tolerance = 1e-6

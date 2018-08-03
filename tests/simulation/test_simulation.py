@@ -10,13 +10,13 @@ from test_case import TestCase
 from .data_path import data_path
 
 
-class SimulationTestProblem(SimulationProblem):
+class SimulationModel(SimulationProblem):
 
     def __init__(self):
         super().__init__(
             input_folder=data_path(),
             output_folder=data_path(),
-            model_name="TestModel",
+            model_name="Model",
             model_folder=data_path(),
         )
 
@@ -29,10 +29,10 @@ class SimulationTestProblem(SimulationProblem):
 class TestSimulation(TestCase):
 
     def setUp(self):
-        self.problem = SimulationTestProblem()
+        self.problem = SimulationModel()
 
     def test_object(self):
-        self.assertIsInstance(self.problem, SimulationTestProblem)
+        self.assertIsInstance(self.problem, SimulationModel)
 
     def test_get_variables(self):
         all_variables = self.problem.get_variables()

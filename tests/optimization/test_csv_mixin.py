@@ -17,10 +17,10 @@ logger = logging.getLogger("rtctools")
 logger.setLevel(logging.WARNING)
 
 
-class TestProblem(CSVMixin, ModelicaMixin, CollocatedIntegratedOptimizationProblem):
+class Model(CSVMixin, ModelicaMixin, CollocatedIntegratedOptimizationProblem):
 
     def __init__(self, **kwargs):
-        kwargs["model_name"] = kwargs.get("model_name", "TestModel")
+        kwargs["model_name"] = kwargs.get("model_name", "Model")
         kwargs["input_folder"] = data_path()
         kwargs["output_folder"] = data_path()
         kwargs["model_folder"] = data_path()
@@ -42,19 +42,19 @@ class TestProblem(CSVMixin, ModelicaMixin, CollocatedIntegratedOptimizationProbl
         return compiler_options
 
 
-class TestProblemLookup(CSVLookupTableMixin, TestProblem):
+class ModelLookup(CSVLookupTableMixin, Model):
 
     def __init__(self):
         super().__init__(
             input_folder=data_path(),
             output_folder=data_path(),
-            model_name="TestModel",
+            model_name="Model",
             model_folder=data_path(),
             lookup_tables=["constant_input"],
         )
 
 
-class TestProblemEnsemble(TestProblem):
+class ModelEnsemble(Model):
 
     csv_ensemble_mode = True
 
@@ -62,7 +62,7 @@ class TestProblemEnsemble(TestProblem):
         super().__init__(
             input_folder=data_path(),
             output_folder=data_path(),
-            model_name="TestModel",
+            model_name="Model",
             model_folder=data_path(),
             lookup_tables=[],
         )
@@ -71,7 +71,7 @@ class TestProblemEnsemble(TestProblem):
 class TestCSVMixin(TestCase):
 
     def setUp(self):
-        self.problem = TestProblem()
+        self.problem = Model()
         self.problem.optimize()
         self.results = self.problem.extract_results()
         self.tolerance = 1e-6
@@ -123,7 +123,7 @@ class TestCSVMixin(TestCase):
 class TestCSVLookupMixin(TestCSVMixin):
 
     def setUp(self):
-        self.problem = TestProblemLookup()
+        self.problem = ModelLookup()
         self.problem.optimize()
         self.results = self.problem.extract_results()
         self.tolerance = 1e-6
@@ -142,7 +142,7 @@ class TestCSVLookupMixin(TestCSVMixin):
 class TestPIMixinEnsemble(TestCase):
 
     def setUp(self):
-        self.problem = TestProblemEnsemble()
+        self.problem = ModelEnsemble()
         self.problem.optimize()
         self.tolerance = 1e-6
 

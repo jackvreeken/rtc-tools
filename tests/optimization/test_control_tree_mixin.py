@@ -17,12 +17,12 @@ logger = logging.getLogger("rtctools")
 logger.setLevel(logging.DEBUG)
 
 
-class TestProblem(
+class Model(
     ControlTreeMixin, ModelicaMixin, CollocatedIntegratedOptimizationProblem
 ):
 
     def __init__(self, branching_times):
-        super().__init__(model_name="TestModelWithInitial", model_folder=data_path())
+        super().__init__(model_name="ModelWithInitial", model_folder=data_path())
         self._branching_times = branching_times
 
     def times(self, variable=None):
@@ -98,7 +98,7 @@ class TestControlTreeMixin1(TestCase):
         return [0.1, 0.2]
 
     def setUp(self):
-        self.problem = TestProblem(self.branching_times)
+        self.problem = Model(self.branching_times)
         self.problem.optimize()
         self.tolerance = 1e-6
 
@@ -144,12 +144,12 @@ class TestControlTreeMixin5(TestControlTreeMixin1):
         return np.linspace(0.0, 1.0, 21)[1:]
 
 
-class TestProblemDijkverruiming(
+class ModelDijkverruiming(
     ControlTreeMixin, ModelicaMixin, CollocatedIntegratedOptimizationProblem
 ):
 
     def __init__(self):
-        super().__init__(model_name="TestModelWithInitial", model_folder=data_path())
+        super().__init__(model_name="ModelWithInitial", model_folder=data_path())
 
     def times(self, variable=None):
         # Collocation points
@@ -233,7 +233,7 @@ class TestProblemDijkverruiming(
 class TestDijkverruiming(TestCase):
 
     def setUp(self):
-        self.problem = TestProblemDijkverruiming()
+        self.problem = ModelDijkverruiming()
         self.problem.optimize()
         self.tolerance = 1e-6
 

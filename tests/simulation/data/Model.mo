@@ -1,4 +1,4 @@
-model TestModel
+model Model
 	parameter Real x_start;
 	Real x(start=x_start, fixed=true);
 	Real w(start=0.0, fixed=true);
@@ -41,4 +41,4 @@ equation
 
 	u_out = u + 1;
 
-end TestModel;
+end Model;

@@ -21,7 +21,7 @@ logger = logging.getLogger("rtctools")
 logger.setLevel(logging.WARNING)
 
 
-class TestProblem(
+class Model(
     GoalProgrammingMixin, ModelicaMixin, CollocatedIntegratedOptimizationProblem
 ):
 
@@ -29,7 +29,7 @@ class TestProblem(
         super().__init__(
             input_folder=data_path(),
             output_folder=data_path(),
-            model_name="TestModelWithInitial",
+            model_name="ModelWithInitial",
             model_folder=data_path(),
         )
 
@@ -105,7 +105,7 @@ class TestGoal3(Goal):
 class TestGoalProgramming(TestCase):
 
     def setUp(self):
-        self.problem = TestProblem()
+        self.problem = Model()
         self.problem.optimize()
         self.tolerance = 1e-6
 
@@ -143,15 +143,15 @@ class TestGoalLowMax(Goal):
     target_max = function_range[0]
 
 
-# Inherit from existing TestProblem, as all properties are equal except the
+# Inherit from existing Model, as all properties are equal except the
 # goals.
-class TestProblemNoMinMax(TestProblem):
+class ModelNoMinMax(Model):
 
     def goals(self):
         return [TestGoalNoMinMax()]
 
 
-class TestProblemLowMax(TestProblem):
+class ModelLowMax(Model):
 
     def goals(self):
         return [TestGoalLowMax()]
@@ -160,8 +160,8 @@ class TestProblemLowMax(TestProblem):
 class TestGoalProgrammingNoMinMax(TestCase):
 
     def setUp(self):
-        self.problem1 = TestProblemNoMinMax()
-        self.problem2 = TestProblemLowMax()
+        self.problem1 = ModelNoMinMax()
+        self.problem2 = ModelLowMax()
         self.problem1.optimize()
         self.problem2.optimize()
         self.tolerance = 1e-6
@@ -195,13 +195,13 @@ class TestGoalMinimizeX(Goal):
     target_min = 2.0
 
 
-class TestProblemMinimizeU(TestProblem):
+class ModelMinimizeU(Model):
 
     def goals(self):
         return [TestGoalMinimizeU()]
 
 
-class TestProblemMinimizeUandX(TestProblem):
+class ModelMinimizeUandX(Model):
 
     def goals(self):
         return [TestGoalMinimizeU(), TestGoalMinimizeX()]
@@ -210,8 +210,8 @@ class TestProblemMinimizeUandX(TestProblem):
 class TestGoalProgrammingHoldMinimization(TestCase):
 
     def setUp(self):
-        self.problem1 = TestProblemMinimizeU()
-        self.problem2 = TestProblemMinimizeUandX()
+        self.problem1 = ModelMinimizeU()
+        self.problem2 = ModelMinimizeUandX()
         self.problem1.optimize()
         self.problem2.optimize()
         self.tolerance = 1e-6
@@ -272,7 +272,7 @@ class PathGoal5(Goal):
     priority = 5
 
 
-class TestProblemPathGoals(
+class ModelPathGoals(
     GoalProgrammingMixin, ModelicaMixin, CollocatedIntegratedOptimizationProblem
 ):
 
@@ -280,7 +280,7 @@ class TestProblemPathGoals(
         super().__init__(
             input_folder=data_path(),
             output_folder=data_path(),
-            model_name="TestModelWithInitial",
+            model_name="ModelWithInitial",
             model_folder=data_path(),
         )
 
@@ -318,7 +318,7 @@ class TestProblemPathGoals(
 class TestGoalProgrammingPathGoals(TestCase):
 
     def setUp(self):
-        self.problem = TestProblemPathGoals()
+        self.problem = ModelPathGoals()
         self.problem.optimize()
         self.tolerance = 1e-6
 
@@ -349,7 +349,7 @@ class PathGoal2Reversed(Goal):
     target_max = Timeseries(np.linspace(0.0, 1.0, 21), 21 * [1.0])
 
 
-class TestProblemPathGoalsReversed(TestProblemPathGoals):
+class ModelPathGoalsReversed(ModelPathGoals):
 
     def path_goals(self):
         return [PathGoal1Reversed(), PathGoal2Reversed()]
@@ -358,7 +358,7 @@ class TestProblemPathGoalsReversed(TestProblemPathGoals):
 class TestGoalProgrammingPathGoalsReversed(TestGoalProgrammingPathGoals):
 
     def setUp(self):
-        self.problem = TestProblemPathGoalsReversed()
+        self.problem = ModelPathGoalsReversed()
         self.problem.optimize()
         self.tolerance = 1e-6
 
@@ -372,7 +372,7 @@ class TestGoalMinU(Goal):
     priority = 3
 
 
-class TestProblemPathGoalsMixed(TestProblemPathGoals):
+class ModelPathGoalsMixed(ModelPathGoals):
 
     def path_goals(self):
         return [PathGoal1(), PathGoal2()]
@@ -403,7 +403,7 @@ class TestGoalLowerUCritical(Goal):
     critical = True
 
 
-class TestProblemPathGoalsMixedCritical(TestProblemPathGoals):
+class ModelPathGoalsMixedCritical(ModelPathGoals):
 
     def path_goals(self):
         return [PathGoal1Critical(), PathGoal2()]
@@ -415,12 +415,12 @@ class TestProblemPathGoalsMixedCritical(TestProblemPathGoals):
 class TestGoalProgrammingPathGoalsMixed(TestGoalProgrammingPathGoals):
 
     def setUp(self):
-        self.problem = TestProblemPathGoalsMixed()
+        self.problem = ModelPathGoalsMixed()
         self.problem.optimize()
         self.tolerance = 1e-6
 
 
-class TestProblemEnsemble(TestProblem):
+class ModelEnsemble(Model):
 
     @property
     def ensemble_size(self):
@@ -446,7 +446,7 @@ class TestProblemEnsemble(TestProblem):
 class TestGoalProgrammingEnsemble(TestGoalProgramming):
 
     def setUp(self):
-        self.problem = TestProblemEnsemble()
+        self.problem = ModelEnsemble()
         self.problem.optimize()
         self.tolerance = 1e-6
 
@@ -477,7 +477,7 @@ class PathGoalSmoothing(Goal):
     priority = 3
 
 
-class TestProblemPathGoalsSmoothing(
+class ModelPathGoalsSmoothing(
     GoalProgrammingMixin, ModelicaMixin, CollocatedIntegratedOptimizationProblem
 ):
 
@@ -485,7 +485,7 @@ class TestProblemPathGoalsSmoothing(
         super().__init__(
             input_folder=data_path(),
             output_folder=data_path(),
-            model_name="TestModelWithInitial",
+            model_name="ModelWithInitial",
             model_folder=data_path(),
         )
 
@@ -523,7 +523,7 @@ class TestProblemPathGoalsSmoothing(
 class TestGoalProgrammingSmoothing(TestCase):
 
     def setUp(self):
-        self.problem = TestProblemPathGoalsSmoothing()
+        self.problem = ModelPathGoalsSmoothing()
         self.problem.optimize()
         self.tolerance = 1e-6
 
@@ -556,7 +556,7 @@ class StateGoal3(StateGoal):
     priority = 3
 
 
-class TestProblemStateGoals(
+class ModelStateGoals(
     GoalProgrammingMixin, ModelicaMixin, CollocatedIntegratedOptimizationProblem
 ):
 
@@ -564,7 +564,7 @@ class TestProblemStateGoals(
         super().__init__(
             input_folder=data_path(),
             output_folder=data_path(),
-            model_name="TestModelWithInitial",
+            model_name="ModelWithInitial",
             model_folder=data_path(),
         )
 
@@ -607,7 +607,7 @@ class TestProblemStateGoals(
 class TestGoalProgrammingStateGoals(TestCase):
 
     def setUp(self):
-        self.problem = TestProblemStateGoals()
+        self.problem = ModelStateGoals()
         self.problem.optimize()
         self.tolerance = 1e-6
 

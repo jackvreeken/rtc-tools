@@ -1,4 +1,4 @@
-model HybridShootingTestModel
+model HybridShootingModel
 	Real x(start=1.1);
 	Real w(start=0.0);
 
@@ -10,4 +10,4 @@ equation
 	der(x) = k * x + u;
 	der(w) = x;
 
-end HybridShootingTestModel;
+end HybridShootingModel;

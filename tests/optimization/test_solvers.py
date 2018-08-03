@@ -4,13 +4,13 @@ import numpy as np
 
 from test_case import TestCase
 
-from .test_modelica_mixin import TestProblemAlgebraic
+from .test_modelica_mixin import ModelAlgebraic
 
 logger = logging.getLogger("rtctools")
 logger.setLevel(logging.DEBUG)
 
 
-class TestProblemCLP(TestProblemAlgebraic):
+class ModelCLP(ModelAlgebraic):
 
     def solver_options(self):
         options = super().solver_options()
@@ -22,7 +22,7 @@ class TestProblemCLP(TestProblemAlgebraic):
 class TestSolverCLP(TestCase):
 
     def setUp(self):
-        self.problem = TestProblemCLP()
+        self.problem = ModelCLP()
         self.problem.optimize()
         self.results = self.problem.extract_results()
         self.tolerance = 1e-6

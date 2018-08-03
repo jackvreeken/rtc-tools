@@ -1,6 +1,6 @@
 import logging
 import sys
-from unittest import expectedFailure
+import unittest
 
 from casadi import MX
 
@@ -21,13 +21,14 @@ logger = logging.getLogger("rtctools")
 logger.setLevel(logging.DEBUG)
 
 
-class TestProblem(ModelicaMixin, CollocatedIntegratedOptimizationProblem):
+class Model(ModelicaMixin, CollocatedIntegratedOptimizationProblem):
 
     def __init__(self):
+        print(data_path())
         super().__init__(
             input_folder=data_path(),
             output_folder=data_path(),
-            model_name="TestModelWithInitial",
+            model_name="ModelWithInitial",
             model_folder=data_path(),
         )
 
@@ -74,7 +75,7 @@ class TestProblem(ModelicaMixin, CollocatedIntegratedOptimizationProblem):
         return compiler_options
 
 
-class TestProblemNonConvex(TestProblem):
+class ModelNonConvex(Model):
 
     def __init__(self, u_seed):
         super().__init__()
@@ -98,7 +99,7 @@ class TestProblemNonConvex(TestProblem):
         return seed
 
 
-class TestProblemScaled(TestProblem):
+class ModelScaled(Model):
 
     def variable_nominal(self, variable):
         if variable.startswith("x"):
@@ -107,7 +108,7 @@ class TestProblemScaled(TestProblem):
             return super().variable_nominal(variable)
 
 
-class TestProblemConstrained(TestProblem):
+class ModelConstrained(Model):
 
     def constraints(self, ensemble_member):
         # Constrain x(t=1.9)^2 >= 0.1.
@@ -116,20 +117,20 @@ class TestProblemConstrained(TestProblem):
         return [(f, 0.1, sys.float_info.max)]
 
 
-class TestProblemTrapezoidal(TestProblem):
+class ModelTrapezoidal(Model):
 
     @property
     def theta(self):
         return 0.5
 
 
-class TestProblemShort(TestProblem):
+class ModelShort(Model):
 
     def times(self, variable=None):
         return np.linspace(0.0, 1.0, 2)
 
 
-class TestProblemAggregation(TestProblem):
+class ModelAggregation(Model):
 
     def times(self, variable=None):
         if variable == "u":
@@ -138,7 +139,7 @@ class TestProblemAggregation(TestProblem):
             return np.linspace(0.0, 1.0, 21)
 
 
-class TestProblemEnsemble(TestProblem):
+class ModelEnsemble(Model):
 
     @property
     def ensemble_size(self):
@@ -156,13 +157,13 @@ class TestProblemEnsemble(TestProblem):
             }
 
 
-class TestProblemAlgebraic(ModelicaMixin, CollocatedIntegratedOptimizationProblem):
+class ModelAlgebraic(ModelicaMixin, CollocatedIntegratedOptimizationProblem):
 
     def __init__(self):
         super().__init__(
             input_folder=data_path(),
             output_folder=data_path(),
-            model_name="TestModelAlgebraic",
+            model_name="ModelAlgebraic",
             model_folder=data_path(),
         )
 
@@ -199,13 +200,13 @@ class TestProblemAlgebraic(ModelicaMixin, CollocatedIntegratedOptimizationProble
         return compiler_options
 
 
-class TestProblemMixedInteger(ModelicaMixin, CollocatedIntegratedOptimizationProblem):
+class ModelMixedInteger(ModelicaMixin, CollocatedIntegratedOptimizationProblem):
 
     def __init__(self):
         super().__init__(
             input_folder=data_path(),
             output_folder=data_path(),
-            model_name="TestModelMixedInteger",
+            model_name="ModelMixedInteger",
             model_folder=data_path(),
         )
 
@@ -238,10 +239,10 @@ class TestProblemMixedInteger(ModelicaMixin, CollocatedIntegratedOptimizationPro
         return compiler_options
 
 
-class TestModelicaMixin(TestCase):
+class TestModelicaMixin(TestCase, unittest.TestCase):
 
     def setUp(self):
-        self.problem = TestProblem()
+        self.problem = Model()
         self.problem.optimize()
         self.results = self.problem.extract_results()
         self.tolerance = 1e-6
@@ -289,7 +290,7 @@ class TestModelicaMixin(TestCase):
         self.assertAlmostEqual(self.results["w"][0], 0.0, self.tolerance)
         self.assertAlmostEqual(self.results["w"][-1], 0.5917, 1e-4)
 
-    @expectedFailure
+    @unittest.skip
     def test_states_in(self):
         states = list(self.problem.states_in("x", 0.05, 0.95))
         verify = []
@@ -324,8 +325,7 @@ class TestModelicaMixin(TestCase):
         ) / 0.05
         self.assertEqual(repr(der), repr(verify))
 
-    # This test fails, because we use CasADi sumRows() now.
-    @expectedFailure
+    @unittest.skip("This test fails, because we use CasADi sumRows() now.")
     def test_integral(self):
         integral = self.problem.integral("x", 0.05, 0.95)
         knots = self.problem.times()[1:-1]
@@ -376,7 +376,7 @@ class TestModelicaMixin(TestCase):
 class TestModelicaMixinScaled(TestModelicaMixin):
 
     def setUp(self):
-        self.problem = TestProblemScaled()
+        self.problem = ModelScaled()
         self.problem.optimize()
         self.results = self.problem.extract_results()
         self.tolerance = 1e-6
@@ -389,12 +389,12 @@ class TestModelicaMixinNonConvex(TestCase):
 
     def test_seeding(self):
         # Verify that both optima are found, depending on the seeding.
-        self.problem = TestProblemNonConvex(np.ones(21) * 2.0)
+        self.problem = ModelNonConvex(np.ones(21) * 2.0)
         self.problem.optimize()
         self.results = self.problem.extract_results()
         self.assertAlmostEqual(self.results["x"][-1], 1.0, self.tolerance)
 
-        self.problem = TestProblemNonConvex(np.ones(21) * -2.0)
+        self.problem = ModelNonConvex(np.ones(21) * -2.0)
         self.problem.optimize()
         self.results = self.problem.extract_results()
         self.assertAlmostEqual(self.results["x"][-1], -1.0, self.tolerance)
@@ -403,7 +403,7 @@ class TestModelicaMixinNonConvex(TestCase):
 class TestModelicaMixinConstrained(TestCase):
 
     def setUp(self):
-        self.problem = TestProblemConstrained()
+        self.problem = ModelConstrained()
         self.problem.optimize()
         self.results = self.problem.extract_results()
 
@@ -417,7 +417,7 @@ class TestModelicaMixinConstrained(TestCase):
 class TestModelicaMixinTrapezoidal(TestCase):
 
     def setUp(self):
-        self.problem = TestProblemTrapezoidal()
+        self.problem = ModelTrapezoidal()
         self.problem.optimize()
         self.results = self.problem.extract_results()
         self.tolerance = 1e-6
@@ -432,7 +432,7 @@ class TestModelicaMixinTrapezoidal(TestCase):
 class TestModelicaMixinShort(TestCase):
 
     def setUp(self):
-        self.problem = TestProblemShort()
+        self.problem = ModelShort()
         self.problem.optimize()
         self.results = self.problem.extract_results()
         self.tolerance = 1e-6
@@ -447,7 +447,7 @@ class TestModelicaMixinShort(TestCase):
 class TestModelicaMixinAggregation(TestCase):
 
     def setUp(self):
-        self.problem = TestProblemAggregation()
+        self.problem = ModelAggregation()
         self.problem.optimize()
         self.results = self.problem.extract_results()
         self.tolerance = 1e-6
@@ -466,7 +466,7 @@ class TestModelicaMixinAggregation(TestCase):
 class TestModelicaMixinEnsemble(TestCase):
 
     def setUp(self):
-        self.problem = TestProblemEnsemble()
+        self.problem = ModelEnsemble()
         self.problem.optimize()
         self.results = self.problem.extract_results()
         self.tolerance = 1e-6
@@ -481,7 +481,7 @@ class TestModelicaMixinEnsemble(TestCase):
 class TestModelicaMixinAlgebraic(TestCase):
 
     def setUp(self):
-        self.problem = TestProblemAlgebraic()
+        self.problem = ModelAlgebraic()
         self.problem.optimize()
         self.results = self.problem.extract_results()
         self.tolerance = 1e-6
@@ -497,7 +497,7 @@ class TestModelicaMixinAlgebraic(TestCase):
 class TestModelicaMixinMixedInteger(TestCase):
 
     def setUp(self):
-        self.problem = TestProblemMixedInteger()
+        self.problem = ModelMixedInteger()
         self.problem.optimize()
         self.results = self.problem.extract_results()
         self.tolerance = 1e-6
