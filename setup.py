@@ -45,8 +45,7 @@ setup(
                         "numpy >= 1.14.0",
                         "scipy >= 1.0.0",
                         "pymoca >= 0.2.6"],
-    tests_require = ['nose'],
-    test_suite = 'nose.collector',
+    tests_require = ['pytest', 'pytest-runner'],
     python_requires='>=3.5',
     cmdclass = versioneer.get_cmdclass(),
     entry_points={
