@@ -1,4 +1,4 @@
-image: python:3.6
+image: python:3.7
 
 before_script:
   - pip install tox
@@ -13,7 +13,6 @@ stages:
 # style
 flake8:
   stage: style
-  image: python:3.6
   script:
     - tox -vv
   variables:
@@ -52,6 +51,14 @@ py36:linux:
   image: python:3.6-jessie
   variables:
     TOXENV: py36
+  tags:
+    - docker
+
+py37:linux:
+  <<: *unittests
+  image: python:3.7-stretch
+  variables:
+    TOXENV: py37
   tags:
     - docker
 
