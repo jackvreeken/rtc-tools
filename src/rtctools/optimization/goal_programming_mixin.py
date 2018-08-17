@@ -748,9 +748,15 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
 
         # Validate goal definitions
         for goal in itertools.chain(goals, path_goals):
-            m, M = ca.MX(goal.function_range[0]), ca.MX(goal.function_range[1])
+            m, M = goal.function_range
 
-            if not m.is_regular() or not M.is_regular():
+            # The function range should not be a symbolic expression
+            assert (not isinstance(m, ca.MX) or m.is_constant())
+            assert (not isinstance(M, ca.MX) or M.is_constant())
+
+            m, M = float(m), float(M)
+
+            if not np.isfinite(m) or not np.isfinite(M):
                 raise Exception("No function range specified for goal {}".format(goal))
 
             if m >= M:
