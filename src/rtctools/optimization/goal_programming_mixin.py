@@ -831,16 +831,16 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
 
                 if goal.has_target_min:
                     indices = np.where(np.logical_not(np.isnan(goal_m)))
-                    if np.any(goal_m[indices] < goal.function_range[0]):
+                    if np.any(goal_m[indices] <= goal.function_range[0]):
                         raise Exception(
-                            'Target minimum is smaller than the lower bound of the function range for goal {}'.format(
-                                goal))
+                            'Target minimum should be greater than the lower bound of the function range for goal {}'
+                            .format(goal))
                 if goal.has_target_max:
                     indices = np.where(np.logical_not(np.isnan(goal_M)))
-                    if np.any(goal_M[indices] > goal.function_range[1]):
+                    if np.any(goal_M[indices] >= goal.function_range[1]):
                         raise Exception(
-                            'Target maximum is greater than the upper bound of the function range for goal {}'.format(
-                                goal))
+                            'Target maximum should be smaller than the upper bound of the function range for goal {}'
+                            .format(goal))
 
         # Solve the subproblems one by one
         logger.info("Starting goal programming")
