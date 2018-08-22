@@ -1206,6 +1206,8 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
 
             # Objective
             f_member = self.objective(ensemble_member)
+            if f_member.size1() == 0:
+                f_member = 0
             if path_objective.size1() > 0:
                 initial_path_objective = path_objective_function.call(
                     self.__func_initial_inputs[ensemble_member], False, True)
