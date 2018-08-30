@@ -32,6 +32,8 @@ class Goal(metaclass=ABCMeta):
     :cvar order:            Penalization order of goal violation.  Default is ``2``.
     :cvar critical:         If ``True``, the algorithm will abort if this goal cannot be fully met.
                             Default is ``False``.
+    :cvar relaxation:       Amount of slack added to the hard constraints related to the goal.
+                            Must be a nonnegative value. Default is ``0.0``.
 
     The target bounds indicate the range within the function should stay, *if possible*.  Goals
     are, in that sense, *soft*, as opposed to standard hard constraints.
@@ -82,6 +84,10 @@ class Goal(metaclass=ABCMeta):
 
     The goal violation value is taken to the order'th power in the objective function of the final
     optimization problem.
+
+    Relaxation is used to loosen the constraints that are set after the
+    optimization of the goal's priority. The unit of the relaxation is equal
+    to that of the goal function.
 
     Example definition of the point goal :math:`x(t) \geq 1.1` for :math:`t=1.0` at priority 1::
 
@@ -851,6 +857,9 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
                         raise Exception(
                             'Target maximum should be smaller than the upper bound of the function range for goal {}'
                             .format(goal))
+
+                if goal.relaxation < 0.0:
+                    raise Exception('Relaxation of goal {} should be a nonnegative value'.format(goal))
 
         # Solve the subproblems one by one
         logger.info("Starting goal programming")
