@@ -44,7 +44,7 @@ setup(
     install_requires = ["casadi >= 3.2.0",
                         "numpy >= 1.14.0",
                         "scipy >= 1.0.0",
-                        "pymoca >= 0.2.6"],
+                        "pymoca >= 0.4.0"],
     tests_require = ['pytest', 'pytest-runner'],
     python_requires='>=3.5',
     cmdclass = versioneer.get_cmdclass(),
