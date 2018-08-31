@@ -943,31 +943,70 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                 1 + 2 * len(self.dae_variables['constant_inputs']) + 3
                 + len(self.__extra_constant_inputs))
 
-            interpolated_states = [None] * (2 * len(collocated_variables))
-            for j, variable in enumerate(collocated_variables):
-                variable = variable.name()
-                times = self.times(variable)
-                interpolation_method = self.interpolation_method(variable)
-                values = self.state_vector(
-                    variable, ensemble_member=ensemble_member)
-                if len(collocation_times) != len(times):
-                    interpolated = interpolate(
-                        times, values, collocation_times, self.equidistant, interpolation_method)
+            # Most variables have collocation times equal to the global
+            # collocation times. Use a vectorized approach to process them.
+            collocated_variable_names = [v.name() for v in collocated_variables]
+            collocated_variable_nominals = np.array([self.variable_nominal(v) for v in collocated_variable_names])
+
+            # When slicing MX/SX objects, we want to do that with a list of Python ints. Slicing
+            # with something else (e.g. a list of np.int32, or a numpy array) is significantly
+            # slower.
+            x_inds = list(range(X.size1()))
+            variable_indices = {}
+            for k, v in self.__indices[ensemble_member].items():
+                if isinstance(v, slice):
+                    variable_indices[k] = x_inds[v]
+                elif isinstance(v, int):
+                    variable_indices[k] = [v]
                 else:
-                    interpolated = values
+                    variable_indices[k] = [int(i) for i in v]
+
+            interpolated_states_explicit = []
+            interpolated_states_implicit = []
+
+            place_holder = [-1] * n_collocation_times
+            for variable in collocated_variable_names:
+                var_inds = variable_indices[variable]
+
+                # If the variable times != collocation times, what we do here is just a placeholder
+                if len(var_inds) != n_collocation_times:
+                    var_inds = var_inds.copy()
+                    var_inds.extend(place_holder)
+                    var_inds = var_inds[:n_collocation_times]
+
+                interpolated_states_explicit.extend(var_inds[:-1])
+                interpolated_states_implicit.extend(var_inds[1:])
+
+            repeated_nominals = np.tile(np.repeat(collocated_variable_nominals, n_collocation_times - 1), 2)
+            interpolated_states = ca.vertcat(X[interpolated_states_explicit],
+                                             X[interpolated_states_implicit]) * repeated_nominals
+            interpolated_states = interpolated_states.reshape((n_collocation_times - 1, len(collocated_variables)*2))
+
+            # Handle variables that have different collocation times.
+            for j, variable in enumerate(collocated_variable_names):
+                times = self.times(variable)
+                if n_collocation_times == len(times):
+                    # Already handled
+                    continue
+
+                interpolation_method = self.interpolation_method(variable)
+                values = self.state_vector(variable, ensemble_member=ensemble_member)
+                interpolated = interpolate(
+                    times, values, collocation_times, self.equidistant, interpolation_method)
+
                 nominal = self.variable_nominal(variable)
                 if nominal != 1:
                     interpolated *= nominal
-                interpolated_states[j] = interpolated[0:n_collocation_times - 1]
-                interpolated_states[len(collocated_variables) +
-                                    j] = interpolated[1:n_collocation_times]
+
+                interpolated_states[:, j] = interpolated[:-1]
+                interpolated_states[:, len(collocated_variables) + j] = interpolated[1:]
+
             # We do not cache the Jacobians, as the structure may change from ensemble member to member,
             # and from goal programming/homotopy run to run.
             # We could, of course, pick the states apart into controls and states,
             # and generate Jacobians for each set separately and for each ensemble member separately, but
             # in this case the increased complexity may well offset the performance gained by caching.
-            accumulation_U[0] = reduce_matvec(ca.horzcat(
-                *interpolated_states), self.solver_input)
+            accumulation_U[0] = reduce_matvec(interpolated_states, self.solver_input)
 
             for j, variable in enumerate(self.dae_variables['constant_inputs']):
                 variable = variable.name()
