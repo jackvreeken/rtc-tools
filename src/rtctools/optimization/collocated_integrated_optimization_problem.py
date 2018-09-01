@@ -302,6 +302,22 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
         X = ca.MX.sym('X', control_size + state_size)
         self.__solver_input = X
 
+        # Later on, we will be slicing MX/SX objects a few times for vectorized operations (to
+        # reduce the Soverhead induced for each CasADi call). When slicing MX/SX objects, we want
+        # to do that with a list of Python ints. Slicing with something else (e.g. a list of
+        # np.int32, or a numpy array) is significantly slower.
+        x_inds = list(range(X.size1()))
+        self.__indices_as_lists = [{} for ensemble_member in range(self.ensemble_size)]
+
+        for ensemble_member in range(self.ensemble_size):
+            for k, v in self.__indices[ensemble_member].items():
+                if isinstance(v, slice):
+                    self.__indices_as_lists[ensemble_member][k] = x_inds[v]
+                elif isinstance(v, int):
+                    self.__indices_as_lists[ensemble_member][k] = [v]
+                else:
+                    self.__indices_as_lists[ensemble_member][k] = [int(i) for i in v]
+
         # Initialize bound and seed vectors
         discrete = np.zeros(X.size1(), dtype=np.bool)
 
@@ -341,6 +357,12 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                 repr(integrated_variables)))
             logger.debug("Collocating variables {}".format(
                 repr(collocated_variables)))
+
+        integrated_variable_names = [v.name() for v in integrated_variables]
+        integrated_variable_nominals = np.array([self.variable_nominal(v) for v in integrated_variable_names])
+
+        collocated_variable_names = [v.name() for v in collocated_variables]
+        collocated_variable_nominals = np.array([self.variable_nominal(v) for v in collocated_variable_names])
 
         # Split derivatives into "integrated" and "collocated" lists.
         integrated_derivatives = []
@@ -388,35 +410,68 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
 
         # Update the store of all ensemble-member-specific data for all ensemble members
         # with initial states, derivatives, and path variables.
+        # Use vectorized approach to avoid SWIG call overhead for each CasADi call.
+        ensemble_member_size = int(self.__state_size / self.ensemble_size)
+
+        n = len(integrated_variables) + len(collocated_variables)
         for ensemble_member in range(self.ensemble_size):
             ensemble_data = ensemble_store[ensemble_member]
 
-            # Store initial state and derivatives
-            initial_state = []
-            initial_derivatives = []
-            for variable in integrated_variables + collocated_variables:
-                variable = variable.name()
-                value = self.state_vector(
-                    variable, ensemble_member=ensemble_member)[0]
-                nominal = self.variable_nominal(variable)
-                if nominal != 1:
-                    value *= nominal
-                initial_state.append(value)
-                initial_derivatives.append(self.der_at(
-                    variable, t0, ensemble_member=ensemble_member))
-            ensemble_data["initial_state"] = ca.vertcat(*initial_state)
-            ensemble_data["initial_derivatives"] = ca.vertcat(
-                *initial_derivatives)
+            initial_state_indices = [None] * n
+
+            # Derivatives take a bit more effort to vectorize, as we can have
+            # both constant values and elements in the state vector
+            initial_derivatives = ca.MX.zeros((n, 1))
+            init_der_variable = []
+            init_der_variable_indices = []
+            init_der_constant = []
+            init_der_constant_values = []
+
+            der_offset = (control_size
+                          + (ensemble_member + 1) * ensemble_member_size
+                          - len(self.dae_variables['derivatives']))
+
+            history = self.history(ensemble_member)
+
+            for j, variable in enumerate(integrated_variable_names + collocated_variable_names):
+                initial_state_indices[j] = self.__indices_as_lists[ensemble_member][variable][0]
+
+                try:
+                    i = self.__differentiated_states_map[variable]
+
+                    init_der_variable_indices.append(der_offset + i)
+                    init_der_variable.append(j)
+                except KeyError:
+                    # We do interpolation here instead of relying on der_at. This faster is because:
+                    # 1. We can reuse the history variable.
+                    # 2. We know that "variable" is a canonical state
+                    # 3. We know that we are only dealing with history (numeric values, not symbolics)
+                    try:
+                        h = history[variable]
+                        if h.times[0] == t0 or len(h.values) == 1:
+                            init_der = 0.0
+                        else:
+                            assert h.times[-1] == t0
+                            init_der = (h.values[-1] - h.values[-2])/(h.times[-1] - h.times[-2])
+                    except KeyError:
+                        init_der = 0.0
+
+                    init_der_constant_values.append(init_der)
+                    init_der_constant.append(j)
+
+            initial_derivatives[init_der_variable] = X[init_der_variable_indices]
+            initial_derivatives[init_der_constant] = init_der_constant_values
+
+            ensemble_data["initial_state"] = X[initial_state_indices] * np.concatenate(
+                (integrated_variable_nominals, collocated_variable_nominals))
+            ensemble_data["initial_derivatives"] = initial_derivatives
 
             # Store initial path variables
-            initial_path_variables = []
-            for variable in self.path_variables:
-                variable = variable.name()
-                values = self.state_vector(
-                    variable, ensemble_member=ensemble_member)
-                initial_path_variables.append(values[0])
-            ensemble_data["initial_path_variables"] = nullvertcat(
-                *initial_path_variables)
+            initial_path_variable_inds = [None] * len(self.__path_variable_names)
+            for j, variable in enumerate(self.__path_variable_names):
+                initial_path_variable_inds[j] = self.__indices_as_lists[ensemble_member][variable][0]
+
+            ensemble_data["initial_path_variables"] = X[initial_path_variable_inds]
 
         # Replace parameters which are constant across the entire ensemble
         constant_parameters = []
@@ -945,28 +1000,12 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
 
             # Most variables have collocation times equal to the global
             # collocation times. Use a vectorized approach to process them.
-            collocated_variable_names = [v.name() for v in collocated_variables]
-            collocated_variable_nominals = np.array([self.variable_nominal(v) for v in collocated_variable_names])
-
-            # When slicing MX/SX objects, we want to do that with a list of Python ints. Slicing
-            # with something else (e.g. a list of np.int32, or a numpy array) is significantly
-            # slower.
-            x_inds = list(range(X.size1()))
-            variable_indices = {}
-            for k, v in self.__indices[ensemble_member].items():
-                if isinstance(v, slice):
-                    variable_indices[k] = x_inds[v]
-                elif isinstance(v, int):
-                    variable_indices[k] = [v]
-                else:
-                    variable_indices[k] = [int(i) for i in v]
-
             interpolated_states_explicit = []
             interpolated_states_implicit = []
 
             place_holder = [-1] * n_collocation_times
             for variable in collocated_variable_names:
-                var_inds = variable_indices[variable]
+                var_inds = self.__indices_as_lists[ensemble_member][variable]
 
                 # If the variable times != collocation times, what we do here is just a placeholder
                 if len(var_inds) != n_collocation_times:
