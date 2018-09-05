@@ -782,18 +782,13 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
             self.__subproblem_path_constraints[ensemble_member][
                 goal.get_function_key(self, ensemble_member)] = [constraint]
 
-    def optimize(self, preprocessing=True, postprocessing=True, log_solver_failure_as_error=True):
-        # Do pre-processing
-        if preprocessing:
-            self.pre()
+    def __validate_goals(self, goals):
+        goals = sorted(goals, key=lambda x: x.priority)
 
-        # Group goals into subproblems
-        subproblems = []
-        goals = self.goals()
-        path_goals = self.path_goals()
+        options = self.goal_programming_options()
 
         # Validate goal definitions
-        for goal in itertools.chain(goals, path_goals):
+        for goal in goals:
             m, M = goal.function_range
 
             # The function range should not be a symbolic expression
@@ -817,10 +812,87 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
             else:
                 if goal.function_range != (np.nan, np.nan):
                     raise Exception("Specifying function range not allowed for goal {}".format(goal))
-        try:
-            priorities = {int(goal.priority) for goal in itertools.chain(goals, path_goals) if not goal.is_empty}
-        except ValueError:
-            raise Exception("GoalProgrammingMixin: All goal priorities must be of type int or castable to int")
+
+            try:
+                int(goal.priority)
+            except ValueError:
+                raise Exception("Priority of not int or castable to int for goal {}".format(goal))
+
+        # Check consistency and monotonicity of goals. Scalar target min/max
+        # of normal goals are also converted to arrays to unify checks with
+        # path goals.
+        if options['check_monotonicity']:
+            for e in range(self.ensemble_size):
+                # Store the previous goal of a certain function key we
+                # encountered, such that we can compare to it.
+                fk_goal_map = {}
+
+                for goal in goals:
+                    fk = goal.get_function_key(self, e)
+                    prev = fk_goal_map.get(fk)
+                    fk_goal_map[fk] = goal
+
+                    if prev is not None:
+                        goal_m, goal_M = self.__min_max_arrays(goal)
+                        other_m, other_M = self.__min_max_arrays(prev)
+
+                        indices = np.where(np.logical_not(np.logical_or(
+                            np.isnan(goal_m), np.isnan(other_m))))
+                        if goal.has_target_min:
+                            if np.any(goal_m[indices] < other_m[indices]):
+                                raise Exception(
+                                    'Target minimum of goal {} must be greater or equal than '
+                                    'target minimum of goal {}.'.format(goal, prev))
+
+                        indices = np.where(np.logical_not(np.logical_or(
+                            np.isnan(goal_M), np.isnan(other_M))))
+                        if goal.has_target_max:
+                            if np.any(goal_M[indices] > other_M[indices]):
+                                raise Exception(
+                                    'Target maximum of goal {} must be less or equal than '
+                                    'target maximum of goal {}'.format(goal, prev))
+
+        for goal in goals:
+            goal_m, goal_M = self.__min_max_arrays(goal)
+
+            if goal.has_target_min and goal.has_target_max:
+                indices = np.where(np.logical_not(np.logical_or(
+                    np.isnan(goal_m), np.isnan(goal_M))))
+
+                if np.any(goal_m[indices] > goal_M[indices]):
+                    raise Exception("Target minimum exceeds target maximum for goal {}".format(goal))
+
+            if goal.has_target_min:
+                indices = np.where(np.logical_not(np.isnan(goal_m)))
+                if np.any(goal_m[indices] <= goal.function_range[0]):
+                    raise Exception(
+                        'Target minimum should be greater than the lower bound of the function range for goal {}'
+                        .format(goal))
+            if goal.has_target_max:
+                indices = np.where(np.logical_not(np.isnan(goal_M)))
+                if np.any(goal_M[indices] >= goal.function_range[1]):
+                    raise Exception(
+                        'Target maximum should be smaller than the upper bound of the function range for goal {}'
+                        .format(goal))
+
+            if goal.relaxation < 0.0:
+                raise Exception('Relaxation of goal {} should be a nonnegative value'.format(goal))
+
+    def optimize(self, preprocessing=True, postprocessing=True, log_solver_failure_as_error=True):
+        # Do pre-processing
+        if preprocessing:
+            self.pre()
+
+        # Group goals into subproblems
+        subproblems = []
+        goals = self.goals()
+        path_goals = self.path_goals()
+
+        # Validate goal definitions
+        self.__validate_goals(goals)
+        self.__validate_goals(path_goals)
+
+        priorities = {int(goal.priority) for goal in itertools.chain(goals, path_goals) if not goal.is_empty}
 
         for priority in sorted(priorities):
             subproblems.append((
@@ -829,69 +901,6 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
                 [goal for goal in path_goals if int(goal.priority) == priority and not goal.is_empty]))
 
         options = self.goal_programming_options()
-
-        # Check consistency and monotonicity of goals. Scalar target min/max
-        # of normal goals are also converted to arrays to unify checks with
-        # path goals.
-        for gs in (goals, path_goals):
-            sorted_goals = sorted(gs, key=lambda x: x.priority)
-
-            if options['check_monotonicity']:
-                for e in range(self.ensemble_size):
-                    # Store the previous goal of a certain function key we
-                    # encountered, such that we can compare to it.
-                    fk_goal_map = {}
-
-                    for goal in sorted_goals:
-                        fk = goal.get_function_key(self, e)
-                        prev = fk_goal_map.get(fk)
-                        fk_goal_map[fk] = goal
-
-                        if prev is not None:
-                            goal_m, goal_M = self.__min_max_arrays(goal)
-                            other_m, other_M = self.__min_max_arrays(prev)
-
-                            indices = np.where(np.logical_not(np.logical_or(
-                                np.isnan(goal_m), np.isnan(other_m))))
-                            if goal.has_target_min:
-                                if np.any(goal_m[indices] < other_m[indices]):
-                                    raise Exception(
-                                        'Target minimum of goal {} must be greater or equal than '
-                                        'target minimum of goal {}.'.format(goal, prev))
-
-                            indices = np.where(np.logical_not(np.logical_or(
-                                np.isnan(goal_M), np.isnan(other_M))))
-                            if goal.has_target_max:
-                                if np.any(goal_M[indices] > other_M[indices]):
-                                    raise Exception(
-                                        'Target maximum of goal {} must be less or equal than '
-                                        'target maximum of goal {}'.format(goal, prev))
-
-            for goal in sorted_goals:
-                goal_m, goal_M = self.__min_max_arrays(goal)
-
-                if goal.has_target_min and goal.has_target_max:
-                    indices = np.where(np.logical_not(np.logical_or(
-                        np.isnan(goal_m), np.isnan(goal_M))))
-
-                    if np.any(goal_m[indices] > goal_M[indices]):
-                        raise Exception("Target minimum exceeds target maximum for goal {}".format(goal))
-
-                if goal.has_target_min:
-                    indices = np.where(np.logical_not(np.isnan(goal_m)))
-                    if np.any(goal_m[indices] <= goal.function_range[0]):
-                        raise Exception(
-                            'Target minimum should be greater than the lower bound of the function range for goal {}'
-                            .format(goal))
-                if goal.has_target_max:
-                    indices = np.where(np.logical_not(np.isnan(goal_M)))
-                    if np.any(goal_M[indices] >= goal.function_range[1]):
-                        raise Exception(
-                            'Target maximum should be smaller than the upper bound of the function range for goal {}'
-                            .format(goal))
-
-                if goal.relaxation < 0.0:
-                    raise Exception('Relaxation of goal {} should be a nonnegative value'.format(goal))
 
         # Solve the subproblems one by one
         logger.info("Starting goal programming")
