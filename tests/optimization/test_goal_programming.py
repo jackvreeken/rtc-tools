@@ -609,6 +609,120 @@ class TestGoalProgrammingStateGoals(TestCase):
             self.assertAlmostLessThan(x, 1.1, value_tol)
 
 
+class ModelMinimizeTwoGoals(ModelMinimizeUandX):
+    def __init__(self, *args, scale_by_problem_size=False, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.scale_by_problem_size = scale_by_problem_size
+
+    def goal_programming_options(self):
+        options = super().goal_programming_options()
+
+        if self.scale_by_problem_size:
+            options['scale_by_problem_size'] = True
+
+        return options
+
+    def goals(self):
+        goals = super().goals()
+        for g in goals:
+            g.priority = 1
+        return goals
+
+
+class TestPathGoalMinimizeU(Goal):
+    def function(self, optimization_problem, ensemble_member):
+        return optimization_problem.state("u")
+
+    priority = 1
+    order = 1
+
+
+class TestPathGoalMinimizeX(Goal):
+    def function(self, optimization_problem, ensemble_member):
+        return optimization_problem.state("x")
+
+    priority = 1
+    order = 1
+
+
+class ModelMinimizeTwoPathGoals(Model):
+    def __init__(self, *args, scale_by_problem_size=False, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.scale_by_problem_size = scale_by_problem_size
+
+    def goal_programming_options(self):
+        options = super().goal_programming_options()
+
+        if self.scale_by_problem_size:
+            options['scale_by_problem_size'] = True
+
+        return options
+
+    def goals(self):
+        return []
+
+    def path_goals(self):
+        return [TestPathGoalMinimizeU(), TestPathGoalMinimizeX()]
+
+
+class ModelMinimizeTwoTargetPathGoals(ModelMinimizeTwoPathGoals):
+    def path_goals(self):
+        goals = super().path_goals()
+        for g in goals:
+            g.function_range = (-2.0, 10.0)
+            g.target_min = 2.0
+            # To make sure the objective contains enough significant digits to
+            # compare, we make it a bit larger with the weight
+            g.weight = 100
+        return goals
+
+
+class TestScaleByProblemSize(TestCase):
+    tolerance = 1e-5
+
+    def test_goals_scale_by_problem_size(self):
+        self.problem1 = ModelMinimizeTwoGoals()
+        self.problem2 = ModelMinimizeTwoGoals(scale_by_problem_size=True)
+        self.problem1.optimize()
+        self.problem2.optimize()
+
+        obj_value_no_scale = self.problem1.objective_value
+        obj_value_scale = self.problem2.objective_value
+
+        self.assertAlmostEqual(1.0, 2 * obj_value_scale / obj_value_no_scale, self.tolerance)
+
+    def test_path_minimization_goals_scale_by_problem_size(self):
+        # Note that only path minimization goals end up in the path objective.
+        self.problem1 = ModelMinimizeTwoPathGoals()
+        self.problem2 = ModelMinimizeTwoPathGoals(scale_by_problem_size=True)
+        self.problem1.optimize()
+        self.problem2.optimize()
+
+        n_times = len(self.problem2.times())
+
+        obj_value_no_scale = self.problem1.objective_value
+        obj_value_scale = self.problem2.objective_value
+
+        self.assertAlmostEqual(1.0, 2 * n_times * obj_value_scale / obj_value_no_scale, self.tolerance)
+
+    def test_path_target_goals_scale_by_problem_size(self):
+        # Note that the epsilon for path goals that have target bounds ends up
+        # in the normal objective.
+        self.problem1 = ModelMinimizeTwoTargetPathGoals()
+        self.problem2 = ModelMinimizeTwoTargetPathGoals(scale_by_problem_size=True)
+        self.problem1.optimize()
+        self.problem2.optimize()
+
+        n_times = len(self.problem2.times())
+
+        obj_value_no_scale = self.problem1.objective_value
+        obj_value_scale = self.problem2.objective_value
+
+        self.assertAlmostEqual(1.0, 2 * n_times * obj_value_scale / obj_value_no_scale, self.tolerance)
+
+
 class ModelInvalidGoals(Model):
     _goals = []
 
