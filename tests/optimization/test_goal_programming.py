@@ -618,10 +618,13 @@ class ModelInvalidGoals(Model):
 
 class InvalidGoal(Goal):
 
-    def __init__(self, function_range, target_min=np.nan, target_max=np.nan):
+    def __init__(self, function_range=(np.nan, np.nan),
+                 target_min=np.nan, target_max=np.nan,
+                 critical=False):
         self.function_range = function_range
         self.target_min = target_min
         self.target_max = target_max
+        self.critical = critical
 
     def function(self, optimization_problem, ensemble_member):
         return optimization_problem.state_at("x", 0.5, ensemble_member=ensemble_member)
@@ -652,4 +655,9 @@ class TestGoalProgrammingInvalidGoals(TestCase):
     def test_target_max_eq_function_range_ub(self):
         self.problem._goals = [InvalidGoal((-2.0, 2.0), target_max=2.0)]
         with self.assertRaisesRegexp(Exception, "maximum should be smaller than the upper"):
+            self.problem.optimize()
+
+    def test_critical_minimization(self):
+        self.problem._goals = [InvalidGoal(critical=True)]
+        with self.assertRaisesRegexp(Exception, "Minimization goals cannot be critical"):
             self.problem.optimize()

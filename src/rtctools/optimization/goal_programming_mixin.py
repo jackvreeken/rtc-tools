@@ -803,6 +803,9 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
             if goal.function_nominal <= 0:
                 raise Exception("Nonpositive nominal value specified for goal {}".format(goal))
 
+            if goal.critical and not goal.has_target_bounds:
+                raise Exception("Minimization goals cannot be critical")
+
             if goal.has_target_bounds:
                 if not np.isfinite(m) or not np.isfinite(M):
                     raise Exception("No function range specified for goal {}".format(goal))
@@ -917,8 +920,6 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
 
             for j, goal in enumerate(goals):
                 if goal.critical:
-                    if not goal.has_target_bounds:
-                        raise Exception("Minimization goals cannot be critical")
                     epsilon = 0.0
                 else:
                     if goal.has_target_bounds:
@@ -946,8 +947,6 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
 
             for j, goal in enumerate(path_goals):
                 if goal.critical:
-                    if not goal.has_target_bounds:
-                        raise Exception("Minimization goals cannot be critical")
                     epsilon = np.zeros(len(self.times()))
                 else:
                     if goal.has_target_bounds:
