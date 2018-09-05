@@ -618,18 +618,11 @@ class ModelInvalidGoals(Model):
 
 class InvalidGoal(Goal):
 
-    def __init__(self, function_range=(np.nan, np.nan),
-                 target_min=np.nan, target_max=np.nan,
-                 critical=False):
-        self.function_range = function_range
-        self.target_min = target_min
-        self.target_max = target_max
-        self.critical = critical
+    def __init__(self, **kwargs):
+        self.__dict__.update(kwargs)
 
     def function(self, optimization_problem, ensemble_member):
         return optimization_problem.state_at("x", 0.5, ensemble_member=ensemble_member)
-
-    priority = 1
 
 
 class TestGoalProgrammingInvalidGoals(TestCase):
@@ -638,26 +631,55 @@ class TestGoalProgrammingInvalidGoals(TestCase):
         self.problem = ModelInvalidGoals()
 
     def test_target_min_lt_function_range_lb(self):
-        self.problem._goals = [InvalidGoal((-2.0, 2.0), target_min=-3.0)]
+        self.problem._goals = [InvalidGoal(function_range=(-2.0, 2.0), target_min=-3.0)]
         with self.assertRaisesRegexp(Exception, "minimum should be greater than the lower"):
             self.problem.optimize()
 
     def test_target_min_eq_function_range_lb(self):
-        self.problem._goals = [InvalidGoal((-2.0, 2.0), target_min=-2.0)]
+        self.problem._goals = [InvalidGoal(function_range=(-2.0, 2.0), target_min=-2.0)]
         with self.assertRaisesRegexp(Exception, "minimum should be greater than the lower"):
             self.problem.optimize()
 
     def test_target_max_gt_function_range_ub(self):
-        self.problem._goals = [InvalidGoal((-2.0, 2.0), target_max=3.0)]
+        self.problem._goals = [InvalidGoal(function_range=(-2.0, 2.0), target_max=3.0)]
         with self.assertRaisesRegexp(Exception, "maximum should be smaller than the upper"):
             self.problem.optimize()
 
     def test_target_max_eq_function_range_ub(self):
-        self.problem._goals = [InvalidGoal((-2.0, 2.0), target_max=2.0)]
+        self.problem._goals = [InvalidGoal(function_range=(-2.0, 2.0), target_max=2.0)]
         with self.assertRaisesRegexp(Exception, "maximum should be smaller than the upper"):
             self.problem.optimize()
 
     def test_critical_minimization(self):
         self.problem._goals = [InvalidGoal(critical=True)]
         with self.assertRaisesRegexp(Exception, "Minimization goals cannot be critical"):
+            self.problem.optimize()
+
+    def test_minimization_function_range(self):
+        self.problem._goals = [InvalidGoal(function_range=(-2.0, 2.0))]
+        with self.assertRaisesRegexp(Exception, "Specifying function range not allowed"):
+            self.problem.optimize()
+
+    def test_function_range_present(self):
+        self.problem._goals = [InvalidGoal(target_min=2.0)]
+        with self.assertRaisesRegexp(Exception, "No function range specified"):
+            self.problem.optimize()
+
+    def test_function_range_valid(self):
+        self.problem._goals = [InvalidGoal(function_range=(2.0, -2.0), target_min=2.1)]
+        with self.assertRaisesRegexp(Exception, "Invalid function range"):
+            self.problem.optimize()
+
+    def test_function_nominal_positive(self):
+        self.problem._goals = [InvalidGoal(function_nominal=-1.0)]
+        with self.assertRaisesRegexp(Exception, "Nonpositive nominal value"):
+            self.problem.optimize()
+
+        self.problem._goals = [InvalidGoal(function_nominal=0.0)]
+        with self.assertRaisesRegexp(Exception, "Nonpositive nominal value"):
+            self.problem.optimize()
+
+    def test_priority_not_cast_int(self):
+        self.problem._goals = [InvalidGoal(priority='test')]
+        with self.assertRaisesRegexp(Exception, "castable to int"):
             self.problem.optimize()
