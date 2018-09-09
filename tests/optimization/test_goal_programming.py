@@ -694,7 +694,6 @@ class TestScaleByProblemSize(TestCase):
         self.assertAlmostEqual(1.0, 2 * obj_value_scale / obj_value_no_scale, self.tolerance)
 
     def test_path_minimization_goals_scale_by_problem_size(self):
-        # Note that only path minimization goals end up in the path objective.
         self.problem1 = ModelMinimizeTwoPathGoals()
         self.problem2 = ModelMinimizeTwoPathGoals(scale_by_problem_size=True)
         self.problem1.optimize()
@@ -708,8 +707,6 @@ class TestScaleByProblemSize(TestCase):
         self.assertAlmostEqual(1.0, 2 * n_times * obj_value_scale / obj_value_no_scale, self.tolerance)
 
     def test_path_target_goals_scale_by_problem_size(self):
-        # Note that the epsilon for path goals that have target bounds ends up
-        # in the normal objective.
         self.problem1 = ModelMinimizeTwoTargetPathGoals()
         self.problem2 = ModelMinimizeTwoTargetPathGoals(scale_by_problem_size=True)
         self.problem1.optimize()
