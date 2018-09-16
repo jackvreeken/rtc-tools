@@ -531,6 +531,8 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
         +===========================+===========+===============+
         | ``violation_relaxation``  | ``float`` | ``0.0``       |
         +---------------------------+-----------+---------------+
+        | ``constraint_relaxation`` | ``float`` | ``0.0``       |
+        +---------------------------+-----------+---------------+
         | ``mu_reinit``             | ``bool``  | ``True``      |
         +---------------------------+-----------+---------------+
         | ``fix_minimized_values``  | ``bool``  | ``True/False``|
@@ -547,6 +549,11 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
         Before turning a soft constraint of the goal programming algorithm into a hard constraint,
         the violation variable (also known as epsilon) of each goal is relaxed with the
         ``violation_relaxation``. Use of this option is normally not required.
+
+        When turning a soft constraint of the goal programming algorithm into a hard constraint,
+        the constraint is relaxed with ``constraint_relaxation``. Use of this option is
+        normally not required. Note that minimization goals do not get ``constraint_relaxation``
+        applied when ``fix_minimized_values`` is True.
 
         A goal is considered to be violated if the violation, scaled between 0 and 1, is greater
         than the specified tolerance. Violated goals are fixed.  Use of this option is normally not
@@ -587,6 +594,7 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
 
         options['mu_reinit'] = True
         options['violation_relaxation'] = 0.0  # Disable by default
+        options['constraint_relaxation'] = 0.0  # Disable by default
         options['violation_tolerance'] = np.inf  # Disable by default
         options['fix_minimized_values'] = False
         options['check_monotonicity'] = True
@@ -917,6 +925,9 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
 
                 m[inds] = (value - goal.relaxation) / goal.function_nominal
                 M[inds] = (value + goal.relaxation) / goal.function_nominal
+
+            m -= options['constraint_relaxation']
+            M += options['constraint_relaxation']
         else:
             # Epsilon encodes the position within the function range.
             if options['fix_minimized_values'] and goal.relaxation == 0.0:
@@ -924,7 +935,7 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
                 M = epsilon / goal.function_nominal
             else:
                 m = -np.inf * np.ones(epsilon.shape)
-                M = (epsilon + goal.relaxation) / goal.function_nominal
+                M = (epsilon + goal.relaxation) / goal.function_nominal + options['constraint_relaxation']
 
         if is_path_goal:
             m = Timeseries(self.times(), m)
