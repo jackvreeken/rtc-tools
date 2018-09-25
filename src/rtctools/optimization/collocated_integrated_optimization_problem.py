@@ -1406,15 +1406,15 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
 
     def extract_controls(self, ensemble_member=0):
         # Solver output
-        X = self.solver_output
+        X = self.solver_output.copy()
 
         # Extract control inputs
         results = {}
         offset = 0
         for variable in self.controls:
             n_times = len(self.times(variable))
-            results[variable] = np.array(self.variable_nominal(
-                variable) * X[offset:offset + n_times, 0]).ravel()
+            results[variable] = self.variable_nominal(
+                variable) * X[offset:offset + n_times]
             offset += n_times
 
         # Done
@@ -1677,7 +1677,7 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
 
     def extract_states(self, ensemble_member=0):
         # Solver output
-        X = self.solver_output
+        X = self.solver_output.copy()
 
         # Discretization parameters
         control_size = self.__control_size
@@ -1709,8 +1709,7 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                 offset += 1
             else:
                 n_times = len(self.times(variable))
-                results[variable] = np.array(self.variable_nominal(
-                    variable) * X[offset:offset + n_times, 0]).ravel()
+                results[variable] = self.variable_nominal(variable) * X[offset:offset + n_times]
                 offset += n_times
 
         # Extract constant input aliases
@@ -1729,14 +1728,13 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
         n_collocation_times = len(self.times())
         for variable in self.path_variables:
             variable = variable.name()
-            results[variable] = np.array(
-                X[offset:offset + n_collocation_times, 0]).ravel()
+            results[variable] = X[offset:offset + n_collocation_times]
             offset += n_collocation_times
 
         # Extract extra variables
         for k in range(len(self.extra_variables)):
             variable = self.extra_variables[k].name()
-            results[variable] = np.array(X[offset + k, 0]).ravel()
+            results[variable] = X[offset + k].ravel()
 
         # Done
         return results
