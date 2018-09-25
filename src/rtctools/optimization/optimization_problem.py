@@ -611,18 +611,19 @@ class OptimizationProblem(metaclass=ABCMeta):
         :returns: The interpolated value.
         """
 
-        if np.all(t == ts):
-            # Nothing to interpolate
-            if not hasattr(t, '__iter__'):
-                return fs[0]
-            else:
+        if hasattr(t, '__iter__'):
+            if len(t) == len(ts) and np.all(t == ts):
+                # Early termination; nothing to interpolate
                 return fs.copy()
 
-        if hasattr(t, '__iter__'):
             f = np.vectorize(lambda t_: self.__interpolate(
                 t_, ts, fs, f_left, f_right))
             return f(t)
         else:
+            if ts[0] == t:
+                # Early termination; nothing to interpolate
+                return fs[0]
+
             return self.__interpolate(t, ts, fs, f_left, f_right, mode)
 
     def __interpolate(self, t, ts, fs, f_left=np.nan, f_right=np.nan, mode=INTERPOLATION_LINEAR):

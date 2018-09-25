@@ -743,68 +743,68 @@ class TestGoalProgrammingInvalidGoals(TestCase):
 
     def test_target_min_lt_function_range_lb(self):
         self.problem._goals = [InvalidGoal(function_range=(-2.0, 2.0), target_min=-3.0)]
-        with self.assertRaisesRegexp(Exception, "minimum should be greater than the lower"):
+        with self.assertRaisesRegex(Exception, "minimum should be greater than the lower"):
             self.problem.optimize()
 
     def test_target_min_eq_function_range_lb(self):
         self.problem._goals = [InvalidGoal(function_range=(-2.0, 2.0), target_min=-2.0)]
-        with self.assertRaisesRegexp(Exception, "minimum should be greater than the lower"):
+        with self.assertRaisesRegex(Exception, "minimum should be greater than the lower"):
             self.problem.optimize()
 
     def test_target_max_gt_function_range_ub(self):
         self.problem._goals = [InvalidGoal(function_range=(-2.0, 2.0), target_max=3.0)]
-        with self.assertRaisesRegexp(Exception, "maximum should be smaller than the upper"):
+        with self.assertRaisesRegex(Exception, "maximum should be smaller than the upper"):
             self.problem.optimize()
 
     def test_target_max_eq_function_range_ub(self):
         self.problem._goals = [InvalidGoal(function_range=(-2.0, 2.0), target_max=2.0)]
-        with self.assertRaisesRegexp(Exception, "maximum should be smaller than the upper"):
+        with self.assertRaisesRegex(Exception, "maximum should be smaller than the upper"):
             self.problem.optimize()
 
     def test_critical_minimization(self):
         self.problem._goals = [InvalidGoal(critical=True)]
-        with self.assertRaisesRegexp(Exception, "Minimization goals cannot be critical"):
+        with self.assertRaisesRegex(Exception, "Minimization goals cannot be critical"):
             self.problem.optimize()
 
     def test_minimization_function_range(self):
         self.problem._goals = [InvalidGoal(function_range=(-2.0, 2.0))]
-        with self.assertRaisesRegexp(Exception, "Specifying function range not allowed"):
+        with self.assertRaisesRegex(Exception, "Specifying function range not allowed"):
             self.problem.optimize()
 
     def test_function_range_present(self):
         self.problem._goals = [InvalidGoal(target_min=2.0)]
-        with self.assertRaisesRegexp(Exception, "No function range specified"):
+        with self.assertRaisesRegex(Exception, "No function range specified"):
             self.problem.optimize()
 
     def test_function_range_valid(self):
         self.problem._goals = [InvalidGoal(function_range=(2.0, -2.0), target_min=2.1)]
-        with self.assertRaisesRegexp(Exception, "Invalid function range"):
+        with self.assertRaisesRegex(Exception, "Invalid function range"):
             self.problem.optimize()
 
     def test_function_nominal_positive(self):
         self.problem._goals = [InvalidGoal(function_nominal=-1.0)]
-        with self.assertRaisesRegexp(Exception, "Nonpositive nominal value"):
+        with self.assertRaisesRegex(Exception, "Nonpositive nominal value"):
             self.problem.optimize()
 
         self.problem._goals = [InvalidGoal(function_nominal=0.0)]
-        with self.assertRaisesRegexp(Exception, "Nonpositive nominal value"):
+        with self.assertRaisesRegex(Exception, "Nonpositive nominal value"):
             self.problem.optimize()
 
     def test_priority_not_cast_int(self):
         self.problem._goals = [InvalidGoal(priority='test')]
-        with self.assertRaisesRegexp(Exception, "castable to int"):
+        with self.assertRaisesRegex(Exception, "castable to int"):
             self.problem.optimize()
 
     def test_target_min_timeseries(self):
         # Only path goals can have Timeseries as target min/max
         self.problem._goals = [InvalidGoal(function_range=(-2.0, 2.0),
                                            target_min=Timeseries(self.problem.times(), [1.0]))]
-        with self.assertRaisesRegexp(Exception, "Target min cannot be a Timeseries"):
+        with self.assertRaisesRegex(Exception, "Target min cannot be a Timeseries"):
             self.problem.optimize()
 
     def test_target_max_timeseries(self):
         # Only path goals can have Timeseries as target min/max
         self.problem._goals = [InvalidGoal(function_range=(-2.0, 2.0),
                                            target_max=Timeseries(self.problem.times(), [1.0]))]
-        with self.assertRaisesRegexp(Exception, "Target max cannot be a Timeseries"):
+        with self.assertRaisesRegex(Exception, "Target max cannot be a Timeseries"):
             self.problem.optimize()
