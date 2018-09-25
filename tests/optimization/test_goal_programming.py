@@ -794,3 +794,17 @@ class TestGoalProgrammingInvalidGoals(TestCase):
         self.problem._goals = [InvalidGoal(priority='test')]
         with self.assertRaisesRegexp(Exception, "castable to int"):
             self.problem.optimize()
+
+    def test_target_min_timeseries(self):
+        # Only path goals can have Timeseries as target min/max
+        self.problem._goals = [InvalidGoal(function_range=(-2.0, 2.0),
+                                           target_min=Timeseries(self.problem.times(), [1.0]))]
+        with self.assertRaisesRegexp(Exception, "Target min cannot be a Timeseries"):
+            self.problem.optimize()
+
+    def test_target_max_timeseries(self):
+        # Only path goals can have Timeseries as target min/max
+        self.problem._goals = [InvalidGoal(function_range=(-2.0, 2.0),
+                                           target_max=Timeseries(self.problem.times(), [1.0]))]
+        with self.assertRaisesRegexp(Exception, "Target max cannot be a Timeseries"):
+            self.problem.optimize()

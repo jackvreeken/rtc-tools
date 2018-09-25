@@ -674,6 +674,12 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
                 if goal.function_range != (np.nan, np.nan):
                     raise Exception("Specifying function range not allowed for goal {}".format(goal))
 
+            if not is_path_goal:
+                if isinstance(goal.target_min, Timeseries):
+                    raise Exception("Target min cannot be a Timeseries for goal {}".format(goal))
+                if isinstance(goal.target_max, Timeseries):
+                    raise Exception("Target max cannot be a Timeseries for goal {}".format(goal))
+
             try:
                 int(goal.priority)
             except ValueError:
