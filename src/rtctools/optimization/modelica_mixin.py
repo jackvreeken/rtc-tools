@@ -158,7 +158,7 @@ class ModelicaMixin(OptimizationProblem):
         compiler_options['replace_parameter_expressions'] = True
 
         # Eliminate variables starting with underscores.
-        compiler_options['eliminable_variable_expression'] = r'(.*[.]|^)_\w+\Z'
+        compiler_options['eliminable_variable_expression'] = r'(.*[.]|^)_\w+(\[[\d,]+\])?\Z'
 
         # Automatically detect and eliminate alias variables.
         compiler_options['detect_aliases'] = True
