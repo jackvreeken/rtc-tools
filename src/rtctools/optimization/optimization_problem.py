@@ -614,7 +614,15 @@ class OptimizationProblem(metaclass=ABCMeta):
         :returns: The interpolated value.
         """
 
-        if hasattr(t, '__iter__'):
+        if isinstance(fs, np.ndarray) and fs.ndim == 2:
+            # 2-D array of values. Interpolate each column separately.
+            if len(t) == len(ts) and np.all(t == ts):
+                # Early termination; nothing to interpolate
+                return fs.copy()
+
+            fs_int = [self.interpolate(t, ts, fs[:, i], f_left, f_right, mode) for i in fs.shape[1]]
+            return np.stack(fs_int, axis=1)
+        elif hasattr(t, '__iter__'):
             if len(t) == len(ts) and np.all(t == ts):
                 # Early termination; nothing to interpolate
                 return fs.copy()
