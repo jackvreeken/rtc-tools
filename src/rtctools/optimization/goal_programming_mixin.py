@@ -1024,9 +1024,6 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
         # Re-add constraints, this time with epsilon values fixed
         for ensemble_member in range(self.ensemble_size):
             for j, goal in enumerate(goals):
-                if goal.critical:
-                    continue
-
                 if j in goal_function_values[ensemble_member]:
                     function_value = goal_function_values[ensemble_member][j]
 
@@ -1037,6 +1034,9 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
                             np.full_like(times, function_value),
                             ensemble_member
                         )
+
+                if goal.critical:
+                    continue
 
                 if goal.has_target_bounds:
                     epsilon = self.__results[ensemble_member][
