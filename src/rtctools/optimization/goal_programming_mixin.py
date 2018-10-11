@@ -363,19 +363,21 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
         # Call parent class first for default behaviour.
         super().__init__(**kwargs)
 
-        # Initialize empty lists, so that the overridden methods may be called outside of the goal programming loop,
-        # for example in pre().
+        # Initialize instance variables, so that the overridden methods may be
+        # called outside of the goal programming loop, for example in pre().
+        self.__first_run = True
+        self.__results_are_current = False
         self.__subproblem_epsilons = []
         self.__subproblem_objectives = []
-        self.__subproblem_soft_constraints = []
+        self.__subproblem_soft_constraints = [[] for ensemble_member in range(self.ensemble_size)]
         self.__subproblem_parameters = []
-        self.__constraint_store = []
+        self.__constraint_store = [OrderedDict() for ensemble_member in range(self.ensemble_size)]
 
         self.__subproblem_path_epsilons = []
         self.__subproblem_path_objectives = []
-        self.__subproblem_path_soft_constraints = []
+        self.__subproblem_path_soft_constraints = [[] for ensemble_member in range(self.ensemble_size)]
         self.__subproblem_path_timeseries = []
-        self.__path_constraint_store = []
+        self.__path_constraint_store = [OrderedDict() for ensemble_member in range(self.ensemble_size)]
 
         self.__original_parameter_keys = {}
         self.__original_constant_input_keys = {}
