@@ -750,11 +750,19 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
                     raise Exception(
                         'Target minimum should be greater than the lower bound of the function range for goal {}'
                         .format(goal))
+                if np.any(goal_m[indices] > goal.function_range[1]):
+                    raise Exception(
+                        'Target minimum should be smaller than the upper bound of the function range for goal {}'
+                        .format(goal))
             if goal.has_target_max:
                 indices = np.where(np.logical_not(np.isnan(goal_M)))
                 if np.any(goal_M[indices] >= goal.function_range[1]):
                     raise Exception(
                         'Target maximum should be smaller than the upper bound of the function range for goal {}'
+                        .format(goal))
+                if np.any(goal_M[indices] < goal.function_range[0]):
+                    raise Exception(
+                        'Target maximum should be larger than the lower bound of the function range for goal {}'
                         .format(goal))
 
             if goal.relaxation < 0.0:
