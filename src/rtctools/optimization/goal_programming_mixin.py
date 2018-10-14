@@ -998,14 +998,18 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
                     goal_functions[j] = goal.function(self, ensemble_member)
 
             if is_path_goal:
-                expr = self.map_path_expression(ca.vertcat(*goal_functions.values()), ensemble_member)
+                expr = self.map_path_expression(
+                    ca.vertcat(*goal_functions.values()), ensemble_member
+                ).T
             else:
                 expr = ca.vertcat(*goal_functions.values())
 
             f = ca.Function('f', [self.solver_input], [expr])
             raw_function_values = np.array(f(self.solver_output))
-            goal_function_values[ensemble_member] = {k: raw_function_values[:, j].ravel()
-                                                     for j, k in enumerate(goal_functions.keys())}
+            goal_function_values[ensemble_member] = {
+                k: raw_function_values[j].ravel()
+                for j, k in enumerate(goal_functions.keys())
+            }
 
         # Re-add constraints, this time with epsilon values fixed
         for ensemble_member in range(self.ensemble_size):
