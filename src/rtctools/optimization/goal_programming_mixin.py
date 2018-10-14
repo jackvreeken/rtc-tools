@@ -1022,7 +1022,11 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
 
                     # Store results
                     if goal.function_value_timeseries_id is not None:
-                        self.set_timeseries(goal.function_value_timeseries_id, function_value, ensemble_member)
+                        self.set_timeseries(
+                            goal.function_value_timeseries_id,
+                            np.full_like(times, function_value),
+                            ensemble_member
+                        )
 
                 if goal.has_target_bounds:
                     epsilon = self.__results[ensemble_member][
@@ -1052,7 +1056,11 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
                                     function_value / goal.function_nominal <
                                     M / goal.function_nominal - options['interior_distance']))
                         epsilon_active[w] = np.nan
-                        self.set_timeseries(goal.violation_timeseries_id, epsilon_active, ensemble_member)
+                        self.set_timeseries(
+                            goal.violation_timeseries_id,
+                            np.full_like(times, epsilon_active),
+                            ensemble_member
+                        )
 
                     # Add a relaxation to appease the barrier method.
                     epsilon += options['violation_relaxation']
