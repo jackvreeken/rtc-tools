@@ -808,3 +808,35 @@ class TestGoalProgrammingInvalidGoals(TestCase):
                                            target_max=Timeseries(self.problem.times(), [1.0]))]
         with self.assertRaisesRegex(Exception, "Target max cannot be a Timeseries"):
             self.problem.optimize()
+
+
+class ModelPathGoalsSeed(ModelPathGoals):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._results = []
+        self._x0 = []
+
+    def transcribe(self):
+        discrete, lbx, ubx, lbg, ubg, x0, nlp = super().transcribe()
+        self._x0.append(x0)
+
+        return discrete, lbx, ubx, lbg, ubg, x0, nlp
+
+    def priority_completed(self, priority):
+        super().priority_completed(priority)
+        self._results.append(self.solver_output)
+
+    def path_goals(self):
+        return [PathGoal3(), PathGoal4(), PathGoal5()]
+
+
+class TestGoalProgrammingSeed(TestCase):
+
+    def setUp(self):
+        self.problem = ModelPathGoalsSeed()
+        self.problem.optimize()
+
+    def test_seed(self):
+        self.assertTrue(np.array_equal(self.problem._results[0], self.problem._x0[1]))
+        self.assertTrue(np.array_equal(self.problem._results[1], self.problem._x0[2]))
