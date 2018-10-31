@@ -303,7 +303,7 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
         self.__solver_input = X
 
         # Later on, we will be slicing MX/SX objects a few times for vectorized operations (to
-        # reduce the Soverhead induced for each CasADi call). When slicing MX/SX objects, we want
+        # reduce the overhead induced for each CasADi call). When slicing MX/SX objects, we want
         # to do that with a list of Python ints. Slicing with something else (e.g. a list of
         # np.int32, or a numpy array) is significantly slower.
         x_inds = list(range(X.size1()))
@@ -671,7 +671,7 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                 self.__integrator_step_function = ca.rootfinder(
                     'integrator_step_function', 'newton', dae_residual_function_integrated, options)
 
-            # Initialize an Function for the DAE residual (collocated part)
+            # Initialize a Function for the DAE residual (collocated part)
             if len(collocated_variables) > 0:
                 self.__dae_residual_function_collocated = ca.Function(
                     'dae_residual_function_collocated',
@@ -713,7 +713,7 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                 *self.dae_variables['time'], *self.path_variables,
                 *self.__extra_constant_inputs)]
 
-        # Initialize an Function for the path objective
+        # Initialize a Function for the path objective
         # Note that we assume that the path objective expression is the same for all ensemble members
         path_objective_function = ca.Function(
             'path_objective',
@@ -722,7 +722,7 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
             function_options)
         path_objective_function = path_objective_function.expand()
 
-        # Initialize an Function for the path constraints
+        # Initialize a Function for the path constraints
         # Note that we assume that the path constraint expression is the same for all ensemble members
         path_constraints_function = ca.Function(
             'path_constraints',
