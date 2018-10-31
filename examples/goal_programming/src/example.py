@@ -126,7 +126,7 @@ class Example(GoalProgrammingMixin, CSVMixin, ModelicaMixin,
         n_level_satisfied = sum(
             1 for x in results['storage.HQ.H'] if _min <= x <= _max)
         q_pump_integral = sum(results['Q_pump'])
-        q_pump_sum_changes = np.sum(np.absolute(np.diff(results['Q_pump'])))
+        q_pump_sum_changes = np.sum(np.diff(results['Q_pump'])**2)
         self.intermediate_results.append(
             (priority, n_level_satisfied, q_pump_integral, q_pump_sum_changes))
 
@@ -139,7 +139,7 @@ class Example(GoalProgrammingMixin, CSVMixin, ModelicaMixin,
             print('Level goal satisfied at {} of {} time steps'.format(
                 n_level_satisfied, len(self.times())))
             print('Integral of Q_pump = {:.2f}'.format(q_pump_integral))
-            print('Sum of Changes in Q_pump: {:.2f}'.format(q_pump_sum_changes))
+            print('Sum of squares of changes in Q_pump: {:.2f}'.format(q_pump_sum_changes))
 
     # Any solver options can be set here
     def solver_options(self):
