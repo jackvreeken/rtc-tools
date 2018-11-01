@@ -1010,14 +1010,14 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
             if is_path_goal:
                 expr = self.map_path_expression(
                     ca.vertcat(*goal_functions.values()), ensemble_member
-                ).T
+                )
             else:
-                expr = ca.vertcat(*goal_functions.values())
+                expr = ca.transpose(ca.vertcat(*goal_functions.values()))
 
             f = ca.Function('f', [self.solver_input], [expr])
             raw_function_values = np.array(f(self.solver_output))
             goal_function_values[ensemble_member] = {
-                k: raw_function_values[j].ravel()
+                k: raw_function_values[:, j].ravel()
                 for j, k in enumerate(goal_functions.keys())
             }
 
@@ -1031,7 +1031,7 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
                     if goal.function_value_timeseries_id is not None:
                         self.set_timeseries(
                             goal.function_value_timeseries_id,
-                            np.full_like(times, function_value),
+                            Timeseries(times, function_value),
                             ensemble_member
                         )
 
@@ -1068,7 +1068,7 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
                         epsilon_active[w] = np.nan
                         self.set_timeseries(
                             goal.violation_timeseries_id,
-                            np.full_like(times, epsilon_active),
+                            Timeseries(times, epsilon_active),
                             ensemble_member
                         )
 
