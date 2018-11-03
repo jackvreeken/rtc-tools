@@ -30,7 +30,9 @@ class HomotopyMixin(OptimizationProblem):
             # Do not override any previously seeded values, such as goal programming results.
             for key, result in self.__results[ensemble_member].items():
                 times = self.times(key)
-                if key not in seed and len(result) == len(times):
+                if key in seed:
+                    continue
+                elif len(result) == len(times):
                     # Only include seed timeseries which are consistent
                     # with the specified time stamps.
                     seed[key] = Timeseries(times, result)
