@@ -57,6 +57,8 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                            for variable in self.dae_variables['control_inputs']]
         self.__controls_map = {v: i for i, v in enumerate(self.__controls)}
 
+        self.__derivative_names = [variable.name() for variable in self.dae_variables['derivatives']]
+
         # DAE cache
         self.__integrator_step_function = None
         self.__dae_residual_function_collocated = None
@@ -1751,11 +1753,9 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                     pass
             offset += len(self.extra_variables)
 
-            for k in range(len(self.dae_variables['derivatives'])):
+            for k, der_name in enumerate(self.__derivative_names):
                 try:
-                    der_name = self.dae_variables['derivatives'][k].name()
-                    variable = "initial_" + der_name
-                    x0[offset + k] = seed[variable]
+                    x0[offset + k] = seed["initial_" + der_name]
                 except KeyError:
                     pass
 
@@ -1824,11 +1824,12 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
             results[variable] = X[offset + k].ravel()
         offset += len(self.extra_variables)
 
-        # Extract derivatives
-        for k in range(len(self.dae_variables['derivatives'])):
-            der_name = self.dae_variables['derivatives'][k].name()
-            variable = "initial_" + der_name
-            results[variable] = X[offset + k].ravel()
+        # Extract initial derivatives
+        for k, der_name in enumerate(self.__derivative_names):
+            try:
+                results["initial_" + der_name] = X[offset + k].ravel()
+            except KeyError:
+                pass
 
         # Done
         return results
