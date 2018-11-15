@@ -3,9 +3,8 @@ import logging
 import numpy as np
 
 from rtctools.optimization.collocated_integrated_optimization_problem import (
-    CollocatedIntegratedOptimizationProblem
+    CollocatedIntegratedOptimizationProblem,
 )
-from rtctools.optimization.csv_lookup_table_mixin import CSVLookupTableMixin
 from rtctools.optimization.csv_mixin import CSVMixin
 from rtctools.optimization.modelica_mixin import ModelicaMixin
 
@@ -18,7 +17,6 @@ logger.setLevel(logging.WARNING)
 
 
 class Model(CSVMixin, ModelicaMixin, CollocatedIntegratedOptimizationProblem):
-
     def __init__(self, **kwargs):
         kwargs["model_name"] = kwargs.get("model_name", "Model")
         kwargs["input_folder"] = data_path()
@@ -42,18 +40,6 @@ class Model(CSVMixin, ModelicaMixin, CollocatedIntegratedOptimizationProblem):
         return compiler_options
 
 
-class ModelLookup(CSVLookupTableMixin, Model):
-
-    def __init__(self):
-        super().__init__(
-            input_folder=data_path(),
-            output_folder=data_path(),
-            model_name="Model",
-            model_folder=data_path(),
-            lookup_tables=["constant_input"],
-        )
-
-
 class ModelEnsemble(Model):
 
     csv_ensemble_mode = True
@@ -69,7 +55,6 @@ class ModelEnsemble(Model):
 
 
 class TestCSVMixin(TestCase):
-
     def setUp(self):
         self.problem = Model()
         self.problem.optimize()
@@ -120,27 +105,7 @@ class TestCSVMixin(TestCase):
                 self.assertAlmostEqual(a, b, self.tolerance)
 
 
-class TestCSVLookupMixin(TestCSVMixin):
-
-    def setUp(self):
-        self.problem = ModelLookup()
-        self.problem.optimize()
-        self.results = self.problem.extract_results()
-        self.tolerance = 1e-6
-
-    def test_call(self):
-        self.assertAlmostEqual(
-            self.problem.lookup_tables(0)["constant_input"](0.2), 2.0, self.tolerance
-        )
-        self.assertAlmostEqual(
-            self.problem.lookup_tables(0)["constant_input"](np.array([0.2, 0.3])),
-            np.array([2.0, 3.0]),
-            self.tolerance,
-        )
-
-
 class TestPIMixinEnsemble(TestCase):
-
     def setUp(self):
         self.problem = ModelEnsemble()
         self.problem.optimize()

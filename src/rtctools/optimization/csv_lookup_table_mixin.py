@@ -406,8 +406,7 @@ class CSVLookupTableMixin(OptimizationProblem):
 
     def lookup_tables(self, ensemble_member):
         # Call parent class first for default values.
-        lookup_tables = super(CSVLookupTableMixin,
-                              self).lookup_tables(ensemble_member)
+        lookup_tables = super().lookup_tables(ensemble_member)
 
         # Update lookup_tables with imported csv lookup tables
         lookup_tables.update(self.__lookup_tables)
