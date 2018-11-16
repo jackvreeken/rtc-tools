@@ -206,9 +206,9 @@ Extracting Results
 
 The results from the run are found in ``output\timeseries_export.csv``. Any
 CSV-reading software can import it, but this is what the results look like when
-plotted in Microsoft Excel:
+plotted with the python library ``matplotlib``:
 
-.. image:: ../../images/basic_resultplot.png
+.. plot:: examples/pyplots/basic_results.py
 
 This plot shows that the operator is able to keep the water level within the
 bounds over the entire time horizon and end with a full reservoir.
