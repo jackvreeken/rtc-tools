@@ -350,6 +350,15 @@ texinfo_documents = [
 # texinfo_no_detailmenu = False
 
 
+# -- Options for matplotlib.sphinxext.plot_directive-----------------------
+
+# Enable generating of svg plots (for web use) in addition to png plots
+plot_formats = ["svg", "png"]
+
+# Make plot backgrounds transparent
+plot_rcparams = {"savefig.transparent": True}
+
+
 # -- Hack to strip annotations from Modelica files ------------------------
 
 MODELICA_EXAMPLE_BASE_FOLDER = '../examples'
