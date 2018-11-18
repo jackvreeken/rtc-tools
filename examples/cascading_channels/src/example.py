@@ -64,6 +64,12 @@ class Example(
             self.get_timeseries("DrinkingWaterExtractionPump_Q_target"),
         )
 
+    def parameters(self, ensemble_member):
+        p = super().parameters(ensemble_member)
+        times = self.times()
+        p['step_size'] = times[1] - times[0]
+        return p
+
     def path_goals(self):
         g = super().path_goals()
 

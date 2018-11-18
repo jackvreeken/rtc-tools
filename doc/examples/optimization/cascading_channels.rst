@@ -39,6 +39,14 @@ removed):
   :language: modelica
   :lineno-match:
 
+.. important::
+
+    Modellers should take care to set proper values for the initial
+    derivatives, in order to avoid spurious waves at the start of the
+    optimization run. In this example we assume a steady state initial
+    condition, as indicated and enforced by the ``initial equation`` section
+    in the Modelica model.
+
 The Optimization Problem
 ------------------------
 
@@ -50,6 +58,7 @@ The python script consists of the following blocks:
 
   * Constructor
   * Implementation of ``pre()`` method
+  * Implementation of ``parameters()`` method
   * Implementation of ``path_goals()`` method
 
 * A run statement
@@ -100,7 +109,17 @@ runs.
   :pyobject: Example.pre
   :lineno-match:
 
-Next, we instantiate the goals. The highest priority goal in this example will
+Next, we implement the ``parameters()`` method. This method passes parameter values
+down to the model. The model uses the step size parameter to perform a semi-implicit
+discretization of the hydraulic equations. We set the ``step_size`` parameter value to
+match the time step size in the input time series.
+
+.. literalinclude:: ../../../examples/cascading_channels/src/example.py
+  :language: python
+  :pyobject: Example.parameters
+  :lineno-match:
+
+Finally, we instantiate the goals. The highest priority goal in this example will
 be to keep the water levels within a desired range. We apply this goal
 iteratively over all the water level states, and give them a priority of 1. The
 second goal is to track a target extraction flow rate with the extraction pump.
