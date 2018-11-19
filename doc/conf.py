@@ -60,7 +60,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'RTC-Tools'
-copyright = '2016 - 2017 Deltares'
+copyright = '2016 - 2018 Deltares, KISTERS'
 author = 'Jorn Baayen, Matthijs den Toom, et al.'
 
 # The version info for the project you're documenting, acts as replacement for
