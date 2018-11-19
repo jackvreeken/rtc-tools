@@ -39,6 +39,10 @@ class PIMixin(OptimizationProblem):
         Check if duplicate parameters are read. Default is ``True``.
     :cvar pi_validate_timeseries:
         Check consistency of timeseries. Default is ``True``.
+    :cvar timeseries_import_basename:
+        Import file basename. Default is ``timeseries_import``.
+    :cvar timeseries_export_basename:
+        Export file basename. Default is ``timeseries_export``.
     """
 
     #: Whether to use PI binary timeseries format
@@ -54,8 +58,9 @@ class PIMixin(OptimizationProblem):
     #: Check for duplicate parameters
     pi_check_for_duplicate_parameters = True
 
-    # I/O Basenames (can be overridden)
+    #: Import file basename
     timeseries_import_basename = 'timeseries_import'
+    #: Export file basename
     timeseries_export_basename = 'timeseries_export'
 
     def __init__(self, **kwargs):

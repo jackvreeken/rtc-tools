@@ -30,10 +30,18 @@ class CSVMixin(OptimizationProblem):
     column its probability.  Furthermore, the other XML files appear one level deeper inside the
     filesystem hierarchy, inside subfolders with the names of the ensemble members.
 
-    :cvar csv_delimiter:           Column delimiter used in CSV files.  Default is ``,``.
-    :cvar csv_equidistant:         Whether or not the timeseries data is equidistant.  Default is ``True``.
-    :cvar csv_ensemble_mode:       Whether or not to use ensembles.  Default is ``False``.
-    :cvar csv_validate_timeseries: Check consistency of timeseries.  Default is ``True``.
+    :cvar csv_delimiter:
+        Column delimiter used in CSV files.  Default is ``,``.
+    :cvar csv_equidistant:
+        Whether or not the timeseries data is equidistant.  Default is ``True``.
+    :cvar csv_ensemble_mode:
+        Whether or not to use ensembles.  Default is ``False``.
+    :cvar csv_validate_timeseries:
+        Check consistency of timeseries.  Default is ``True``.
+    :cvar timeseries_import_basename:
+        Import file basename. Default is ``timeseries_import``.
+    :cvar timeseries_export_basename:
+        Export file basename. Default is ``timeseries_export``.
     """
 
     #: Column delimiter used in CSV files
@@ -47,6 +55,11 @@ class CSVMixin(OptimizationProblem):
 
     #: Check consistency of timeseries
     csv_validate_timeseries = True
+
+    #: Import file basename
+    timeseries_import_basename = "timeseries_import"
+    #: Export file basename
+    timeseries_export_basename = "timeseries_export"
 
     def __init__(self, **kwargs):
         # Check arguments
@@ -92,8 +105,14 @@ class CSVMixin(OptimizationProblem):
 
             for ensemble_member_name in self.__ensemble['name']:
                 _timeseries = csv.load(
-                    os.path.join(self.__input_folder, ensemble_member_name, 'timeseries_import.csv'),
-                    delimiter=self.csv_delimiter, with_time=True)
+                    os.path.join(
+                        self.__input_folder,
+                        ensemble_member_name,
+                        self.timeseries_import_basename + ".csv",
+                    ),
+                    delimiter=self.csv_delimiter,
+                    with_time=True,
+                )
                 self.__timeseries_times = _timeseries[_timeseries.dtype.names[0]]
                 self.__timeseries.append(
                     AliasDict(
@@ -122,8 +141,13 @@ class CSVMixin(OptimizationProblem):
                 self.__initial_state.append(AliasDict(self.alias_relation, _initial_state))
             logger.debug("CSVMixin: Read initial state.")
         else:
-            _timeseries = csv.load(os.path.join(
-                self.__input_folder, 'timeseries_import.csv'), delimiter=self.csv_delimiter, with_time=True)
+            _timeseries = csv.load(
+                os.path.join(
+                    self.__input_folder, self.timeseries_import_basename + ".csv"
+                ),
+                delimiter=self.csv_delimiter,
+                with_time=True,
+            )
             self.__timeseries_times = _timeseries[_timeseries.dtype.names[0]]
             self.__timeseries.append(
                 AliasDict(
@@ -348,7 +372,7 @@ class CSVMixin(OptimizationProblem):
                         continue
                 data[output_variable] = values
 
-            fname = os.path.join(folder, 'timeseries_export.csv')
+            fname = os.path.join(folder, self.timeseries_export_basename + ".csv")
             csv.save(fname, data, delimiter=self.csv_delimiter, with_time=True)
 
         if self.csv_ensemble_mode:
