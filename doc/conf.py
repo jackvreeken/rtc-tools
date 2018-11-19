@@ -370,6 +370,7 @@ MODELICA_EXAMPLES = [
     "lookup_table",
     "simulation",
     "cascading_channels",
+    "channel_pulse",
     "channel_wave_damping",
 ]
 
