@@ -370,6 +370,7 @@ MODELICA_EXAMPLES = [
     "lookup_table",
     "simulation",
     "cascading_channels",
+    "channel_wave_damping",
 ]
 
 MODELICA_STRIPPED_EXAMPLE_FOLDER = '_build/mo'
