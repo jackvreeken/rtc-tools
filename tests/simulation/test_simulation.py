@@ -21,6 +21,11 @@ class SimulationModel(SimulationProblem):
             model_folder=data_path(),
         )
 
+    def seed(self):
+        seed = super().seed()
+        seed["z"] = 1.0
+        return seed
+
     def compiler_options(self):
         compiler_options = super().compiler_options()
         compiler_options["cache"] = False
@@ -148,6 +153,10 @@ class TestSimulation(TestCase):
             val = self.problem.get_var("switched")
             self.assertEqual(val, expected_values[i])
             i += 1
+
+    def test_seed(self):
+        seed = self.problem.seed()
+        self.assertEqual(seed["z"], 1.0)
 
 
 class FailingSimulationModel(SimulationProblem):

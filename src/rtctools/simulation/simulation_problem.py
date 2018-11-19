@@ -267,6 +267,19 @@ class SimulationProblem:
                     # Set var to be fixed
                     var.fixed = True
 
+            if not var.fixed:
+                # To make initialization easier, we allow setting initial guesses by providing timeseries
+                # with names that match a symbol in the model. We only check for this matching if the start
+                # and fixed attributes were left as default
+                try:
+                    start_val = self.seed()[var_name]
+                except KeyError:
+                    pass
+                else:
+                    # An initial state was found- add it to the constrained residuals
+                    logger.debug('Initialize: Added {} = {} as initial guess (found matching timeseries).'.format(
+                        var_name, start_val))
+
             # Attempt to set start_val in the state vector. Default to zero if unknown.
             try:
                 self.set_var(var_name, start_val if start_val is not None else 0.0)
@@ -723,6 +736,15 @@ class SimulationProblem:
                     logger.debug("Read intial state for {}".format(variable))
 
         return initial_state_dict
+
+    @cached
+    def seed(self) -> AliasDict:
+        """
+        Seed values providing an initial guess for the t0 states.
+
+        :returns: A dictionary of variable names and seed (t0) values.
+        """
+        return AliasDict(self.alias_relation)
 
     @cached
     def parameters(self):
