@@ -13,7 +13,10 @@ class Example(
     def parameters(self, ensemble_member):
         p = super().parameters(ensemble_member)
         times = self.times()
-        p['step_size'] = times[1] - times[0]
+        if self.use_semi_implicit:
+            p['step_size'] = times[1] - times[0]
+        else:
+            p['step_size'] = 0.0
         p['Channel.use_convective_acceleration'] = self.use_convective_acceleration
         p['Channel.use_upwind'] = self.use_upwind
         return p
@@ -40,10 +43,23 @@ class ExampleInertialWave(Example):
 
     model_name = 'Example'
 
+    use_semi_implicit = False
     use_convective_acceleration = False
     use_upwind = False
 
     timeseries_export_basename = "timeseries_export_inertial_wave"
+
+
+class ExampleInertialWaveSemiImplicit(Example):
+    """Inertial wave equation (no convective acceleration)"""
+
+    model_name = 'Example'
+
+    use_semi_implicit = True
+    use_convective_acceleration = False
+    use_upwind = False
+
+    timeseries_export_basename = "timeseries_export_inertial_wave_semi_implicit"
 
 
 class ExampleSaintVenant(Example):
@@ -51,6 +67,7 @@ class ExampleSaintVenant(Example):
 
     model_name = 'Example'
 
+    use_semi_implicit = False
     use_convective_acceleration = True
     use_upwind = False
 
@@ -62,6 +79,7 @@ class ExampleSaintVenantUpwind(Example):
 
     model_name = 'Example'
 
+    use_semi_implicit = False
     use_convective_acceleration = True
     use_upwind = True
 
@@ -69,5 +87,6 @@ class ExampleSaintVenantUpwind(Example):
 
 
 run_optimization_problem(ExampleInertialWave)
+run_optimization_problem(ExampleInertialWaveSemiImplicit)
 run_optimization_problem(ExampleSaintVenant)
 run_optimization_problem(ExampleSaintVenantUpwind)

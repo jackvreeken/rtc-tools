@@ -72,6 +72,14 @@ HEC-RAS and RTC-Tools use different numerical schemes:
      HEC-RAS uses a linearization technique to compute discharge and level
      increments.
 
+.. note::
+
+    For optimization, the recommended discretization for RTC-Tools is 
+    semi-implicit inertial wave.  Consult Baayen and Piovesan,
+    *A continuation approach to nonlinear model predictive control of open channel systems*,
+    2018, for details.  A preprint is available online as 
+    `arXiv:1801.06507 <https://arxiv.org/abs/1801.06507>`_.
+
 
 Comparison of Results
 ---------------------

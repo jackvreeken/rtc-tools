@@ -11,6 +11,8 @@ output_dir = Path("../../../examples/channel_pulse/output/").resolve()
 
 # Import Data
 rtc_tools_record = np.recfromcsv(output_dir / "timeseries_export_inertial_wave.csv", encoding=None)
+rtc_tools_semi_impl_record = np.recfromcsv(
+    output_dir / "timeseries_export_inertial_wave_semi_implicit.csv", encoding=None)
 rtc_tools_conv_acc_record = np.recfromcsv(
     output_dir / "timeseries_export_saint_venant.csv", encoding=None
 )
@@ -46,6 +48,13 @@ axarr[0].plot(
 )
 axarr[0].plot(
     times,
+    rtc_tools_semi_impl_record["channel_q_dn"],
+    label="Downstream\n(RTC-Tools Inertial Wave semi-impl.)",
+    linestyle="--",
+    color="pink",
+)
+axarr[0].plot(
+    times,
     rtc_tools_conv_acc_record["channel_q_dn"],
     label="Downstream\n(RTC-Tools Saint Venant central diff.)",
     linestyle="--",
@@ -74,6 +83,13 @@ axarr[1].plot(
     label="Upstream\n(RTC-Tools Inertial Wave)",
     linestyle="--",
     color="red",
+)
+axarr[1].plot(
+    times,
+    rtc_tools_semi_impl_record["channel_h_up"],
+    label="Upstream\n(RTC-Tools Inertial Wave semi-impl.)",
+    linestyle="--",
+    color="pink",
 )
 axarr[1].plot(
     times,

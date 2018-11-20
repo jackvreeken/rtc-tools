@@ -18,7 +18,7 @@ model Example
     left_slope_angle_down = 45,
     right_slope_angle_up = 45,
     right_slope_angle_down = 45,
-    semi_implicit_step_size = 0.0 // Here, this does matter:  step_size
+    semi_implicit_step_size = step_size
   )  annotation(Placement(visible = true, transformation(origin = {0, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Deltares.ChannelFlow.Hydraulic.BoundaryConditions.Level Level annotation(Placement(visible = true, transformation(origin = {60, 8}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Deltares.ChannelFlow.Hydraulic.BoundaryConditions.Discharge Discharge annotation(Placement(visible = true, transformation(origin = {-60, 8}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
