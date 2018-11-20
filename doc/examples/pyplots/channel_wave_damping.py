@@ -118,6 +118,28 @@ for i, group in enumerate(groups):
         color=plt.get_cmap(cmaps[1])(shades[0]),
     )
 
+# Scale the y-axis the same for axes 0 and 2
+step = 50
+axarr[0].autoscale(enable=True, axis="y", tight=True)
+axarr[2].autoscale(enable=True, axis="y", tight=True)
+start0, stop0 = axarr[0].get_ylim()
+start2, stop2 = axarr[2].get_ylim()
+start = (min(start0, start2) // step) * step
+stop = (max(stop0, stop2) // step + 1) * step
+axarr[0].set_ylim(start, stop)
+axarr[2].set_ylim(start, stop)
+
+# Scale the y-axis the same for axes 1 and 3
+step = 1
+axarr[1].autoscale(enable=True, axis="y", tight=True)
+axarr[3].autoscale(enable=True, axis="y", tight=True)
+start1, stop1 = axarr[1].get_ylim()
+start3, stop3 = axarr[3].get_ylim()
+start = (min(start1, start3) // step) * step
+stop = (max(stop1, stop3) // step + 1) * step
+axarr[1].set_ylim(start, stop)
+axarr[3].set_ylim(start, stop)
+
 # Format bottom axis label
 axarr[-1].xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
 
