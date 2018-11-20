@@ -43,6 +43,22 @@ removed):
   :language: modelica
   :lineno-match:
 
+.. note::
+
+    In order to simulate and show how the PID controllers activate only once
+    the incoming wave has propagated downstream, we will discretize the model
+    in time with a resolution of 5 minutes. With our spatial resolution of 4
+    level nodes per 20 km reach, this produces a CFL number of approximately 0.1.
+
+    For optimization-based control, such a fine temporal resolution is not needed,
+    as the system is able to look ahead and plan corrective measures ahead of time.
+    In this case, CFL numbers of up to 1 or even higher are typically used.
+
+    Nevertheless, in order to present a consistent comparison, a 5 minute
+    time step is also used for the optimization example. It is easy to explore
+    the effect of the time step size on the optimization results by changing the
+    value of the ``step_size`` class variable.
+
 To run the model with the local control scheme, we make a second model that
 constrains the flow rates to the weir settings as determined by local PID
 controller elements:
@@ -62,8 +78,8 @@ The local control model makes use of a PID controller class:
     Modellers should take care to set proper values for the initial
     derivatives, in order to avoid spurious waves at the start of the
     optimization run. In this example we assume a steady state initial
-    condition, as indicated and enforced by the ``initial equation`` section
-    in the Modelica model.
+    condition, as indicated and enforced by the ``SteadyStateInitializationMixin``
+    in the Python code.
 
 The Optimization Problem
 ------------------------
@@ -73,7 +89,7 @@ Goals
 
 In this model, we define a TargetLevelGoal to find a requested target level:
 
-.. literalinclude:: ../../../examples/channel_wave_damping/src/example.py
+.. literalinclude:: ../../../examples/channel_wave_damping/src/example_optimization.py
   :language: python
   :pyobject: TargetLevelGoal
   :lineno-match:
@@ -89,23 +105,23 @@ Optimization Problem
 We construct the class by declaring it and inheriting the desired parent
 classes.
 
-.. literalinclude:: ../../../examples/channel_wave_damping/src/example.py
+.. literalinclude:: ../../../examples/channel_wave_damping/src/example_optimization.py
   :language: python
-  :pyobject: Example
+  :pyobject: ExampleOptimization
   :lineno-match:
   :end-before: Goal Programming Approach
 
-The ``StepSizeParameterMixin`` inspects the input data and defines the step_size
-parameter, while the ``SteadyStateInitializationMixin`` constrains the initial
+The ``StepSizeParameterMixin`` defines the step size parameter and sets the optimization
+time steps, while the ``SteadyStateInitializationMixin`` constrains the initial
 conditions to be steady-state.
 
 Next, we instantiate the goals. There are two water level goals, applied at the
 upper and middle channels. The goals are very simple—they just target a
 specific water level.
 
-.. literalinclude:: ../../../examples/channel_wave_damping/src/example.py
+.. literalinclude:: ../../../examples/channel_wave_damping/src/example_optimization.py
   :language: python
-  :pyobject: Example.path_goals
+  :pyobject: ExampleOptimization.path_goals
   :lineno-match:
 
 We want to apply these goals to every timestep, so we use the ``path_goals()``
@@ -132,7 +148,7 @@ To make our script run, at the bottom of our file we just have to call the
 classes we just created. We do this for both the local control model and the
 goal programming model.
 
-.. literalinclude:: ../../../examples/channel_wave_damping/src/example.py
+.. literalinclude:: ../../../examples/channel_wave_damping/src/example_optimization.py
   :language: python
   :lineno-match:
   :start-after: # Run
@@ -160,9 +176,9 @@ All together, all the scripts are as as follows:
   :language: python
   :lineno-match:
 
-``example.py``:
+``example_optimization.py``:
 
-.. literalinclude:: ../../../examples/channel_wave_damping/src/example.py
+.. literalinclude:: ../../../examples/channel_wave_damping/src/example_optimization.py
   :language: python
   :lineno-match:
 
@@ -177,6 +193,6 @@ plotted using the python library matplotlib:
 .. plot:: examples/pyplots/channel_wave_damping.py
 
 In this example, the PID controller is tuned poorly and ends up amplifying
-the incoming wave as it propagates downstream.  The optimizing controller,
+the incoming wave as it propagates downstream. The optimizing controller,
 in contrast, does not amplify the wave and maintains the target water level
 throughout the wave event.

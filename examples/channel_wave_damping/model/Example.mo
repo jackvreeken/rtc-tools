@@ -11,7 +11,9 @@ model Example
     bottom_width_down = 50,
     length = 20000,
     uniform_nominal_depth = 5,
-    friction_coefficient = 35
+    friction_coefficient = 35,
+    n_level_nodes = 4,
+    Q(each nominal = 100.0)
   ) annotation(Placement(visible = true, transformation(origin = {-60, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Deltares.ChannelFlow.Hydraulic.Branches.HomotopicTrapezoidal middle(
     theta = theta,
@@ -22,7 +24,9 @@ model Example
     bottom_width_down = 50,
     length = 20000,
     uniform_nominal_depth = 5,
-    friction_coefficient = 35
+    friction_coefficient = 35,
+    n_level_nodes = 4,
+    Q(each nominal = 100.0)
   ) annotation(Placement(visible = true, transformation(origin = {0, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Deltares.ChannelFlow.Hydraulic.Branches.HomotopicTrapezoidal downstream(
     theta = theta,
@@ -33,7 +37,9 @@ model Example
     bottom_width_down = 50,
     length = 20000,
     uniform_nominal_depth = 5,
-    friction_coefficient = 35
+    friction_coefficient = 35,
+    n_level_nodes = 4,
+    Q(each nominal = 100.0)
   ) annotation(Placement(visible = true, transformation(origin = {58, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Deltares.ChannelFlow.Hydraulic.Structures.DischargeControlledStructure dam_middle annotation(Placement(visible = true, transformation(origin = {30, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Deltares.ChannelFlow.Hydraulic.Structures.DischargeControlledStructure dam_upstream annotation(Placement(visible = true, transformation(origin = {-30, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
@@ -41,8 +47,6 @@ model Example
   // Inputs
   input Modelica.SIunits.Position Level_H(fixed = true) = Level.H;
   input Modelica.SIunits.VolumeFlowRate Inflow_Q(fixed = true) = Discharge.Q;
-  input Modelica.SIunits.VolumeFlowRate Q_dam_middle(fixed = false, min = 0.0, max = 1000.0) = dam_middle.Q;
-  input Modelica.SIunits.VolumeFlowRate Q_dam_upstream(fixed = false, min = 0.0, max = 1000.0) = dam_upstream.Q;
 
   // Outputs
   output Modelica.SIunits.Position H_middle = middle.H[middle.n_level_nodes];
@@ -60,7 +64,7 @@ equation
   connect(Discharge.HQ, upstream.HQUp) annotation(Line(points = {{-82, 0}, {-68, 0}}, color = {0, 0, 255}));
   connect(Level.HQ, downstream.HQDown) annotation(Line(points = {{66, 0}, {82, 0}, {82, 0}, {82, 0}}, color = {0, 0, 255}));
 initial equation
-  downstream.Q[3] = Inflow_Q;
-  middle.Q[3] = Inflow_Q;
-  upstream.Q[3] = Inflow_Q;
+  downstream.Q[2:downstream.n_level_nodes + 1] = Inflow_Q;
+  middle.Q[2:middle.n_level_nodes + 1] = Inflow_Q;
+  upstream.Q[2:upstream.n_level_nodes + 1] = Inflow_Q;
 end Example;

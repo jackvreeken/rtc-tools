@@ -30,7 +30,7 @@ class TargetLevelGoal(Goal):
     priority = 1
 
 
-class Example(
+class ExampleOptimization(
     StepSizeParameterMixin,
     SteadyStateInitializationMixin,
     HomotopyMixin,
@@ -50,5 +50,5 @@ class Example(
 
 
 # Run
-run_optimization_problem(Example)
+run_optimization_problem(ExampleOptimization)
 run_optimization_problem(ExampleLocalControl)

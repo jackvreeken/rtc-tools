@@ -8,7 +8,7 @@ model ExampleLocalControl
     I = -0.01,
     D = 0.0,
     feed_forward = 100.0,
-    control_action = Q_dam_upstream
+    control_action = dam_upstream.Q
   );
   PIDController middle_pid(
     state = dam_middle.HQUp.H,
@@ -17,6 +17,8 @@ model ExampleLocalControl
     I = -0.01,
     D = 0.0,
     feed_forward = 100.0,
-    control_action = Q_dam_middle
+    control_action = dam_middle.Q
   );
+  output Modelica.SIunits.VolumeFlowRate Q_dam_upstream = dam_upstream.Q;
+  output Modelica.SIunits.VolumeFlowRate Q_dam_middle = dam_middle.Q;
 end ExampleLocalControl;
