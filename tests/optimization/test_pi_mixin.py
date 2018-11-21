@@ -1,3 +1,5 @@
+import bisect
+
 import numpy as np
 
 from rtctools.optimization.collocated_integrated_optimization_problem import (
@@ -92,26 +94,28 @@ class TestPIMixin(TestCase):
         self.assertAlmostLessThan(self.results["u"], 2, self.tolerance)
 
     def test_interpolation(self):
+        t_idx = bisect.bisect_left(self.problem.io.times_sec, 0.0)
+
         t = (
             self.problem.get_timeseries("x", 0).times[
-                self.problem.get_forecast_index() + 1
+                t_idx + 1
             ]
             + (
                 self.problem.get_timeseries("x", 0).times[
-                    self.problem.get_forecast_index() + 2
+                    t_idx + 2
                 ]
                 - self.problem.get_timeseries("x", 0).times[
-                    self.problem.get_forecast_index() + 1
+                    t_idx + 1
                 ]
             )
             / 2
         )
         x_ref = (
             self.problem.get_timeseries("x", 0).values[
-                self.problem.get_forecast_index() + 1
+                t_idx + 1
             ]
             + self.problem.get_timeseries("x", 0).values[
-                self.problem.get_forecast_index() + 2
+                t_idx + 2
             ]
         ) / 2
         self.assertAlmostEqual(
