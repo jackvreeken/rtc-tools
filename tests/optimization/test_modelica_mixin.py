@@ -25,6 +25,7 @@ class Model(ModelicaMixin, CollocatedIntegratedOptimizationProblem):
 
     def __init__(self):
         print(data_path())
+        self._extra_variable = MX.sym('extra')
         super().__init__(
             input_folder=data_path(),
             output_folder=data_path(),
@@ -64,6 +65,23 @@ class Model(ModelicaMixin, CollocatedIntegratedOptimizationProblem):
     def constraints(self, ensemble_member):
         # No additional constraints
         return []
+
+    @property
+    def extra_variables(self):
+        v = super().extra_variables
+        return [*v, self._extra_variable]
+
+    def bounds(self):
+        b = super().bounds()
+        b[self._extra_variable.name()] = [-1000, 1000]
+        return b
+
+    def path_constraints(self, ensemble_member):
+        c = super().path_constraints(ensemble_member)[:]
+        c.append(
+            (self.state('x') - self._extra_variable, -np.inf, 0.0)
+        )
+        return c
 
     def post(self):
         # Do
@@ -288,7 +306,14 @@ class TestModelicaMixin(TestCase, unittest.TestCase):
 
     def test_multiple_states(self):
         self.assertAlmostEqual(self.results["w"][0], 0.0, self.tolerance)
-        self.assertAlmostEqual(self.results["w"][-1], 0.5917, 1e-4)
+        self.assertAlmostEqual(self.results["w"][-1], 0.5917, 1e-3)
+
+    def test_extra_variable(self):
+        self.assertAlmostLessThan(
+            np.max(self.results["x"]),
+            self.results[self.problem._extra_variable.name()],
+            self.tolerance
+        )
 
     @unittest.skip
     def test_states_in(self):
