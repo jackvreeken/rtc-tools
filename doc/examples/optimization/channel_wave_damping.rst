@@ -48,7 +48,7 @@ removed):
     In order to simulate and show how the PID controllers activate only once
     the incoming wave has propagated downstream, we will discretize the model
     in time with a resolution of 5 minutes. With our spatial resolution of 4
-    level nodes per 20 km reach, this produces a CFL number of approximately 0.1.
+    level nodes per 20 km reach, this produces a CFL number of approximately 0.4.
 
     For optimization-based control, such a fine temporal resolution is not needed,
     as the system is able to look ahead and plan corrective measures ahead of time.
