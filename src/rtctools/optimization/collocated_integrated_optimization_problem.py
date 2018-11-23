@@ -1213,26 +1213,16 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                         [self.variable_nominal(var.name()) for var in self.path_variables],
                         initial_extra_constant_inputs), extra_variables])
 
-            for i in range(len(delayed_feedback_expressions)):
-                expression = delayed_feedback_expressions[i]
-                in_variable_name = delayed_feedback_states[i]
-                delay = delayed_feedback_durations[i]
-
-                # Resolve aliases
-                in_canonical, in_sign = self.alias_relation.canonical_signed(
-                    in_variable_name)
-                in_times = self.times(in_canonical)
-                in_nominal = self.variable_nominal(in_canonical)
-                in_values = in_nominal * \
-                    self.state_vector(
-                        in_canonical, ensemble_member=ensemble_member)
-                if in_sign < 0:
-                    in_values *= in_sign
-
+            if delayed_feedback_expressions:
                 # Resolve delay values
-                # First, substitute parameters for values
-                [delay] = ca.substitute(
-                    [ca.MX(delay)],
+                # First, substitute parameters for values all at once. Make
+                # sure substitute() gets called with the right signature. This
+                # means we need at least one element that is of type MX.
+                delayed_feedback_durations = list(delayed_feedback_durations)
+                delayed_feedback_durations[0] = ca.MX(delayed_feedback_durations[0])
+
+                substituted_delay_durations = ca.substitute(
+                    delayed_feedback_durations,
                     [ca.vertcat(symbolic_parameters)],
                     [ca.vertcat(parameters)])
 
@@ -1240,60 +1230,76 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                 mapped_delay_function = ca.Function(
                     'delay_values',
                     self.dae_variables['time'] + self.dae_variables['constant_inputs'],
-                    [delay]
+                    substituted_delay_durations
                     ).map(len(collocation_times))
 
                 # Call mapped delay function with inputs as arrays
-                [delay] = mapped_delay_function.call(
+                evaluated_delay_durations = mapped_delay_function.call(
                     [collocation_times] +
                     [constant_inputs[v.name()] for v in self.dae_variables['constant_inputs']])
 
-                # Cast delay from DM to np.array
-                delay = delay.toarray().flatten()
+                for i in range(len(delayed_feedback_expressions)):
+                    in_variable_name = delayed_feedback_states[i]
+                    expression = delayed_feedback_expressions[i]
+                    delay = evaluated_delay_durations[i]
 
-                assert np.all(np.isfinite(delay)), (
-                    'Delay duration must be resolvable to real values at transcribe()')
+                    # Resolve aliases
+                    in_canonical, in_sign = self.alias_relation.canonical_signed(
+                        in_variable_name)
+                    in_times = self.times(in_canonical)
+                    in_nominal = self.variable_nominal(in_canonical)
+                    in_values = in_nominal * \
+                        self.state_vector(
+                            in_canonical, ensemble_member=ensemble_member)
+                    if in_sign < 0:
+                        in_values *= in_sign
 
-                out_times = np.concatenate([history_times, collocation_times])
-                out_values = ca.veccat(
-                    delayed_feedback_history[:, i],
-                    initial_delayed_feedback[i],
-                    ca.transpose(discretized_delayed_feedback[i, :]))
+                    # Cast delay from DM to np.array
+                    delay = delay.toarray().flatten()
 
-                # Check whether enough history has been specified, and that no
-                # needed history values are missing
-                hist_earliest = np.min(collocation_times - delay)
-                hist_start_ind = np.searchsorted(out_times, hist_earliest)
-                if out_times[hist_start_ind] != hist_earliest:
-                    # We need an earlier value to interpolate with
-                    hist_start_ind -= 1
+                    assert np.all(np.isfinite(delay)), (
+                        'Delay duration must be resolvable to real values at transcribe()')
 
-                if np.any(np.isnan(delayed_feedback_history[hist_start_ind:, i])):
-                    logger.warning(
-                        'Incomplete history for delayed expression {}. '
-                        'Extrapolating t0 value backwards in time.'.format(
-                            expression))
-                    out_times = out_times[len(history_times):]
-                    out_values = out_values[len(history_times):]
+                    out_times = np.concatenate([history_times, collocation_times])
+                    out_values = ca.veccat(
+                        delayed_feedback_history[:, i],
+                        initial_delayed_feedback[i],
+                        ca.transpose(discretized_delayed_feedback[i, :]))
 
-                # Set up delay constraints
-                if len(collocation_times) != len(in_times):
-                    interpolation_method = self.interpolation_method(
-                        in_canonical)
-                    x_in = interpolate(in_times, in_values,
-                                       collocation_times, self.equidistant, interpolation_method)
-                else:
-                    x_in = in_values
-                interpolation_method = self.interpolation_method()
-                x_out_delayed = interpolate(
-                    out_times, out_values, collocation_times - delay, self.equidistant, interpolation_method)
+                    # Check whether enough history has been specified, and that no
+                    # needed history values are missing
+                    hist_earliest = np.min(collocation_times - delay)
+                    hist_start_ind = np.searchsorted(out_times, hist_earliest)
+                    if out_times[hist_start_ind] != hist_earliest:
+                        # We need an earlier value to interpolate with
+                        hist_start_ind -= 1
 
-                nominal = nominal_delayed_feedback[i]
+                    if np.any(np.isnan(delayed_feedback_history[hist_start_ind:, i])):
+                        logger.warning(
+                            'Incomplete history for delayed expression {}. '
+                            'Extrapolating t0 value backwards in time.'.format(
+                                expression))
+                        out_times = out_times[len(history_times):]
+                        out_values = out_values[len(history_times):]
 
-                g.append((x_in - x_out_delayed) / nominal)
-                zeros = np.zeros(n_collocation_times)
-                lbg.extend(zeros)
-                ubg.extend(zeros)
+                    # Set up delay constraints
+                    if len(collocation_times) != len(in_times):
+                        interpolation_method = self.interpolation_method(
+                            in_canonical)
+                        x_in = interpolate(in_times, in_values,
+                                           collocation_times, self.equidistant, interpolation_method)
+                    else:
+                        x_in = in_values
+                    interpolation_method = self.interpolation_method()
+                    x_out_delayed = interpolate(
+                        out_times, out_values, collocation_times - delay, self.equidistant, interpolation_method)
+
+                    nominal = nominal_delayed_feedback[i]
+
+                    g.append((x_in - x_out_delayed) / nominal)
+                    zeros = np.zeros(n_collocation_times)
+                    lbg.extend(zeros)
+                    ubg.extend(zeros)
 
             # Objective
             f_member = self.objective(ensemble_member)
