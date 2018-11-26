@@ -462,7 +462,8 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                     init_der_constant.append(j)
 
             initial_derivatives[init_der_variable] = X[init_der_variable_indices]
-            initial_derivatives[init_der_constant] = init_der_constant_values
+            if len(init_der_constant_values) > 0:
+                initial_derivatives[init_der_constant] = init_der_constant_values
 
             ensemble_data["initial_state"] = X[initial_state_indices] * np.concatenate(
                 (integrated_variable_nominals, collocated_variable_nominals))
