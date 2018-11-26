@@ -62,19 +62,28 @@ As you can see, this model is as simple as it gets. We only add a constraint to
 keep the initialization states consistent with the HEC-RAS initialization.
 
 
-Comparison of Numerical Schemes
--------------------------------
+Comparison of Discretizations and Numerical Schemes
+---------------------------------------------------
 
-HEC-RAS and RTC-Tools use different numerical schemes:
+HEC-RAS and RTC-Tools use different discretizations and numerical schemes, but also
+solve different equations.  RTC-Tools solves the original nonlinear equations, whereas
+HEC-RAS `solves a linearized momentum equation <http://www.hec.usace.army.mil/software/hec-ras/documentation/HEC-RAS%205.0%20Reference%20Manual.pdf>`_.
 
-   * RTC-Tools uses a staggered grid, whereas HEC-RAS uses a box scheme;
-   * RTC-Tools provides a solution of the original nonlinear equations, whereas
-     HEC-RAS uses a linearization technique to compute discharge and level
-     increments.
++-----------------------------+----------------------------------------------------------------+--------------------------------+ 
+|                             | RTC-Tools 2                                                    | HEC-RAS                        | 
++=============================+================================================================+================================+ 
+| Momentum equation           | Saint-Venant / inertial wave (default)                         | Linearized Saint-Venant        | 
++-----------------------------+----------------------------------------------------------------+--------------------------------+ 
+| Spatial discretization      | Staggered                                                      | Collocated                     | 
++-----------------------------+----------------------------------------------------------------+--------------------------------+ 
+| Numerical scheme (temporal) | Semi-implicit / implicit (default)                             | Centered Preissmann box scheme | 
++-----------------------------+----------------------------------------------------------------+--------------------------------+ 
+| Numerical scheme (spatial)  | Central differences, upwind convective acceleration (optional) | Centered Preissmann box scheme | 
++-----------------------------+----------------------------------------------------------------+--------------------------------+ 
 
 .. note::
 
-    For optimization, the recommended discretization for RTC-Tools is 
+    For optimization, the recommended momentum equation and temporal scheme for RTC-Tools is 
     semi-implicit inertial wave.  Consult Baayen and Piovesan,
     *A continuation approach to nonlinear model predictive control of open channel systems*,
     2018, for details.  A preprint is available online as 
@@ -90,3 +99,6 @@ exported into the same directory under the name ``HEC-RAS_results.csv``. We can
 compare the results using the Python library ``matplotlib``:
 
 .. plot:: examples/pyplots/channel_pulse_results.py
+
+Both HEC-RAS and RTC-Tools were run with a spatial step size of 1000 m and a 
+temporal step size of 15 min.
