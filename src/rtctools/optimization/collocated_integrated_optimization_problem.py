@@ -1024,6 +1024,35 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                         initial_state_constraint_states.append(sym)
                         initial_state_constraint_values.append(val)
 
+            for i, variable in enumerate(self.differentiated_states):
+                try:
+                    history_timeseries = history[variable]
+                except KeyError:
+                    pass
+                else:
+                    if len(history_timeseries.times) <= 1 or np.isnan(history_timeseries.values[-2]):
+                        continue
+
+                    assert history_timeseries.times[-1] == t0
+
+                    sym = initial_derivatives[i]
+
+                    if np.isnan(history_timeseries.values[-1]):
+                        t0_val = self.state_vector(variable, ensemble_member=ensemble_member)[0]
+                    else:
+                        t0_val = self.interpolate(
+                            t0,
+                            history_timeseries.times,
+                            history_timeseries.values,
+                            np.nan,
+                            np.nan
+                        )
+                    val = (t0_val - history_timeseries.values[-2]) / (t0 - history_timeseries.times[-2])
+
+                    expr = sym - val
+                    initial_state_constraint_states.append(expr)
+                    initial_state_constraint_values.append(0.0)
+
             # Call the external metadata function in one go, rather than two
             if len(initial_state_constraint_states) > 0:
                 g.append(ca.vertcat(*initial_state_constraint_states))

@@ -257,6 +257,14 @@ class ModelMixedInteger(ModelicaMixin, CollocatedIntegratedOptimizationProblem):
         return compiler_options
 
 
+class ModelHistory(Model):
+    def history(self, ensemble_member):
+        h = super().history(ensemble_member)
+        h['x'] = Timeseries(np.array([-0.1, 0.0]), np.array([0.9, 1.1]))
+        h['w'] = Timeseries(np.array([-0.1, 0.0]), np.array([0.9, np.nan]))
+        return h
+
+
 class TestModelicaMixin(TestCase, unittest.TestCase):
 
     def setUp(self):
@@ -536,4 +544,20 @@ class TestModelicaMixinMixedInteger(TestCase):
         )
         self.assertAlmostEqual(
             self.results["y"], -1 * np.ones(21, dtype=np.bool), self.tolerance
+        )
+
+
+class TestModelicaMixinHistory(TestCase, unittest.TestCase):
+    def setUp(self):
+        self.problem = ModelHistory()
+        self.problem.optimize()
+        self.results = self.problem.extract_results()
+        self.tolerance = 1e-6
+
+    def test_initial_der_x(self):
+        self.assertAlmostEqual(
+            self.results['initial_der(x)'], 2.0, self.tolerance
+        )
+        self.assertAlmostEqual(
+            self.results['initial_der(w)'], (self.results['w'][0] - 0.9) / 0.1, self.tolerance
         )
