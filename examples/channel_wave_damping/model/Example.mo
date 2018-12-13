@@ -13,7 +13,7 @@ model Example
     uniform_nominal_depth = 5,
     friction_coefficient = 35,
     n_level_nodes = 4,
-    Q(each nominal = 100.0)
+    Q_nominal = 100.0
   ) annotation(Placement(visible = true, transformation(origin = {-60, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Deltares.ChannelFlow.Hydraulic.Branches.HomotopicTrapezoidal middle(
     theta = theta,
@@ -26,7 +26,7 @@ model Example
     uniform_nominal_depth = 5,
     friction_coefficient = 35,
     n_level_nodes = 4,
-    Q(each nominal = 100.0)
+    Q_nominal = 100.0
   ) annotation(Placement(visible = true, transformation(origin = {0, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Deltares.ChannelFlow.Hydraulic.Branches.HomotopicTrapezoidal downstream(
     theta = theta,
@@ -39,7 +39,7 @@ model Example
     uniform_nominal_depth = 5,
     friction_coefficient = 35,
     n_level_nodes = 4,
-    Q(each nominal = 100.0)
+    Q_nominal = 100.0
   ) annotation(Placement(visible = true, transformation(origin = {58, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Deltares.ChannelFlow.Hydraulic.Structures.DischargeControlledStructure dam_middle annotation(Placement(visible = true, transformation(origin = {30, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Deltares.ChannelFlow.Hydraulic.Structures.DischargeControlledStructure dam_upstream annotation(Placement(visible = true, transformation(origin = {-30, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));

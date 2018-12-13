@@ -1,6 +1,7 @@
 model Example
   // Elements
   Deltares.ChannelFlow.Hydraulic.Branches.HomotopicTrapezoidal Channel(
+    Q_nominal = 100.0,
     H_b_down = -5.0,
     H_b_up = -5.0,
     friction_coefficient = 0.045,
