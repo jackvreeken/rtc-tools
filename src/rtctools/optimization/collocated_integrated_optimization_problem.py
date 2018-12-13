@@ -426,6 +426,7 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
             initial_derivatives = ca.MX.zeros((n, 1))
             init_der_variable = []
             init_der_variable_indices = []
+            init_der_variable_nominals = []
             init_der_constant = []
             init_der_constant_values = []
 
@@ -441,6 +442,7 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                 try:
                     i = self.__differentiated_states_map[variable]
 
+                    init_der_variable_nominals.append(self.variable_nominal(variable))
                     init_der_variable_indices.append(der_offset + i)
                     init_der_variable.append(j)
                 except KeyError:
@@ -461,7 +463,8 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                     init_der_constant_values.append(init_der)
                     init_der_constant.append(j)
 
-            initial_derivatives[init_der_variable] = X[init_der_variable_indices]
+            initial_derivatives[init_der_variable] = X[init_der_variable_indices] * np.array(
+                init_der_variable_nominals)
             if len(init_der_constant_values) > 0:
                 initial_derivatives[init_der_constant] = init_der_constant_values
 
@@ -1774,9 +1777,11 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                     pass
             offset += len(self.extra_variables)
 
-            for k, der_name in enumerate(self.__derivative_names):
+            for k, (state_name, der_name) in enumerate(
+                    zip(self.__differentiated_states, self.__derivative_names)):
                 try:
-                    x0[offset + k] = seed["initial_" + der_name]
+                    nominal = self.variable_nominal(state_name)
+                    x0[offset + k] = seed["initial_" + der_name] / nominal
                 except KeyError:
                     pass
 
@@ -1846,9 +1851,11 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
         offset += len(self.extra_variables)
 
         # Extract initial derivatives
-        for k, der_name in enumerate(self.__derivative_names):
+        for k, (state_name, der_name) in enumerate(
+                zip(self.__differentiated_states, self.__derivative_names)):
             try:
-                results["initial_" + der_name] = X[offset + k].ravel()
+                nominal = self.variable_nominal(state_name)
+                results["initial_" + der_name] = nominal * X[offset + k].ravel()
             except KeyError:
                 pass
 
@@ -2110,7 +2117,8 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                 # Fall through, in case 'variable' is not a differentiated state.
                 pass
             else:
-                return sign * X[
+                nominal = self.variable_nominal(canonical)
+                return nominal * sign * X[
                     control_size +
                     (ensemble_member + 1) * ensemble_member_size -
                     len(self.dae_variables['derivatives']) + i]

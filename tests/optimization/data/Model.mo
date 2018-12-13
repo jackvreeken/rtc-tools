@@ -1,5 +1,5 @@
 model Model
-	Real x(start=1.1);
+	Real x(start=1.1, nominal = 10);
 	Real w(start=0.0);
 	Real alias;
 
