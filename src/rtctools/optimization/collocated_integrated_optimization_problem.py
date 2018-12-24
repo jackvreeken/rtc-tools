@@ -816,7 +816,6 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
         collocation_time_0 = accumulated_U[offset + 0]
         collocation_time_1 = accumulated_U[offset + 1]
         path_variables_1 = accumulated_U[offset + 2:offset + 2 + len(self.path_variables)]
-        extra_variables = ca.vertcat(*[self.extra_variable(var.name()) for var in self.extra_variables])
         extra_constant_inputs_1 = accumulated_U[offset + 2 + len(self.path_variables):]
 
         # Approximate derivatives using backwards finite differences
@@ -999,6 +998,8 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
             initial_constant_inputs = ensemble_aggregate["initial_constant_inputs"][:, ensemble_member]
             initial_extra_constant_inputs = ensemble_aggregate["initial_extra_constant_inputs"][:, ensemble_member]
             parameters = ensemble_aggregate["parameters"][:, ensemble_member]
+            extra_variables = ca.vertcat(*[
+                self.extra_variable(var.name(), ensemble_member) for var in self.extra_variables])
 
             constant_inputs = ensemble_store[ensemble_member]["constant_inputs"]
             extra_constant_inputs = ensemble_store[ensemble_member]["extra_constant_inputs"]
