@@ -167,7 +167,7 @@ class LookupTable:
             lb_viol = y_array_not_nan < l_r
             ub_viol = y_array_not_nan > u_r
             all_viol = y_array_not_nan[lb_viol | ub_viol]
-            if all_viol:
+            if all_viol.size > 0:
                 raise ValueError(
                     "Values {} are not in lookup table range ({}, {})".format(
                         all_viol, l_r, u_r
@@ -259,7 +259,7 @@ class CSVLookupTableMixin(OptimizationProblem):
             self.__lookup_table_folder, 'curvefit_options.ini')
         try:
             ini_config = configparser.RawConfigParser()
-            ini_config.readfp(open(ini_path))
+            ini_config.read(ini_path)
             no_curvefit_options = False
         except IOError:
             logger.info(
