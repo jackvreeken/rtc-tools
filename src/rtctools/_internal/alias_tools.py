@@ -1,9 +1,9 @@
-import collections
+from collections.abc import MutableSet
 
 from pymoca.backends.casadi.alias_relation import AliasRelation  # noqa: F401
 
 
-class OrderedSet(collections.MutableSet):
+class OrderedSet(MutableSet):
     """
     Adapted from https://code.activestate.com/recipes/576694/
     with some additional methods:
