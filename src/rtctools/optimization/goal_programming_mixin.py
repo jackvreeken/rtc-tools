@@ -816,6 +816,9 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
             if options['keep_soft_constraints']:
                 if goal.relaxation != 0.0:
                     raise Exception("Relaxation not allowed with `keep_soft_constraints` for goal {}".format(goal))
+                if goal.violation_timeseries_id is not None:
+                    raise Exception(
+                        "Violation timeseries id not allowed with `keep_soft_constraints` for goal {}".format(goal))
             else:
                 if goal.size > 1:
                     raise Exception("Option `keep_soft_constraints` needs to be set for vector goal {}".format(goal))
