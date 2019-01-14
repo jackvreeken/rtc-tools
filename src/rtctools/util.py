@@ -141,7 +141,7 @@ def run_simulation_problem(simulation_problem_class, base_folder='..', log_level
 
     # Set up logging
     logger = logging.getLogger("rtctools")
-    if not any((isinstance(h, logging.StreamHandler) for h in logger.handlers)):
+    if not logger.hasHandlers() and not any((isinstance(h, logging.StreamHandler) for h in logger.handlers)):
         handler = logging.StreamHandler()
         formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
         handler.setFormatter(formatter)
