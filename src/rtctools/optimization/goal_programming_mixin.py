@@ -1069,7 +1069,9 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
                 M = (epsilon * (goal.function_range[1] - goal_M)
                      + goal_M + goal.relaxation) / goal.function_nominal
             if goal.has_target_min and goal.has_target_max:
-                inds = np.abs(m - M) < options['equality_threshold']
+                # Avoid comparing with NaN
+                inds = ~(np.isnan(m) | np.isnan(M))
+                inds[inds] &= np.abs(m[inds] - M[inds]) < options['equality_threshold']
                 if np.any(inds):
                     avg = 0.5 * (m + M)
                     m[inds] = M[inds] = avg[inds]
@@ -1206,17 +1208,19 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
                             M = self.interpolate(times, goal.target_max.times, goal.target_max.values)
                         w = np.ones_like(function_value)
                         if goal.has_target_min:
-                            w = np.logical_and(
-                                w, np.logical_or(
-                                    np.logical_not(np.isfinite(m)),
-                                    function_value / goal.function_nominal >
-                                    m / goal.function_nominal + options['interior_distance']))
+                            # Avoid comparing with NaN while making sure that
+                            # w[i] is True when m[i] is not finite.
+                            m = np.array(m)
+                            m[~np.isfinite(m)] = -np.inf
+                            w = np.logical_and(w, (function_value / goal.function_nominal >
+                                                   m / goal.function_nominal + options['interior_distance']))
                         if goal.has_target_max:
-                            w = np.logical_and(
-                                w, np.logical_or(
-                                    np.logical_not(np.isfinite(M)),
-                                    function_value / goal.function_nominal <
-                                    M / goal.function_nominal - options['interior_distance']))
+                            # Avoid comparing with NaN while making sure that
+                            # w[i] is True when M[i] is not finite.
+                            M = np.array(M)
+                            M[~np.isfinite(M)] = np.inf
+                            w = np.logical_and(w, (function_value / goal.function_nominal <
+                                                   M / goal.function_nominal + options['interior_distance']))
                         epsilon_active[w] = np.nan
                         self.set_timeseries(
                             goal.violation_timeseries_id,
