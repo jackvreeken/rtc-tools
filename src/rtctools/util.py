@@ -10,7 +10,8 @@ import casadi
 from . import __version__
 from ._internal.alias_tools import OrderedSet
 from .data import pi
-from .optimization.pi_mixin import PIMixin
+from .optimization.pi_mixin import PIMixin as OptimizationPIMixin
+from .simulation.pi_mixin import PIMixin as SimulationPIMixin
 
 
 def run_optimization_problem(optimization_problem_class, base_folder='..', log_level=logging.INFO, profile=False):
@@ -52,7 +53,7 @@ def run_optimization_problem(optimization_problem_class, base_folder='..', log_l
         logger.addHandler(handler)
 
     # Add pi.DiagHandler, if using PIMixin. Only add it if it does not already exist.
-    if (issubclass(optimization_problem_class, PIMixin) and
+    if (issubclass(optimization_problem_class, OptimizationPIMixin) and
             not any((isinstance(h, pi.DiagHandler) for h in logger.handlers))):
         handler = pi.DiagHandler(output_folder)
         logger.addHandler(handler)
@@ -144,6 +145,12 @@ def run_simulation_problem(simulation_problem_class, base_folder='..', log_level
         handler = logging.StreamHandler()
         formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
         handler.setFormatter(formatter)
+        logger.addHandler(handler)
+
+    # Add pi.DiagHandler, if using PIMixin. Only add it if it does not already exist.
+    if (issubclass(simulation_problem_class, SimulationPIMixin) and
+            not any((isinstance(h, pi.DiagHandler) for h in logger.handlers))):
+        handler = pi.DiagHandler(output_folder)
         logger.addHandler(handler)
 
     logger.setLevel(log_level)
