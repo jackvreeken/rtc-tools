@@ -14,7 +14,7 @@ import pymoca
 import pymoca.backends.casadi.api
 
 
-from rtctools._internal.alias_tools import AliasDict, AliasRelation
+from rtctools._internal.alias_tools import AliasDict
 from rtctools._internal.caching import cached
 
 logger = logging.getLogger("rtctools")
@@ -812,19 +812,7 @@ class SimulationProblem:
     @property
     @cached
     def alias_relation(self):
-        # Initialize aliases
-        alias_relation = AliasRelation()
-        for v in itertools.chain(self.__pymoca_model.states,
-                                 self.__pymoca_model.der_states,
-                                 self.__pymoca_model.alg_states,
-                                 self.__pymoca_model.inputs):
-            for alias in v.aliases:
-                alias_relation.add(v.symbol.name(), alias)
-                if logger.getEffectiveLevel() == logging.DEBUG:
-                    logger.debug("SimulationProblem: Aliased {} to {}".format(
-                        v.symbol.name(), alias))
-
-        return alias_relation
+        return self.__pymoca_model.alias_relation
 
     @cached
     def compiler_options(self):
