@@ -862,6 +862,21 @@ class TestGoalProgrammingInvalidGoals(TestCase):
         with self.assertRaisesRegex(Exception, "Target max cannot be a Timeseries"):
             self.problem.optimize()
 
+    def test_goal_weight_minimization(self):
+        self.problem._goals = [InvalidGoal(weight=-1.0)]
+
+        # For minimization goals we can have a negative goal weight
+        try:
+            self.problem.optimize()
+        except Exception:
+            self.fail("test_goal_weight_minimization() failed unexpectedly.")
+
+    def test_goal_weight_targets(self):
+        self.problem._goals = [InvalidGoal(function_range=(-2.0, 2.0), target_max=1.0, weight=-1.0)]
+
+        with self.assertRaisesRegex(Exception, "Goal weight should be positive"):
+            self.problem.optimize()
+
 
 class ModelPathGoalsSeed(ModelPathGoals):
 

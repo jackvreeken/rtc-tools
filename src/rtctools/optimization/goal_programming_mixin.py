@@ -798,6 +798,9 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
 
                 if np.any(m >= M):
                     raise Exception("Invalid function range for goal {}.".format(goal))
+
+                if goal.weight <= 0:
+                    raise Exception("Goal weight should be positive for goal {}".format(goal))
             else:
                 if goal.function_range != (np.nan, np.nan):
                     raise Exception("Specifying function range not allowed for goal {}".format(goal))
