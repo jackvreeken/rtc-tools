@@ -1285,9 +1285,10 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
             obj_val += options['constraint_relaxation']
             constraint = _GoalConstraint(None, _constraint_func, -np.inf, obj_val, True)
 
-        # The goal works over all ensemble members, so we add it to the first
-        # one as that one is always present.
-        self.__problem_constraints[0].append(constraint)
+        # The goal works over all ensemble members, so we add it to the last
+        # one, as at that point the inputs of all previous ensemble members
+        # will have been discretized, mapped and stored.
+        self.__problem_constraints[-1].append(constraint)
 
     def optimize(self, preprocessing=True, postprocessing=True, log_solver_failure_as_error=True):
         # Do pre-processing
