@@ -116,7 +116,9 @@ class ControlTreeMixin(OptimizationProblem):
             # to a new branch
             available = set(branches[current_branch])
 
-            idx = 0
+            # We first select the scenario with the max distance to any other branch
+            idx = np.argmax(np.amax(distances, axis=0))
+
             for i in range(options['k']):
                 if idx >= 0:
                     branches[current_branch +
