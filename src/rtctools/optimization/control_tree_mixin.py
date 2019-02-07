@@ -174,6 +174,10 @@ class ControlTreeMixin(OptimizationProblem):
                 self.__control_indices[member][control_input] = np.zeros(
                     len(times), dtype=np.int16)
             for branch, members in branches.items():
+                if not members:
+                    # Avoid making free variables by skipping branches which have no members
+                    continue
+
                 branching_time_0 = branching_times[len(branch) + 0]
                 branching_time_1 = branching_times[len(branch) + 1]
                 els = np.logical_and(
