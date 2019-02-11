@@ -213,7 +213,7 @@ class ModelPathGoalsVector(Model):
         return [PathGoal1_2(self), PathGoal3(self)]
 
 
-class TestVectorConstraints(TestCase):
+class TestVectorGoals(TestCase):
 
     """
     NOTE: As long as the order of goals/constraints is the same, whether or not they are passed
@@ -233,7 +233,7 @@ class TestVectorConstraints(TestCase):
         self.assertListEqual(self.problem1._objective_values, self.problem2._objective_values)
         self.assertTrue(np.array_equal(results1['x'], results2['x']))
 
-    def test_path_vector_constraints_simple(self):
+    def test_path_vector_goals_simple(self):
         self.problem1 = ModelPathGoals()
         self.problem2 = ModelPathGoalsVector()
         self.problem1.optimize()
