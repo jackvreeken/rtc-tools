@@ -534,7 +534,9 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
             acc_objective = ca.sum1(ca.vertcat(*[o(self, ensemble_member) for o in subproblem_path_objectives]))
 
             if self.goal_programming_options()['scale_by_problem_size']:
-                acc_objective = acc_objective / n_objectives / len(self.times())
+                # Objective is already divided by number of active time steps
+                # at this point when `scale_by_problem_size` is set.
+                acc_objective = acc_objective / n_objectives
 
             return acc_objective
         else:
@@ -670,7 +672,7 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
 
         If ``scale_by_problem_size`` is set to ``True``, the objective (i.e. the sum of the violation variables)
         will be divided by the number of goals, and the path objective will be divided by the number
-        of path goals and the number of time steps. This will make sure the objectives are always in
+        of path goals and the number of active time steps (per goal). This will make sure the objectives are always in
         the range [0, 1], at the cost of solving each goal/time step less accurately.
 
         The option ``keep_soft_constraints`` controls how the epsilon variables introduced in the target
@@ -992,18 +994,32 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
             # Make objective for soft constraints and minimization goals
             if not goal.critical:
                 if goal.has_target_bounds:
+                    if is_path_goal and options['scale_by_problem_size']:
+                        goal_m, goal_M = self.__min_max_arrays(goal, target_shape=len(self.times()))
+                        goal_active = np.isfinite(goal_m) | np.isfinite(goal_M)
+                        n_active = np.sum(goal_active.astype(int), axis=0)
+                    else:
+                        n_active = 1
+
                     def _objective_func(problem, ensemble_member,
-                                        goal=goal, epsilon=epsilon, is_path_goal=is_path_goal):
+                                        goal=goal, epsilon=epsilon, is_path_goal=is_path_goal,
+                                        n_active=n_active):
                         if is_path_goal:
                             epsilon = problem.variable(epsilon.name())
                         else:
                             epsilon = problem.extra_variable(epsilon.name(), ensemble_member)
 
-                        return goal.weight * ca.constpow(epsilon, goal.order)
+                        return goal.weight * ca.constpow(epsilon, goal.order) / n_active
                 else:
-                    def _objective_func(problem, ensemble_member, goal=goal):
+                    if is_path_goal and options['scale_by_problem_size']:
+                        n_active = len(self.times())
+                    else:
+                        n_active = 1
+
+                    def _objective_func(problem, ensemble_member, goal=goal, is_path_goal=is_path_goal,
+                                        n_active=n_active):
                         f = goal.function(problem, ensemble_member) / goal.function_nominal
-                        return goal.weight * ca.constpow(f, goal.order)
+                        return goal.weight * ca.constpow(f, goal.order) / n_active
 
                 objectives.append(_objective_func)
 
