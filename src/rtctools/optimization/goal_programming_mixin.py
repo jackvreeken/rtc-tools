@@ -509,9 +509,9 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
 
         return seed
 
-    def __n_objectives(self, ensemble_member):
-        return ca.vertcat(*[o(self, ensemble_member) for o in self.__subproblem_objectives]).size1() \
-               + ca.vertcat(*[o(self, ensemble_member) for o in self.__subproblem_path_objectives]).size1()
+    def __n_objectives(self, subproblem_objectives, subproblem_path_objectives, ensemble_member):
+        return ca.vertcat(*[o(self, ensemble_member) for o in subproblem_objectives]).size1() \
+               + ca.vertcat(*[o(self, ensemble_member) for o in subproblem_path_objectives]).size1()
 
     def __objective(self, subproblem_objectives, n_objectives, ensemble_member):
         if len(subproblem_objectives) > 0:
@@ -525,7 +525,8 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
             return ca.MX(0)
 
     def objective(self, ensemble_member):
-        n_objectives = self.__n_objectives(ensemble_member)
+        n_objectives = self.__n_objectives(self.__subproblem_objectives, self.__subproblem_path_objectives,
+                                           ensemble_member)
         return self.__objective(self.__subproblem_objectives, n_objectives, ensemble_member)
 
     def __path_objective(self, subproblem_path_objectives, n_objectives, ensemble_member):
@@ -540,7 +541,8 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
             return ca.MX(0)
 
     def path_objective(self, ensemble_member):
-        n_objectives = self.__n_objectives(ensemble_member)
+        n_objectives = self.__n_objectives(self.__subproblem_objectives, self.__subproblem_path_objectives,
+                                           ensemble_member)
         return self.__path_objective(self.__subproblem_path_objectives, n_objectives, ensemble_member)
 
     def constraints(self, ensemble_member):
@@ -1268,7 +1270,8 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
             for ensemble_member in range(problem.ensemble_size):
                 # NOTE: Users might be overriding objective() and/or path_objective(). Use the
                 # private methods that work only on the goals.
-                n_objectives = len(subproblem_objectives) + len(subproblem_path_objectives)
+                n_objectives = problem.__n_objectives(
+                    subproblem_objectives, subproblem_path_objectives, ensemble_member)
                 expr = problem.__objective(subproblem_objectives, n_objectives, ensemble_member)
                 expr += ca.sum1(problem.map_path_expression(
                     problem.__path_objective(subproblem_path_objectives, n_objectives, ensemble_member),

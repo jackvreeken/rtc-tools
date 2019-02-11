@@ -244,3 +244,71 @@ class TestVectorGoals(TestCase):
 
         self.assertListEqual(self.problem1._objective_values, self.problem2._objective_values)
         self.assertTrue(np.array_equal(results1['x'], results2['x']))
+
+
+class ScaleByProblemSizeMixin:
+
+    def goal_programming_options(self):
+        options = super().goal_programming_options()
+        options['scale_by_problem_size'] = True
+        return options
+
+
+class ModelGoalsScale(ScaleByProblemSizeMixin, ModelGoals):
+    pass
+
+
+class ModelGoalsVectorScale(ScaleByProblemSizeMixin, ModelGoalsVector):
+    pass
+
+
+class ModelPathGoalsScale(ScaleByProblemSizeMixin, ModelPathGoals):
+    pass
+
+
+class ModelPathGoalsVectorScale(ScaleByProblemSizeMixin, ModelPathGoalsVector):
+    pass
+
+
+class TestVectorGoalsScaleProblemSize(TestCase):
+
+    def test_vector_goals(self):
+        self.problem1 = ModelGoalsScale()
+        self.problem2 = ModelGoalsVectorScale()
+        self.problem1.optimize()
+        self.problem2.optimize()
+
+        results1 = self.problem1.extract_results()
+        results2 = self.problem2.extract_results()
+
+        self.assertListEqual(self.problem1._objective_values, self.problem2._objective_values)
+        self.assertTrue(np.array_equal(results1['x'], results2['x']))
+
+    def test_path_vector_goals_scaled_vs_non_scaled(self):
+        self.problem1 = ModelPathGoals()
+        self.problem1_scaled = ModelPathGoalsScale()
+        self.problem2 = ModelPathGoalsVector()
+        self.problem2_scaled = ModelPathGoalsVectorScale()
+
+        self.problem1.optimize()
+        self.problem1_scaled.optimize()
+        self.problem2.optimize()
+        self.problem2_scaled.optimize()
+
+        self.assertNotEqual(self.problem1._objective_values, self.problem1_scaled._objective_values)
+        self.assertLess(self.problem1_scaled.objective_value, self.problem1.objective_value)
+
+        self.assertNotEqual(self.problem2._objective_values, self.problem2_scaled._objective_values)
+        self.assertLess(self.problem2_scaled.objective_value, self.problem2.objective_value)
+
+    def test_path_vector_goals_simple(self):
+        self.problem1 = ModelPathGoalsScale()
+        self.problem2 = ModelPathGoalsVectorScale()
+        self.problem1.optimize()
+        self.problem2.optimize()
+
+        results1 = self.problem1.extract_results()
+        results2 = self.problem2.extract_results()
+
+        self.assertListEqual(self.problem1._objective_values, self.problem2._objective_values)
+        self.assertTrue(np.array_equal(results1['x'], results2['x']))
