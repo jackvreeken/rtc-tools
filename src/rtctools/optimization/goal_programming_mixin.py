@@ -953,7 +953,7 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
                     n_times = len(goal.target_min.times)
                     target_min_slice_inds = ~np.all(np.broadcast_to(inds.transpose(), (goal.size, n_times)), axis=1)
                 elif isinstance(goal.target_min, np.ndarray):
-                    target_min = goal.target_min
+                    target_min = goal.target_min.copy()
                     inds = np.logical_or(np.isnan(target_min), np.isneginf(target_min))
                     target_min[inds] = -sys.float_info.max
                     target_min_slice_inds = ~inds
@@ -976,7 +976,7 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
                     n_times = len(goal.target_max.times)
                     target_max_slice_inds = ~np.all(np.broadcast_to(inds.transpose(), (goal.size, n_times)), axis=1)
                 elif isinstance(goal.target_max, np.ndarray):
-                    target_max = goal.target_max
+                    target_max = goal.target_max.copy()
                     inds = np.logical_or(np.isnan(target_max), np.isposinf(target_max))
                     target_max[inds] = sys.float_info.max
                     target_max_slice_inds = ~inds
