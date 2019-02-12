@@ -678,7 +678,9 @@ class OptimizationProblem(metaclass=ABCMeta):
                 (k, r) = divmod(t - ts[0], dt)
                 k = int(k)
 
-                if r != 0:
+                # Note that for the case k = n - 1 and r = small epsilon,
+                # we need to add the k + 1 < n check.
+                if r != 0 and k + 1 < n:
                     if mode == self.INTERPOLATION_LINEAR:
                         return fs[k] + r * (fs[k + 1] - fs[k]) / dt
                     elif mode == self.INTERPOLATION_PIECEWISE_CONSTANT_FORWARD:
