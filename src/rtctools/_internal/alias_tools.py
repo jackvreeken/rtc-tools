@@ -1,4 +1,5 @@
 from collections.abc import MutableSet
+from typing import Generic, Iterator, Mapping, Tuple, TypeVar
 
 from pymoca.backends.casadi.alias_relation import AliasRelation  # noqa: F401
 
@@ -91,7 +92,11 @@ class OrderedSet(MutableSet):
 # End snippet
 
 
-class AliasDict:
+KT = TypeVar('KT')
+VT = TypeVar('VT')
+
+
+class AliasDict(Generic[KT, VT]):
     def __init__(self, relation, other=None, signed_values=True):
         self.__relation = relation
         self.__d = {}
@@ -99,21 +104,21 @@ class AliasDict:
         if other:
             self.update(other)
 
-    def __canonical_signed(self, key):
+    def __canonical_signed(self, key: KT):
         var, sign = self.__relation.canonical_signed(key)
         if self.__signed_values:
             return var, sign
         else:
             return var, 1
 
-    def __setitem__(self, key, val):
+    def __setitem__(self, key: KT, val: VT):
         var, sign = self.__canonical_signed(key)
         if isinstance(val, tuple):
             self.__d[var] = [-c if sign < 0 else c for c in val]
         else:
             self.__d[var] = -val if sign < 0 else val
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: KT):
         var, sign = self.__canonical_signed(key)
         val = self.__d[var]
         if isinstance(val, tuple):
@@ -121,42 +126,42 @@ class AliasDict:
         else:
             return -val if sign < 0 else val
 
-    def __delitem__(self, key):
+    def __delitem__(self, key: KT):
         var, sign = self.__canonical_signed(key)
         del self.__d[var]
 
-    def __contains__(self, key):
+    def __contains__(self, key: KT):
         var, sign = self.__canonical_signed(key)
         return var in self.__d
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.__d)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[KT]:
         return iter(self.__d)
 
-    def update(self, other):
+    def update(self, other: Mapping[KT, VT]):
         for key, value in other.items():
             self[key] = value
 
-    def get(self, key, default=None):
+    def get(self, key: KT, default: VT = None):
         if key in self:
             return self[key]
         else:
             return default
 
-    def setdefault(self, key, default):
+    def setdefault(self, key: KT, default: VT):
         if key in self:
             return self[key]
         else:
             self[key] = default
             return default
 
-    def keys(self):
+    def keys(self) -> Iterator[KT]:
         return self.__d.keys()
 
-    def values(self):
+    def values(self) -> Iterator[VT]:
         return self.__d.values()
 
-    def items(self):
+    def items(self) -> Iterator[Tuple[KT, VT]]:
         return self.__d.items()

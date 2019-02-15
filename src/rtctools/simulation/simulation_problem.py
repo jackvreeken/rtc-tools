@@ -770,7 +770,7 @@ class SimulationProblem:
         raise NotImplementedError
 
     @cached
-    def initial_state(self) -> AliasDict:
+    def initial_state(self) -> AliasDict[str, float]:
         """
         The initial state.
 
@@ -793,7 +793,7 @@ class SimulationProblem:
         return initial_state_dict
 
     @cached
-    def seed(self) -> AliasDict:
+    def seed(self) -> AliasDict[str, float]:
         """
         Seed values providing an initial guess for the t0 states.
 

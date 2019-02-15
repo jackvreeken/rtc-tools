@@ -346,7 +346,7 @@ class OptimizationProblem(metaclass=ABCMeta):
         """
         return 1.0
 
-    def parameters(self, ensemble_member: int) -> AliasDict:
+    def parameters(self, ensemble_member: int) -> AliasDict[str, Union[bool, int, float, ca.MX]]:
         """
         Returns a dictionary of parameters.
 
@@ -356,7 +356,7 @@ class OptimizationProblem(metaclass=ABCMeta):
         """
         return AliasDict(self.alias_relation)
 
-    def constant_inputs(self, ensemble_member: int) -> AliasDict:
+    def constant_inputs(self, ensemble_member: int) -> AliasDict[str, Timeseries]:
         """
         Returns a dictionary of constant inputs.
 
@@ -366,7 +366,7 @@ class OptimizationProblem(metaclass=ABCMeta):
         """
         return AliasDict(self.alias_relation)
 
-    def lookup_tables(self, ensemble_member: int) -> AliasDict:
+    def lookup_tables(self, ensemble_member: int) -> AliasDict[str, 'LookupTable']:
         """
         Returns a dictionary of lookup tables.
 
@@ -376,7 +376,8 @@ class OptimizationProblem(metaclass=ABCMeta):
         """
         return AliasDict(self.alias_relation)
 
-    def bounds(self) -> AliasDict:
+    def bounds(self) -> AliasDict[str, Tuple[Union[float, np.ndarray, Timeseries],
+                                             Union[float, np.ndarray, Timeseries]]]:
         """
         Returns variable bounds as a dictionary mapping variable names to a pair of bounds.
         A bound may be a constant, or a time series.
@@ -392,7 +393,7 @@ class OptimizationProblem(metaclass=ABCMeta):
         """
         return AliasDict(self.alias_relation)
 
-    def history(self, ensemble_member: int) -> AliasDict:
+    def history(self, ensemble_member: int) -> AliasDict[str, Timeseries]:
         """
         Returns the state history.  Uses the initial_state() method by default.
 
@@ -438,7 +439,7 @@ class OptimizationProblem(metaclass=ABCMeta):
         """
         return self.times()[0]
 
-    def initial_state(self, ensemble_member: int) -> AliasDict:
+    def initial_state(self, ensemble_member: int) -> AliasDict[str, float]:
         """
         The initial state.
 
@@ -466,7 +467,7 @@ class OptimizationProblem(metaclass=ABCMeta):
         """
         return ca.MX(0)
 
-    def seed(self, ensemble_member: int) -> AliasDict:
+    def seed(self, ensemble_member: int) -> AliasDict[str, Union[float, Timeseries]]:
         """
         Seeding data.  The optimization algorithm is seeded with the data returned by this method.
 
