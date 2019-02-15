@@ -264,6 +264,12 @@ class ModelHistory(Model):
         h['w'] = Timeseries(np.array([-0.1, 0.0]), np.array([0.9, np.nan]))
         return h
 
+    def variable_nominal(self, variable):
+        if variable in {'x', 'w'}:
+            return 2.0
+        else:
+            return super().variable_nominal(variable)
+
 
 class TestModelicaMixin(TestCase, unittest.TestCase):
 
@@ -555,6 +561,9 @@ class TestModelicaMixinHistory(TestCase, unittest.TestCase):
         self.tolerance = 1e-6
 
     def test_initial_der_x(self):
+        self.assertNotEqual(self.problem.variable_nominal('x'), 1.0)
+        self.assertNotEqual(self.problem.variable_nominal('w'), 1.0)
+
         self.assertAlmostEqual(
             self.results['initial_der(x)'], 2.0, self.tolerance
         )

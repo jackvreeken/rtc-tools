@@ -1040,6 +1040,7 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
 
                     if np.isnan(history_timeseries.values[-1]):
                         t0_val = self.state_vector(variable, ensemble_member=ensemble_member)[0]
+                        t0_val *= self.variable_nominal(variable)
                     else:
                         t0_val = self.interpolate(
                             t0,
