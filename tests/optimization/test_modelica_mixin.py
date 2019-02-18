@@ -271,6 +271,37 @@ class ModelHistory(Model):
             return super().variable_nominal(variable)
 
 
+class ModelSymbolicParameters(ModelicaMixin, CollocatedIntegratedOptimizationProblem):
+
+    def __init__(self):
+        super().__init__(
+            input_folder=data_path(),
+            output_folder=data_path(),
+            model_name="ModelSymbolicParameters",
+            model_folder=data_path(),
+        )
+
+    def times(self, variable=None):
+        # Collocation points
+        return np.linspace(0.0, 1.0, 21)
+
+    def parameters(self, ensemble_member):
+        parameters = super().parameters(ensemble_member)
+        parameters["u_max"] = 2.0
+        parameters["w_seed"] = 0.2
+        return parameters
+
+    def objective(self, ensemble_member):
+        # Quadratic penalty on state 'x' at final time
+        xf = self.state_at("x", self.times("x")[-1], ensemble_member=ensemble_member)
+        return xf ** 2
+
+    def compiler_options(self):
+        compiler_options = super().compiler_options()
+        compiler_options["cache"] = False
+        return compiler_options
+
+
 class TestModelicaMixin(TestCase, unittest.TestCase):
 
     def setUp(self):
@@ -570,3 +601,13 @@ class TestModelicaMixinHistory(TestCase, unittest.TestCase):
         self.assertAlmostEqual(
             self.results['initial_der(w)'], (self.results['w'][0] - 0.9) / 0.1, self.tolerance
         )
+
+
+class TestModelicaMixinSymbolicParameters(TestCase, unittest.TestCase):
+
+    def setUp(self):
+        self.problem = ModelSymbolicParameters()
+        self.tolerance = 1e-6
+
+    def test_symbolic_seed(self):
+        self.assertTrue(np.all(self.problem.seed(0)['w'].values == 0.2))
