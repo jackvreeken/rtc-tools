@@ -223,7 +223,7 @@ class ModelicaMixin(OptimizationProblem):
                     # If start contains symbolics, try substituting parameter values
                     if isinstance(start, ca.MX) and not start.is_constant():
                         [start] = substitute_in_external([start], self.__mx['parameters'], parameter_values)
-                        if not start.is_constant():
+                        if not start.is_constant() or np.isnan(float(start)):
                             raise Exception('ModelicaMixin: Could not resolve initial value for {}'.format(sym_name))
 
                     start = v.python_type(start)
@@ -264,14 +264,14 @@ class ModelicaMixin(OptimizationProblem):
             m_ = v.min
             if isinstance(m_, ca.MX) and not m_.is_constant():
                 [m_] = substitute_in_external([m_], self.__mx['parameters'], parameter_values)
-                if not m_.is_constant():
+                if not m_.is_constant() or np.isnan(float(m_)):
                     raise Exception('Could not resolve lower bound for variable {}'.format(sym_name))
             m_ = float(m_)
 
             M_ = v.max
             if isinstance(M_, ca.MX) and not M_.is_constant():
                 [M_] = substitute_in_external([M_], self.__mx['parameters'], parameter_values)
-                if not M_.is_constant():
+                if not M_.is_constant() or np.isnan(float(M_)):
                     raise Exception('Could not resolve upper bound for variable {}'.format(sym_name))
             M_ = float(M_)
 
@@ -306,7 +306,7 @@ class ModelicaMixin(OptimizationProblem):
                 # If start contains symbolics, try substituting parameter values
                 if isinstance(start, ca.MX) and not start.is_constant():
                     [start] = substitute_in_external([start], self.__mx['parameters'], parameter_values)
-                    if not start.is_constant():
+                    if not start.is_constant() or np.isnan(float(start)):
                         logger.error('ModelicaMixin: Could not resolve seed value for {}'.format(sym_name))
                         continue
 
@@ -348,7 +348,7 @@ class ModelicaMixin(OptimizationProblem):
             if isinstance(nominal, ca.MX) and not nominal.is_constant():
                 [nominal] = substitute_in_external([nominal], self.__mx['parameters'], parameter_values)
 
-            if not isinstance(nominal, ca.MX) or nominal.is_constant():
+            if (not isinstance(nominal, ca.MX) and not np.isnan(nominal)) or nominal.is_constant():
                 nominal = float(nominal)
 
                 # Take absolute value (nominal sign is meaningless- a nominal is a magnitude)
