@@ -288,6 +288,7 @@ class ModelSymbolicParameters(ModelicaMixin, CollocatedIntegratedOptimizationPro
     def parameters(self, ensemble_member):
         parameters = super().parameters(ensemble_member)
         parameters["u_max"] = 2.0
+        parameters["x_initial"] = 1.1
         parameters["w_seed"] = 0.2
         return parameters
 
@@ -611,3 +612,8 @@ class TestModelicaMixinSymbolicParameters(TestCase, unittest.TestCase):
 
     def test_symbolic_seed(self):
         self.assertTrue(np.all(self.problem.seed(0)['w'].values == 0.2))
+
+    def test_symbolic_initial_state(self):
+        self.assertEqual(self.problem.initial_state(0)['x'], 1.1)
+        self.problem.optimize()
+        self.assertAlmostEqual(self.problem.extract_results()['x'][0], 1.1, self.tolerance)
