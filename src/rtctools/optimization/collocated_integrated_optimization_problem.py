@@ -271,14 +271,6 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                             "No values found for constant input {}".format(variable))
                     else:
                         values = constant_input.values
-                        if isinstance(values, ca.MX) and not values.is_constant():
-                            [values] = substitute_in_external(
-                                [values], symbolic_parameters, parameter_values)
-                        elif np.any([isinstance(value, ca.MX) and not value.is_constant() for value in values]):
-                            values = ca.vertcat(*values)
-                            [values] = substitute_in_external(
-                                [values], symbolic_parameters, parameter_values)
-                            values = ca.vertsplit(values)
                         constant_inputs_interpolated[variable] = self.interpolate(
                             collocation_times, constant_input.times, values, 0.0, 0.0)
 
