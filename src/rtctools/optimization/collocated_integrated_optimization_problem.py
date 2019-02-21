@@ -1029,12 +1029,9 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                     initial_state_constraint_states.append(expr)
                     initial_state_constraint_values.append(0.0)
 
-            # Call the external metadata function in one go, rather than two
             if len(initial_state_constraint_states) > 0:
                 g.append(ca.vertcat(*initial_state_constraint_states))
                 initial_state_constraint_values = ca.vertcat(*initial_state_constraint_values)
-                [initial_state_constraint_values] = substitute_in_external(
-                    [initial_state_constraint_values], [symbolic_parameters], [parameters])
                 lbg.append(initial_state_constraint_values)
                 ubg.append(initial_state_constraint_values)
 
