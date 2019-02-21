@@ -294,39 +294,15 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                 if v.ndim == 1:
                     ensemble_data["extra_constant_inputs"][k] = v[:, None]
 
-        # Resolve variable bounds
         bounds = self.bounds()
-        bound_keys, bound_values = zip(*bounds.items())
-        lb_values, ub_values = zip(*bound_values)
-        lb_values = np.array(lb_values, dtype=np.object)
-        ub_values = np.array(ub_values, dtype=np.object)
-        lb_mx_indices = np.where(
-            [isinstance(v, ca.MX) and not v.is_constant() for v in lb_values])
-        ub_mx_indices = np.where(
-            [isinstance(v, ca.MX) and not v.is_constant() for v in ub_values])
-        if len(lb_mx_indices[0]) > 0:
-            lb_values[lb_mx_indices] = substitute_in_external(
-                ca.vertcat(*lb_values[lb_mx_indices]),
-                symbolic_parameters,
-                self.__parameter_values_ensemble_member_0)
-        if len(ub_mx_indices[0]) > 0:
-            ub_values[ub_mx_indices] = substitute_in_external(
-                ca.vertcat(*ub_values[ub_mx_indices]),
-                symbolic_parameters,
-                self.__parameter_values_ensemble_member_0)
-        resolved_bounds = AliasDict(self.alias_relation)
-        for i, key in enumerate(bound_keys):
-            lb, ub = lb_values[i], ub_values[i]
-            resolved_bounds[key] = (float(lb) if isinstance(
-                lb, ca.MX) else lb, float(ub) if isinstance(ub, ca.MX) else ub)
 
         # Initialize control discretization
         control_size, discrete_control, lbx_control, ubx_control, x0_control, indices_control = \
-            self.discretize_controls(resolved_bounds)
+            self.discretize_controls(bounds)
 
         # Initialize state discretization
         state_size, discrete_state, lbx_state, ubx_state, x0_state, indices_state = \
-            self.discretize_states(resolved_bounds)
+            self.discretize_states(bounds)
 
         # Merge state vector offset dictionary
         self.__indices = indices_control
@@ -1558,7 +1534,7 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
     def controls(self):
         return self.__controls
 
-    def discretize_controls(self, resolved_bounds):
+    def discretize_controls(self, bounds):
         # Default implementation: One single set of control inputs for all
         # ensembles
         count = 0
@@ -1593,7 +1569,7 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                      n_times] = self.variable_is_discrete(variable)
 
             try:
-                bound = resolved_bounds[variable]
+                bound = bounds[variable]
             except KeyError:
                 pass
             else:
@@ -1694,7 +1670,7 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
     def algebraic_states(self):
         return self.__algebraic_states
 
-    def discretize_states(self, resolved_bounds):
+    def discretize_states(self, bounds):
         # Default implementation: States for all ensemble members
         ensemble_member_size = 0
 
@@ -1797,7 +1773,7 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                 if variable in self.integrated_states:
                     assert variable_size == 1
                     try:
-                        bound = resolved_bounds[variable]
+                        bound = bounds[variable]
                     except KeyError:
                         pass
                     else:
@@ -1828,7 +1804,7 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                     n_times = len(times)
 
                     try:
-                        bound = resolved_bounds[variable]
+                        bound = bounds[variable]
                     except KeyError:
                         pass
                     else:
@@ -1866,7 +1842,7 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                 variable_size = variable_sizes[variable]
 
                 try:
-                    bound = resolved_bounds[variable]
+                    bound = bounds[variable]
                 except KeyError:
                     pass
                 else:
