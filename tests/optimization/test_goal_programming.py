@@ -358,6 +358,37 @@ class TestGoalProgrammingPathGoalsReversed(TestGoalProgrammingPathGoals):
         self.tolerance = 1e-6
 
 
+class PathGoal1MaxEmpty(PathGoal1):
+    def __init__(self, optimization_problem):
+        times = optimization_problem.times()
+        self.target_max = Timeseries(times, np.full(len(times), np.nan))
+        super().__init__()
+
+
+class ModelPathGoalsOnePriority(ModelPathGoals):
+
+    def path_goals(self):
+        return [PathGoal1()]
+
+
+class ModelPathGoalsOnePriorityMaxEmpty(ModelPathGoalsOnePriority):
+
+    def path_goals(self):
+        return [PathGoal1MaxEmpty(self)]
+
+
+class TestGoalProgrammingPathGoalsMaxEmpty(TestCase):
+
+    def setUp(self):
+        self.problem = ModelPathGoalsOnePriority()
+        self.problem_max_empty = ModelPathGoalsOnePriorityMaxEmpty()
+        self.problem.optimize()
+        self.problem_max_empty.optimize()
+
+    def test_objective_exactly_equal(self):
+        self.assertEqual(self.problem.objective_value, self.problem_max_empty.objective_value)
+
+
 class TestGoalMinU(Goal):
 
     def function(self, optimization_problem, ensemble_member):

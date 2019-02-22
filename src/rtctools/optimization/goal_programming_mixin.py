@@ -1053,7 +1053,7 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
                                               (f - eps * (bound - target) - target) / nominal,
                                               0.0)[inds]
 
-                        if goal.has_target_min:
+                        if goal.has_target_min and np.any(target_min_slice_inds):
                             _f = functools.partial(
                                 _soft_constraint_func,
                                 target=min_variable,
@@ -1061,7 +1061,7 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
                                 inds=target_min_slice_inds)
                             constraint = _GoalConstraint(goal, _f, 0.0, np.inf, False)
                             soft_constraints[ensemble_member].append(constraint)
-                        if goal.has_target_max:
+                        if goal.has_target_max and np.any(target_max_slice_inds):
                             _f = functools.partial(
                                 _soft_constraint_func,
                                 target=max_variable,
