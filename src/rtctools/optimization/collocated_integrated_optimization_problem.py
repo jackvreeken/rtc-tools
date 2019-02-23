@@ -986,6 +986,10 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
 
                     if not np.isnan(val):
                         idx = self.__indices_as_lists[ensemble_member][variable][0]
+
+                        if val < lbx[idx] or val > ubx[idx]:
+                            logger.warning("Initial value {} for variable '{}' outside bounds.".format(val, variable))
+
                         lbx[idx] = ubx[idx] = val
 
             initial_derivative_constraints = []
