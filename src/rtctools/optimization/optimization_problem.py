@@ -14,6 +14,10 @@ from .timeseries import Timeseries
 logger = logging.getLogger("rtctools")
 
 
+# Typical type for a bound on a variable
+BT = Union[float, np.ndarray, Timeseries]
+
+
 class OptimizationProblem(DataStoreAccessor, metaclass=ABCMeta):
     """
     Base class for all optimization problems.
@@ -385,8 +389,98 @@ class OptimizationProblem(DataStoreAccessor, metaclass=ABCMeta):
         """
         return AliasDict(self.alias_relation)
 
-    def bounds(self) -> AliasDict[str, Tuple[Union[float, np.ndarray, Timeseries],
-                                             Union[float, np.ndarray, Timeseries]]]:
+    @staticmethod
+    def merge_bounds(a: Tuple[BT, BT], b: Tuple[BT, BT]) -> Tuple[BT, BT]:
+        """
+        Returns a pair of bounds which is the intersection of the two pairs of
+        bounds given as input.
+
+        :param a: First pair ``(upper, lower)`` bounds
+        :param b: Second pair ``(upper, lower)`` bounds
+
+        :returns: A pair of ``(upper, lower)`` bounds which is the
+                  intersection of the two input bounds.
+        """
+        a, A = a
+        b, B = b
+
+        # Make sure we are dealing with the correct types
+        if __debug__:
+            for v in (a, A, b, B):
+                if isinstance(v, np.ndarray):
+                    assert v.ndim == 1
+                    assert np.issubdtype(v.dtype, np.number)
+                else:
+                    assert isinstance(v, (float, int, Timeseries))
+
+        all_bounds = [a, A, b, B]
+
+        # First make sure that we treat single element vectors as scalars
+        for i, v in enumerate(all_bounds):
+            if isinstance(v, np.ndarray) and np.prod(v.shape) == 1:
+                all_bounds[i] = v.item()
+
+        # Upcast lower bounds to be of equal type, and upper bounds as well.
+        for i, j in [(0, 2), (2, 0), (1, 3), (3, 1)]:
+            v1 = all_bounds[i]
+            v2 = all_bounds[j]
+
+            # We only check for v1 being of a "smaller" type than v2, as we
+            # know we will encounter the reverse as well.
+            if isinstance(v1, type(v2)):
+                # Same type, nothing to do.
+                continue
+            elif isinstance(v1, (int, float)) and isinstance(v2, Timeseries):
+                all_bounds[i] = Timeseries(v2.times, np.full_like(v2.values, v1))
+            elif isinstance(v1, np.ndarray) and isinstance(v2, Timeseries):
+                if v2.values.ndim != 2 or len(v1) != v2.values.shape[1]:
+                    raise Exception(
+                        "Mismatching vector size when upcasting to Timeseries, {} vs. {}.".format(v1, v2))
+                all_bounds[i] = Timeseries(v2.times, np.broadcast_to(v1, v2.values.shape))
+            elif isinstance(v1, (int, float)) and isinstance(v2, np.ndarray):
+                all_bounds[i] = np.full_like(v2, v1)
+
+        a, A, b, B = all_bounds
+
+        assert isinstance(a, type(b))
+        assert isinstance(A, type(B))
+
+        # Merge the bounds
+        m, M = None, None
+
+        if isinstance(a, np.ndarray):
+            if not a.shape == b.shape:
+                raise Exception("Cannot merge vector minimum bounds of non-equal size")
+            m = np.maximum(a, b)
+        elif isinstance(a, Timeseries):
+            if len(a.times) != len(b.times):
+                raise Exception("Cannot merge Timeseries minimum bounds with different lengths")
+            elif not np.all(a.times == b.times):
+                raise Exception("Cannot merge Timeseries minimum bounds with non-equal times")
+            elif not a.values.shape == b.values.shape:
+                raise Exception("Cannot merge vector Timeseries minimum bounds of non-equal size")
+            m = Timeseries(a.times, np.maximum(a.values, b.values))
+        else:
+            m = max(a, b)
+
+        if isinstance(A, np.ndarray):
+            if not A.shape == B.shape:
+                raise Exception("Cannot merge vector maximum bounds of non-equal size")
+            M = np.minimum(A, B)
+        elif isinstance(A, Timeseries):
+            if len(A.times) != len(B.times):
+                raise Exception("Cannot merge Timeseries maximum bounds with different lengths")
+            elif not np.all(A.times == B.times):
+                raise Exception("Cannot merge Timeseries maximum bounds with non-equal times")
+            elif not A.values.shape == B.values.shape:
+                raise Exception("Cannot merge vector Timeseries maximum bounds of non-equal size")
+            M = Timeseries(A.times, np.minimum(A.values, B.values))
+        else:
+            M = min(A, B)
+
+        return m, M
+
+    def bounds(self) -> AliasDict[str, Tuple[BT, BT]]:
         """
         Returns variable bounds as a dictionary mapping variable names to a pair of bounds.
         A bound may be a constant, or a time series.
