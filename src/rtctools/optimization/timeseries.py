@@ -10,7 +10,7 @@ class Timeseries:
     Time series object, bundling time stamps with values.
     """
 
-    def __init__(self, times: np.ndarray, values: Union[np.ndarray, list, ca.DM]):
+    def __init__(self, times: np.ndarray, values: Union[float, np.ndarray, list, ca.DM]):
         """
         Create a new time series object.
 
@@ -18,8 +18,16 @@ class Timeseries:
         :param values: Iterable of values.
         """
         self.__times = times
-        if len(values) == 1:
+
+        if isinstance(values, ca.DM):
+            # Note that a ca.DM object has no __iter__ attribute, which we
+            # want it to have. We also want it to store it as a _flat_ array,
+            # not a 2-D column vector.
+            assert values.shape[0] == 1 or values.shape[1] == 1, "Only 1D ca.DM objects supported"
+            values = values.toarray().ravel()
+        elif isinstance(values, (np.ndarray, list)) and len(values) == 1:
             values = values[0]
+
         if hasattr(values, '__iter__'):
             self.__values = np.array(values, dtype=np.float64, copy=True)
         else:
