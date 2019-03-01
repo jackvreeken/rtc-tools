@@ -144,17 +144,6 @@ class PIMixin(IOMixin):
         return options
 
     @cached
-    def parameters(self, ensemble_member):
-        # Call parent class first for default values.
-        parameters = super().parameters(ensemble_member)
-
-        for parameter, value in self.io.parameters(ensemble_member).items():
-            parameters[parameter] = value
-
-        # Done
-        return parameters
-
-    @cached
     def initial_state(self, ensemble_member):
         # Call parent class first for default values.
         initial_state = super().initial_state(ensemble_member)

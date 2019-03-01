@@ -254,6 +254,17 @@ class IOMixin(OptimizationProblem, metaclass=ABCMeta):
         return seed
 
     @cached
+    def parameters(self, ensemble_member):
+        # Call parent class first for default values.
+        parameters = super().parameters(ensemble_member)
+
+        for parameter, value in self.io.parameters(ensemble_member).items():
+            parameters[parameter] = value
+
+        # Done
+        return parameters
+
+    @cached
     def constant_inputs(self, ensemble_member):
         # Call parent class first for default values.
         constant_inputs = super().constant_inputs(ensemble_member)

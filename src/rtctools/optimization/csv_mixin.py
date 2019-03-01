@@ -182,23 +182,6 @@ class CSVMixin(IOMixin):
             return 1.0
 
     @cached
-    def parameters(self, ensemble_member):
-        # Call parent class first for default values.
-        parameters = super().parameters(ensemble_member)
-
-        # Load parameters from parameter config
-        for parameter in self.dae_variables['parameters']:
-            parameter = parameter.name()
-            try:
-                parameters[parameter] = self.io.get_parameter(parameter, ensemble_member)
-            except KeyError:
-                pass
-            else:
-                if logger.getEffectiveLevel() == logging.DEBUG:
-                    logger.debug("CSVMixin: Read parameter {} ".format(parameter))
-        return parameters
-
-    @cached
     def initial_state(self, ensemble_member):
         # Call parent class first for default values.
         initial_state = super().initial_state(ensemble_member)
