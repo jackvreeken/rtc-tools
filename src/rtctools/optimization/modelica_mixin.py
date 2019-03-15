@@ -206,28 +206,6 @@ class ModelicaMixin(OptimizationProblem):
         return parameters
 
     @cached
-    def constant_inputs(self, ensemble_member):
-        # Call parent class first for default values.
-        constant_inputs = super().constant_inputs(ensemble_member)
-
-        # Return input values from pymoca model
-        times = self.times()
-        constant_input_names = {sym.name() for sym in self.__mx['constant_inputs']}
-        for v in self.__pymoca_model.inputs:
-            if v.symbol.name() in constant_input_names:
-                if not np.isnan(v.value):
-                    constant_inputs[v.symbol.name()] = Timeseries(
-                        times, np.full_like(times, v.value))
-                    if logger.getEffectiveLevel() == logging.DEBUG:
-                        logger.debug(
-                            "Read constant input {} = {} from Modelica model".format(
-                                v.symbol.name(), v.value
-                            )
-                        )
-
-        return constant_inputs
-
-    @cached
     def initial_state(self, ensemble_member):
         initial_state = AliasDict(self.alias_relation)
 
