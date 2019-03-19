@@ -227,13 +227,7 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
             for i, symbol in enumerate(self.dae_variables['parameters']):
                 variable = symbol.name()
                 try:
-                    p_i = parameter_values[i] = parameters[variable]
-                    if isinstance(p_i, (ca.MX, ca.DM)):
-                        # Cannot use np.isnan on CasADi matrix types
-                        if p_i.is_constant() and np.isnan(float(p_i)):
-                            raise KeyError
-                    elif np.isnan(p_i):
-                        raise KeyError
+                    parameter_values[i] = parameters[variable]
                 except KeyError:
                     raise Exception(
                         "No value specified for parameter {}".format(variable))
