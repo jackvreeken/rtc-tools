@@ -347,10 +347,13 @@ class ModelicaMixin(OptimizationProblem):
             # If nominal contains parameter symbols, substitute them
             if isinstance(nominal, ca.MX) and not nominal.is_constant():
                 [nominal] = substitute_in_external([nominal], self.__mx['parameters'], parameter_values)
+                if not nominal.is_constant() or np.isnan(float(nominal)):
+                    logger.error('ModelicaMixin: Could not resolve nominal value for {}'.format(sym_name))
+                    continue
 
-            if (not isinstance(nominal, ca.MX) and not np.isnan(nominal)) or nominal.is_constant():
-                nominal = float(nominal)
+            nominal = float(nominal)
 
+            if not np.isnan(nominal):
                 # Take absolute value (nominal sign is meaningless- a nominal is a magnitude)
                 nominal = abs(nominal)
 
