@@ -27,3 +27,18 @@ Minimize absolute value
 .. autoclass:: rtctools.optimization.min_abs_goal_programming_mixin.MinAbsStateGoal
     :members: __init__
     :show-inheritance:
+
+Linearized order
+~~~~~~~~~~~~~~~~
+
+.. autoclass:: rtctools.optimization.linearized_order_gpmixin.LinearizedOrderGoalProgrammingMixin
+    :members: goal_programming_options
+    :show-inheritance:
+
+.. autoclass:: rtctools.optimization.linearized_order_gpmixin.LinearizedOrderGoal
+    :members:
+    :show-inheritance:
+
+.. autoclass:: rtctools.optimization.linearized_order_gpmixin.LinearizedOrderStateGoal
+    :members: __init__
+    :show-inheritance:
