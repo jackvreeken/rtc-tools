@@ -731,7 +731,7 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
         """
         return []
 
-    def __min_max_arrays(self, g, target_shape=None):
+    def _gp_min_max_arrays(self, g, target_shape=None):
         times = self.times()
 
         m, M = None, None
@@ -763,7 +763,7 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
 
         return m, M
 
-    def __validate_goals(self, goals, is_path_goal):
+    def _gp_validate_goals(self, goals, is_path_goal):
         goals = sorted(goals, key=lambda x: x.priority)
 
         options = self.goal_programming_options()
@@ -850,8 +850,8 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
                     fk_goal_map[fk] = goal
 
                     if prev is not None:
-                        goal_m, goal_M = self.__min_max_arrays(goal, target_shape)
-                        other_m, other_M = self.__min_max_arrays(prev, target_shape)
+                        goal_m, goal_M = self._gp_min_max_arrays(goal, target_shape)
+                        other_m, other_M = self._gp_min_max_arrays(prev, target_shape)
 
                         indices = np.where(np.logical_not(np.logical_or(
                             np.isnan(goal_m), np.isnan(other_m))))
@@ -870,7 +870,7 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
                                     'target maximum of goal {}'.format(goal, prev))
 
         for goal in goals:
-            goal_m, goal_M = self.__min_max_arrays(goal, target_shape)
+            goal_m, goal_M = self._gp_min_max_arrays(goal, target_shape)
             goal_lb = np.broadcast_to(goal.function_range[0], goal_m.shape)
             goal_ub = np.broadcast_to(goal.function_range[1], goal_M.shape)
 
@@ -905,7 +905,7 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
             if goal.relaxation < 0.0:
                 raise Exception('Relaxation of goal {} should be a nonnegative value'.format(goal))
 
-    def __goal_constraints(self, goals, sym_index, options, is_path_goal):
+    def _gp_goal_constraints(self, goals, sym_index, options, is_path_goal):
         """
         There are three ways in which a goal turns into objectives/constraints:
 
@@ -993,9 +993,11 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
 
             # Make objective for soft constraints and minimization goals
             if not goal.critical:
-                if goal.has_target_bounds:
+                if hasattr(goal, '_objective_func'):
+                    _objective_func = goal._objective_func
+                elif goal.has_target_bounds:
                     if is_path_goal and options['scale_by_problem_size']:
-                        goal_m, goal_M = self.__min_max_arrays(goal, target_shape=len(self.times()))
+                        goal_m, goal_M = self._gp_min_max_arrays(goal, target_shape=len(self.times()))
                         goal_active = np.isfinite(goal_m) | np.isfinite(goal_M)
                         n_active = np.sum(goal_active.astype(int), axis=0)
                     else:
@@ -1076,7 +1078,7 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
         if not is_path_goal:
             epsilon = epsilon[:1]
 
-        goal_m, goal_M = self.__min_max_arrays(goal, target_shape=epsilon.shape)
+        goal_m, goal_M = self._gp_min_max_arrays(goal, target_shape=epsilon.shape)
 
         if goal.has_target_bounds:
             # We use a violation variable formulation, with the violation
@@ -1155,7 +1157,7 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
                 except KeyError:
                     constraint_store[ensemble_member][fk] = other
 
-    def __soft_to_hard_constraints(self, goals, sym_index, is_path_goal):
+    def _gp_soft_to_hard_constraints(self, goals, sym_index, is_path_goal):
         if is_path_goal:
             constraint_store = self.__path_constraint_store
         else:
@@ -1262,7 +1264,7 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
                 constraint_store[ensemble_member][fk] = self.__goal_hard_constraint(
                     goal, epsilon, existing_constraint, ensemble_member, options, is_path_goal)
 
-    def __add_subproblem_objective_constraint(self):
+    def _gp_add_subproblem_objective_constraint(self):
         # We want to keep the additional variables/parameters we set around
         self.__problem_epsilons.extend(self.__subproblem_epsilons)
         self.__problem_path_epsilons.extend(self.__subproblem_path_epsilons)
@@ -1333,8 +1335,8 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
             raise Exception("The option 'violation_relaxation' cannot be used when 'keep_soft_constraints' is set.")
 
         # Validate goal definitions
-        self.__validate_goals(goals, is_path_goal=False)
-        self.__validate_goals(path_goals, is_path_goal=True)
+        self._gp_validate_goals(goals, is_path_goal=False)
+        self._gp_validate_goals(path_goals, is_path_goal=True)
 
         priorities = {int(goal.priority) for goal in itertools.chain(goals, path_goals) if not goal.is_empty}
 
@@ -1373,12 +1375,12 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
             (self.__subproblem_epsilons, self.__subproblem_objectives,
              self.__subproblem_soft_constraints, hard_constraints,
              self.__subproblem_parameters) = \
-                self.__goal_constraints(goals, i, options, is_path_goal=False)
+                self._gp_goal_constraints(goals, i, options, is_path_goal=False)
 
             (self.__subproblem_path_epsilons, self.__subproblem_path_objectives,
              self.__subproblem_path_soft_constraints, path_hard_constraints,
              self.__subproblem_path_timeseries) = \
-                self.__goal_constraints(path_goals, i, options, is_path_goal=True)
+                self._gp_goal_constraints(path_goals, i, options, is_path_goal=True)
 
             # Put hard constraints in the constraint stores
             self.__update_constraint_store(self.__constraint_store, hard_constraints)
@@ -1404,10 +1406,10 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
             self.priority_completed(priority)
 
             if options['keep_soft_constraints']:
-                self.__add_subproblem_objective_constraint()
+                self._gp_add_subproblem_objective_constraint()
             else:
-                self.__soft_to_hard_constraints(goals, i, is_path_goal=False)
-                self.__soft_to_hard_constraints(path_goals, i, is_path_goal=True)
+                self._gp_soft_to_hard_constraints(goals, i, is_path_goal=False)
+                self._gp_soft_to_hard_constraints(path_goals, i, is_path_goal=True)
 
         logger.info("Done goal programming")
 
