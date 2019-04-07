@@ -1120,6 +1120,8 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
             if options['fix_minimized_values'] and goal.relaxation == 0.0:
                 m = epsilon / goal.function_nominal
                 M = epsilon / goal.function_nominal
+                self.check_collocation_linearity = False
+                self.linear_collocation = False
             else:
                 m = -np.inf * np.ones(epsilon.shape)
                 M = (epsilon + goal.relaxation) / goal.function_nominal + options['constraint_relaxation']
@@ -1303,6 +1305,8 @@ class GoalProgrammingMixin(OptimizationProblem, metaclass=ABCMeta):
 
         if options['fix_minimized_values']:
             constraint = _GoalConstraint(None, _constraint_func, obj_val, obj_val, True)
+            self.check_collocation_linearity = False
+            self.linear_collocation = False
         else:
             obj_val += options['constraint_relaxation']
             constraint = _GoalConstraint(None, _constraint_func, -np.inf, obj_val, True)
