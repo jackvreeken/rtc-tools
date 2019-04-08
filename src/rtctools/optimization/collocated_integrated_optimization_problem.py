@@ -221,6 +221,18 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
             if self.__variable_sizes.get(variable, 1) > 1:
                 raise NotImplementedError("Vector symbol not supported for control state '{}'".format(variable))
 
+        # Path variables are not allowed to have nominals != 1.0
+        for variable in self.__path_variable_names:
+            if self.variable_nominal(variable) != 1.0:
+                raise Exception(
+                    "Specifying a nominal for path variable '{}' not allowed.".format(variable))
+
+        # Nominals for extra variables are not picked up
+        for variable in self.__extra_variable_names:
+            if self.variable_nominal(variable) != 1.0:
+                logger.warning(
+                    "Nominal for extra variable '{}' will be ignored.".format(variable))
+
         # Collocation times
         collocation_times = self.times()
         n_collocation_times = len(collocation_times)
