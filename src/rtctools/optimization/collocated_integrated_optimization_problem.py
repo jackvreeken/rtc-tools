@@ -221,18 +221,6 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
             if self.__variable_sizes.get(variable, 1) > 1:
                 raise NotImplementedError("Vector symbol not supported for control state '{}'".format(variable))
 
-        # Path variables are not allowed to have nominals != 1.0
-        for variable in self.__path_variable_names:
-            if self.variable_nominal(variable) != 1.0:
-                raise Exception(
-                    "Specifying a nominal for path variable '{}' not allowed.".format(variable))
-
-        # Nominals for extra variables are not picked up
-        for variable in self.__extra_variable_names:
-            if self.variable_nominal(variable) != 1.0:
-                logger.warning(
-                    "Nominal for extra variable '{}' will be ignored.".format(variable))
-
         # Collocation times
         collocation_times = self.times()
         n_collocation_times = len(collocation_times)
@@ -507,11 +495,19 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
             # Store initial path variables
             initial_path_variable_inds = []
 
+            path_variables_size = sum(self.__variable_sizes[v] for v in self.__path_variable_names)
+            path_variables_nominals = np.ones(path_variables_size)
+
+            offset = 0
             for variable in self.__path_variable_names:
                 step = len(self.times(variable))
                 initial_path_variable_inds.extend(self.__indices_as_lists[ensemble_member][variable][0::step])
 
-            ensemble_data["initial_path_variables"] = X[initial_path_variable_inds]
+                variable_size = self.__variable_sizes[variable]
+                path_variables_nominals[offset:offset + variable_size] = self.variable_nominal(variable)
+                offset += variable_size
+
+            ensemble_data["initial_path_variables"] = X[initial_path_variable_inds] * path_variables_nominals
 
         # Replace parameters which are constant across the entire ensemble
         constant_parameters = []
@@ -1169,6 +1165,14 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                 variable_size = self.__variable_sizes[variable]
                 values = self.state_vector(
                     variable, ensemble_member=ensemble_member)
+
+                nominal = self.variable_nominal(variable)
+                if isinstance(nominal, np.ndarray):
+                    nominal = np.broadcast_to(nominal, (n_collocation_times, variable_size)).transpose().ravel()
+                    values *= nominal
+                elif nominal != 1:
+                    values *= nominal
+
                 path_variables[j] = values.reshape((n_collocation_times, variable_size))[1:, :]
 
             accumulation_U[1 + 2 * len(
@@ -1844,6 +1848,9 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                         pass
                     else:
                         nominal = self.variable_nominal(variable)
+                        if isinstance(nominal, np.ndarray):
+                            nominal = np.broadcast_to(nominal, (n_times, variable_size)).transpose().ravel()
+
                         if bound[0] is not None:
                             if isinstance(bound[0], Timeseries):
                                 lower_bound = self.interpolate(
@@ -1881,10 +1888,11 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                 except KeyError:
                     pass
                 else:
+                    nominal = self.variable_nominal(variable)
                     if bound[0] is not None:
-                        lbx[offset:offset + variable_size] = bound[0]
+                        lbx[offset:offset + variable_size] = bound[0] / nominal
                     if bound[1] is not None:
-                        ubx[offset:offset + variable_size] = bound[1]
+                        ubx[offset:offset + variable_size] = bound[1] / nominal
 
                 # Warn for NaNs
                 if np.any(np.isnan(lbx[offset:offset + variable_size])):
@@ -1923,6 +1931,8 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                     try:
                         seed_k = seed[variable]
                         nominal = self.variable_nominal(variable)
+                        if isinstance(nominal, np.ndarray):
+                            nominal = np.broadcast_to(nominal, (n_times, variable_size)).transpose().ravel()
                         x0[offset:offset + n_times * variable_size] = self.interpolate(
                             times, seed_k.times, seed_k.values, 0, 0).transpose().ravel() / nominal
                     except KeyError:
@@ -1936,9 +1946,10 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
 
                 try:
                     seed_v = seed[variable]
+                    nominal = self.variable_nominal(variable)
                     if isinstance(seed_v, np.ndarray):
                         seed_v = seed_v.ravel()
-                    x0[offset:offset + variable_size] = seed_v
+                    x0[offset:offset + variable_size] = seed_v / nominal
                 except KeyError:
                     pass
 
@@ -2017,6 +2028,8 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                     .reshape((variable_size, n_collocation_times)).transpose()
             else:
                 results[variable] = X[offset:offset + n_collocation_times]
+
+            results[variable] *= self.variable_nominal(variable)
             offset += n_collocation_times * variable_size
 
         # Extract extra variables
@@ -2031,6 +2044,7 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
             else:
                 results[variable] = X[offset].ravel()
 
+            results[variable] *= self.variable_nominal(variable)
             offset += variable_size
 
         # Extract initial derivatives
@@ -2169,7 +2183,7 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
 
     def extra_variable(self, extra_variable, ensemble_member=0):
         indices = self.__indices[ensemble_member][extra_variable]
-        return self.solver_input[indices]
+        return self.solver_input[indices] * self.variable_nominal(extra_variable)
 
     def states_in(self, variable, t0=None, tf=None, ensemble_member=0):
         # Time stamps for this variable

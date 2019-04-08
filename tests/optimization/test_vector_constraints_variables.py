@@ -637,6 +637,101 @@ class TestVectorConstraints(TestCase):
         self.assertAlmostEqual(v1, ref, 1e-6)
 
 
+class AdditionalNominals:
+
+    def pre(self):
+        super().pre()
+
+        self._additional_vars_nominals = {}
+
+    def variable_nominal(self, variable):
+        if variable in self._additional_vars_nominals:
+            return self._additional_vars_nominals[variable]
+        else:
+            return super().variable_nominal(variable)
+
+
+class ModelAdditionalVariablesNominals(AdditionalNominals, ModelAdditionalVariables):
+
+    def pre(self):
+        super().pre()
+
+        nominals = np.linspace(0.5, 2.0, len(self.times()))
+
+        for i, v in enumerate(self._additional_vars):
+            self._additional_vars_nominals[v.name()] = nominals[i]
+
+
+class ModelAdditionalVariablesVectorNominals(AdditionalNominals, ModelAdditionalVariablesVector):
+
+    def pre(self):
+        super().pre()
+
+        nominals = np.linspace(0.5, 2.0, len(self.times()))
+
+        offset = 0
+        for v in self._additional_vars:
+            self._additional_vars_nominals[v.name()] = nominals[offset:offset + v.size1()]
+            offset += v.size1()
+
+
+class ModelAdditionalPathVariablesNominals(AdditionalNominals, ModelAdditionalPathVariables):
+
+    def pre(self):
+        super().pre()
+
+        for i, v in enumerate(self._additional_path_vars):
+            self._additional_vars_nominals[v.name()] = float(2 + i)
+
+
+class ModelAdditionalPathVariablesVectorNominals(AdditionalNominals, ModelAdditionalPathVariablesVector):
+
+    def pre(self):
+        super().pre()
+
+        self._additional_vars_nominals = {self._additional_path_var.name(): np.array([2, 3, 4])}
+
+
+class TestVectorNominals(TestCase):
+
+    def test_additional_variables(self):
+        self.problem1 = ModelAdditionalVariablesNominals()
+        self.problem2 = ModelAdditionalVariablesVectorNominals()
+        self.problem1.optimize()
+        self.problem2.optimize()
+
+        self.assertEqual(self.problem1.objective_value, self.problem2.objective_value)
+        self.assertTrue(np.array_equal(self.problem1.solver_output, self.problem2.solver_output))
+
+        results1 = self.problem1.extract_results()
+        results2 = self.problem2.extract_results()
+
+        v1 = np.hstack([results1[p.name()].ravel() for p in self.problem1._additional_vars])
+        v2 = np.hstack([results2[p.name()].ravel() for p in self.problem2._additional_vars])
+
+        self.assertTrue(np.array_equal(v1, v2))
+
+    def test_additional_path_variables(self):
+        self.problem1 = ModelAdditionalPathVariablesNominals()
+        self.problem2 = ModelAdditionalPathVariablesVectorNominals()
+        self.problem1.optimize()
+        self.problem2.optimize()
+
+        self.assertEqual(self.problem1.objective_value, self.problem2.objective_value)
+        self.assertTrue(np.array_equal(self.problem1.solver_output, self.problem2.solver_output))
+
+        results1 = self.problem1.extract_results()
+        results2 = self.problem2.extract_results()
+
+        ref = np.stack((results1['u'], results1['u']**2, results1['u']**3), axis=1)
+
+        v1 = np.stack(tuple(results1[p.name()] for p in self.problem1._additional_path_vars), axis=1)
+        v2 = results2[self.problem2._additional_path_var.name()]
+
+        self.assertTrue(np.array_equal(v1, v2))
+        self.assertAlmostEqual(v1, ref, 1e-6)
+
+
 class InvalidVectorConstraintLbg(ModelAdditionalVariablesVector):
 
     def constraints(self, ensemble_member):

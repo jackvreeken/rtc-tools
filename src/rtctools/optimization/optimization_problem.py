@@ -421,7 +421,7 @@ class OptimizationProblem(metaclass=ABCMeta):
         """
         return False
 
-    def variable_nominal(self, variable: str) -> float:
+    def variable_nominal(self, variable: str) -> Union[float, np.ndarray]:
         """
         Returns the nominal value of the variable.  Variables are scaled by replacing them with
         their nominal value multiplied by the new variable.
