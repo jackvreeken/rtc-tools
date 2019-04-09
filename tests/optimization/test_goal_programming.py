@@ -65,6 +65,7 @@ class Model(
     def compiler_options(self):
         compiler_options = super().compiler_options()
         compiler_options["cache"] = False
+        compiler_options['library_folders'] = []
         return compiler_options
 
 
@@ -307,6 +308,7 @@ class ModelPathGoals(
     def compiler_options(self):
         compiler_options = super().compiler_options()
         compiler_options["cache"] = False
+        compiler_options['library_folders'] = []
         return compiler_options
 
 
@@ -592,6 +594,7 @@ class ModelPathGoalsSmoothing(
     def compiler_options(self):
         compiler_options = super().compiler_options()
         compiler_options["cache"] = False
+        compiler_options['library_folders'] = []
         return compiler_options
 
 
@@ -676,6 +679,7 @@ class ModelStateGoals(
     def compiler_options(self):
         compiler_options = super().compiler_options()
         compiler_options["cache"] = False
+        compiler_options['library_folders'] = []
         return compiler_options
 
 

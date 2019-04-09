@@ -55,6 +55,7 @@ class Model(
     def compiler_options(self):
         compiler_options = super().compiler_options()
         compiler_options["cache"] = False
+        compiler_options['library_folders'] = []
         return compiler_options
 
 

@@ -90,6 +90,7 @@ class Model(ModelicaMixin, CollocatedIntegratedOptimizationProblem):
     def compiler_options(self):
         compiler_options = super().compiler_options()
         compiler_options["cache"] = False
+        compiler_options['library_folders'] = []
         return compiler_options
 
 
@@ -215,6 +216,7 @@ class ModelAlgebraic(ModelicaMixin, CollocatedIntegratedOptimizationProblem):
     def compiler_options(self):
         compiler_options = super().compiler_options()
         compiler_options["cache"] = False
+        compiler_options['library_folders'] = []
         return compiler_options
 
 
@@ -254,6 +256,7 @@ class ModelMixedInteger(ModelicaMixin, CollocatedIntegratedOptimizationProblem):
     def compiler_options(self):
         compiler_options = super().compiler_options()
         compiler_options["cache"] = False
+        compiler_options['library_folders'] = []
         return compiler_options
 
 
@@ -300,6 +303,7 @@ class ModelSymbolicParameters(ModelicaMixin, CollocatedIntegratedOptimizationPro
     def compiler_options(self):
         compiler_options = super().compiler_options()
         compiler_options["cache"] = False
+        compiler_options['library_folders'] = []
         return compiler_options
 
 
