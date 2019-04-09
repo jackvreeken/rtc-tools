@@ -1,5 +1,6 @@
 import itertools
 import logging
+import warnings
 from abc import ABCMeta, abstractmethod
 
 import casadi as ca
@@ -134,6 +135,9 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
         case, the control input at the final time step is not used.
 
         .. warning:: This is an experimental feature for :math:`0 < \theta < 1`.
+
+        .. deprecated:: 2.4
+           Support for semi-explicit collocation (theta < 1) will be removed in a future release.
         """
 
         # Default to implicit Euler collocation, which is cheaper to evaluate
@@ -429,6 +433,8 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
 
         # Establish integrator theta
         theta = self.theta
+        if theta < 1:
+            warnings.warn("Explicit collocation is deprecated and will be removed in a future version.", FutureWarning)
 
         # Set CasADi function options
         options = self.solver_options()
