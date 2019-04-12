@@ -494,21 +494,17 @@ class SimulationProblem:
         guess = self.__state_vector[:self.__states_end_index]
         next_state = self.__do_step(guess, ca.vertcat(dt, *self.__state_vector))
 
-        # make sure that the step converged sufficiently
-        largest_res = ca.norm_inf(self.__res_vals(next_state, ca.vertcat(self.__dt, *self.__state_vector)))
+        # Check convergence of rootfinder
+        rootfinder_stats = self.__do_step.stats()
 
-        # Check both ways in which IPOPT's tolerance can be specified
-        try:
-            tol = self.solver_options()['ipopt.tol']
-        except KeyError:
-            tol = self.solver_options().get('ipopt', {}).get('tol', 1.0e-8)
-
-        if largest_res > tol:
+        if not rootfinder_stats['success']:
             logger.warning(
-                'Simulation may have failed to converge at time {}. Residual value {} is greater than {}'.format(
-                    self.get_current_time(), largest_res, tol))
+                'Simulation has failed to converge at time {}. Solver failed with status {}'.format(
+                    self.get_current_time(), rootfinder_stats['nlpsol']['return_status']))
 
         if logger.getEffectiveLevel() == logging.DEBUG:
+            # compute max residual
+            largest_res = ca.norm_inf(self.__res_vals(next_state, ca.vertcat(self.__dt, *self.__state_vector)))
             logger.debug('Residual maximum magnitude: {:.2E}'.format(float(largest_res)))
 
         # Update state vector
