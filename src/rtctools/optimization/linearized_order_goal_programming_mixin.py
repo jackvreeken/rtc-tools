@@ -188,7 +188,12 @@ class LinearizedOrderGoalProgrammingMixin(GoalProgrammingMixin):
             def _objective_func(problem, ensemble_member,
                                 goal=goal, linear_variable=linear_variable, is_path_goal=is_path_goal,
                                 n_active=n_active):
-                return goal.weight * linear_variable / n_active
+                if is_path_goal:
+                    lin = problem.variable(linear_variable.name())
+                else:
+                    lin = problem.extra_variable(linear_variable.name(), ensemble_member)
+
+                return goal.weight * lin / n_active
 
             goal._objective_func = _objective_func
 

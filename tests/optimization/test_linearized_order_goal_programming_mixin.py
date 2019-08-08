@@ -32,6 +32,16 @@ class RangeGoalUOrder2(RangeGoalUOrder1):
     order = 2
 
 
+class RangeGoalUOrder2PerTimestep(RangeGoalUOrder2):
+
+    def __init__(self, optimization_problem, t):
+        self._t = t
+        super().__init__(optimization_problem)
+
+    def function(self, optimization_problem, ensemble_member):
+        return optimization_problem.state_at(self.state, self._t)
+
+
 class RangeGoalUOrder2Linearize(LinearizedOrderGoal, RangeGoalUOrder2):
     linearize_order = True
 
@@ -82,6 +92,15 @@ class ModelLinearGoalOrder2(LinearizedOrderGoalProgrammingMixin, ModelRangeUOrde
     pass
 
 
+class ModelLinearGoalOrder2PerTimestep(ModelLinearGoalOrder2):
+
+    def goals(self):
+        return [RangeGoalUOrder2PerTimestep(self, t) for t in self.times()]
+
+    def path_goals(self):
+        return [RangeGoalX()]
+
+
 class ModelLinearGoalOrder2OverruleNoLinearize(ModelLinearGoalOrder2):
 
     def path_goals(self):
@@ -108,6 +127,9 @@ class TestLinearGoalOrder(TestCase):
         cls.problem2_nonlinear_overrule = ModelLinearGoalOrder2OverruleNoLinearize()
         cls.problem2_nonlinear_overrule.optimize()
 
+        cls.problem2_linear_per_timestep = ModelLinearGoalOrder2PerTimestep()
+        cls.problem2_linear_per_timestep.optimize()
+
     def test_order_1_linear_equal(self):
         self.assertEqual(self.problem1.objective_value, self.problem1_linear.objective_value)
 
@@ -131,3 +153,7 @@ class TestLinearGoalOrder(TestCase):
 
     def test_order_2_linear_overrule_equal(self):
         self.assertEqual(self.problem2_linear.objective_value, self.problem2_linear_overrule.objective_value)
+
+    def test_order_2_per_timestep_equal(self):
+        self.assertEqual(self.problem2_linear_per_timestep.objective_value,
+                         self.problem2_linear.objective_value)
