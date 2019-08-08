@@ -70,7 +70,7 @@ class Model(
         return compiler_options
 
 
-class TestGoalMinimizeU(Goal):
+class GoalMinimizeU(Goal):
 
     def function(self, optimization_problem, ensemble_member):
         return optimization_problem.state_at("u", 0.5, ensemble_member=ensemble_member)
@@ -79,24 +79,24 @@ class TestGoalMinimizeU(Goal):
     order = 1
 
 
-class TestGoalPrio2MinimizeU(TestGoalMinimizeU):
+class GoalPrio2MinimizeU(GoalMinimizeU):
     priority = 2
 
 
-class TestGoalMinimizeSqU(TestGoalPrio2MinimizeU):
+class GoalMinimizeSqU(GoalPrio2MinimizeU):
     order = 2
 
 
-class TestGoalMinimizeAbsU(MinAbsGoal, TestGoalPrio2MinimizeU):
+class GoalMinimizeAbsU(MinAbsGoal, GoalPrio2MinimizeU):
     pass
 
 
-class TestInvalidGoalTargetAbsU(TestGoalMinimizeAbsU):
+class InvalidGoalTargetAbsU(GoalMinimizeAbsU):
     target_min = 0.0
     function_range = (0.0, 10.0)
 
 
-class TestGoalTargetU(StateGoal):
+class GoalTargetU(StateGoal):
     state = 'u'
     target_min = -1.9
     target_max = 1.9
@@ -106,34 +106,34 @@ class TestGoalTargetU(StateGoal):
 class ModelTargetU(Model):
 
     def path_goals(self):
-        return [TestGoalTargetU(self)]
+        return [GoalTargetU(self)]
 
 
 class ModelTargetMinimizeU(ModelTargetU):
 
     def goals(self):
-        return [TestGoalPrio2MinimizeU()]
+        return [GoalPrio2MinimizeU()]
 
     def path_goals(self):
-        return [TestGoalTargetU(self)]
+        return [GoalTargetU(self)]
 
 
 class ModelInvalidAbsoluteGoal(ModelTargetU, MinAbsGoalProgrammingMixin):
 
     def min_abs_goals(self):
-        return [TestInvalidGoalTargetAbsU()]
+        return [InvalidGoalTargetAbsU()]
 
 
 class ModelMinimizeSqU(ModelTargetU):
 
     def goals(self):
-        return [TestGoalMinimizeSqU()]
+        return [GoalMinimizeSqU()]
 
 
 class ModelMinimizeAbsU(ModelTargetU, MinAbsGoalProgrammingMixin):
 
     def min_abs_goals(self):
-        return [TestGoalMinimizeAbsU()]
+        return [GoalMinimizeAbsU()]
 
 
 class TestAbsoluteMinimization(TestCase):

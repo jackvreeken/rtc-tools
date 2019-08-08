@@ -56,7 +56,7 @@ class Model(
         return bounds
 
     def goals(self):
-        return [TestGoal1(), TestGoal2(), TestGoal3()]
+        return [Goal1(), Goal2(), Goal3()]
 
     def set_timeseries(self, timeseries_id, timeseries, ensemble_member, **kwargs):
         # Do nothing
@@ -69,7 +69,7 @@ class Model(
         return compiler_options
 
 
-class TestGoal1(Goal):
+class Goal1(Goal):
 
     def function(self, optimization_problem, ensemble_member):
         return optimization_problem.state_at("x", 0.5, ensemble_member=ensemble_member)
@@ -81,7 +81,7 @@ class TestGoal1(Goal):
     function_value_timeseries_id = "function_value"
 
 
-class TestGoal2(Goal):
+class Goal2(Goal):
 
     def function(self, optimization_problem, ensemble_member):
         return optimization_problem.state_at("x", 0.7, ensemble_member=ensemble_member)
@@ -91,7 +91,7 @@ class TestGoal2(Goal):
     target_min = 0.1
 
 
-class TestGoal3(Goal):
+class Goal3(Goal):
 
     def function(self, optimization_problem, ensemble_member):
         return optimization_problem.integral(
@@ -121,7 +121,7 @@ class TestGoalProgramming(TestCase):
         )
 
 
-class TestGoalNoMinMax(Goal):
+class GoalNoMinMax(Goal):
 
     def function(self, optimization_problem, ensemble_member):
         return optimization_problem.integral("x", ensemble_member=ensemble_member)
@@ -131,7 +131,7 @@ class TestGoalNoMinMax(Goal):
     order = 1
 
 
-class TestGoalLowMax(Goal):
+class GoalLowMax(Goal):
 
     def function(self, optimization_problem, ensemble_member):
         return optimization_problem.integral("x", ensemble_member=ensemble_member)
@@ -148,13 +148,13 @@ class TestGoalLowMax(Goal):
 class ModelNoMinMax(Model):
 
     def goals(self):
-        return [TestGoalNoMinMax()]
+        return [GoalNoMinMax()]
 
 
 class ModelLowMax(Model):
 
     def goals(self):
-        return [TestGoalLowMax()]
+        return [GoalLowMax()]
 
 
 class TestGoalProgrammingNoMinMax(TestCase):
@@ -174,7 +174,7 @@ class TestGoalProgrammingNoMinMax(TestCase):
         )
 
 
-class TestGoalMinimizeU(Goal):
+class GoalMinimizeU(Goal):
 
     def function(self, optimization_problem, ensemble_member):
         return optimization_problem.state_at("u", 0.5, ensemble_member=ensemble_member)
@@ -183,7 +183,7 @@ class TestGoalMinimizeU(Goal):
     order = 1
 
 
-class TestGoalMinimizeX(Goal):
+class GoalMinimizeX(Goal):
 
     def function(self, optimization_problem, ensemble_member):
         return optimization_problem.state_at("x", 0.5, ensemble_member=ensemble_member)
@@ -197,13 +197,13 @@ class TestGoalMinimizeX(Goal):
 class ModelMinimizeU(Model):
 
     def goals(self):
-        return [TestGoalMinimizeU()]
+        return [GoalMinimizeU()]
 
 
 class ModelMinimizeUandX(Model):
 
     def goals(self):
-        return [TestGoalMinimizeU(), TestGoalMinimizeX()]
+        return [GoalMinimizeU(), GoalMinimizeX()]
 
 
 class TestGoalProgrammingHoldMinimization(TestCase):
@@ -391,7 +391,7 @@ class TestGoalProgrammingPathGoalsMaxEmpty(TestCase):
         self.assertEqual(self.problem.objective_value, self.problem_max_empty.objective_value)
 
 
-class TestGoalMinU(Goal):
+class GoalMinU(Goal):
 
     def function(self, optimization_problem, ensemble_member):
         return optimization_problem.integral("u", ensemble_member=ensemble_member)
@@ -431,7 +431,7 @@ class ModelPathGoalsMixed(ModelPathGoals):
         return goals
 
     def goals(self):
-        return [TestGoalMinU()]
+        return [GoalMinU()]
 
     def priority_completed(self, priority):
         super().priority_completed(priority)
@@ -462,7 +462,7 @@ class PathGoal1CriticalTimeseries(Goal):
     critical = True
 
 
-class TestGoalLowerUCritical(Goal):
+class GoalLowerUCritical(Goal):
 
     def function(self, optimization_problem, ensemble_member):
         return optimization_problem.integral("u", ensemble_member=ensemble_member)
@@ -478,7 +478,7 @@ class ModelPathGoalsMixedCritical(ModelPathGoals):
         return [PathGoal1Critical(), PathGoal2()]
 
     def goals(self):
-        return [TestGoalLowerUCritical()]
+        return [GoalLowerUCritical()]
 
 
 class ModelPathGoalsMixedCriticalTimeseries(ModelPathGoals):
@@ -487,7 +487,7 @@ class ModelPathGoalsMixedCriticalTimeseries(ModelPathGoals):
         return [PathGoal1CriticalTimeseries(self), PathGoal2()]
 
     def goals(self):
-        return [TestGoalLowerUCritical()]
+        return [GoalLowerUCritical()]
 
 
 class TestGoalProgrammingPathGoalsMixed(TestGoalProgrammingPathGoals):
@@ -757,7 +757,7 @@ class ModelMinimizeTwoGoals(ModelMinimizeUandX):
         return goals
 
 
-class TestPathGoalMinimizeU(Goal):
+class PathGoalMinimizeU(Goal):
     def function(self, optimization_problem, ensemble_member):
         return optimization_problem.state("u")
 
@@ -765,7 +765,7 @@ class TestPathGoalMinimizeU(Goal):
     order = 1
 
 
-class TestPathGoalMinimizeX(Goal):
+class PathGoalMinimizeX(Goal):
     def function(self, optimization_problem, ensemble_member):
         return optimization_problem.state("x")
 
@@ -791,7 +791,7 @@ class ModelMinimizeTwoPathGoals(Model):
         return []
 
     def path_goals(self):
-        return [TestPathGoalMinimizeU(), TestPathGoalMinimizeX()]
+        return [PathGoalMinimizeU(), PathGoalMinimizeX()]
 
 
 class ModelMinimizeTwoTargetPathGoals(ModelMinimizeTwoPathGoals):
