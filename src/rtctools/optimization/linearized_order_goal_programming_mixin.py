@@ -40,8 +40,7 @@ class LinearizedOrderGoal(Goal):
 
         res_vals = ca.Function("res_vals", [x, ca.vertcat(a, b)], [f])
 
-        options = {'nlpsol': 'ipopt', 'nlpsol_options': {'print_time': 0, 'ipopt': {'print_level': 0}}}
-        do_step = ca.rootfinder("next_state", "nlpsol", res_vals, options)
+        do_step = ca.rootfinder("next_state", "fast_newton", res_vals)
 
         x = 0.0
         a = 0.0
