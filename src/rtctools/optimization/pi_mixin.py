@@ -96,7 +96,7 @@ class PIMixin(IOMixin):
                     raise Exception(
                         'PIMixin: Time stamps must be strictly increasing.')
 
-        if self.equidistant:
+        if self.__timeseries_import.dt:
             # Check if the timeseries are truly equidistant
             if self.pi_validate_timeseries:
                 dt = timeseries_import_times[1] - timeseries_import_times[0]
