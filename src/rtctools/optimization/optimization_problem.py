@@ -628,9 +628,7 @@ class OptimizationProblem(metaclass=ABCMeta):
                 # Early termination; nothing to interpolate
                 return fs.copy()
 
-            f = np.vectorize(lambda t_: self.__interpolate(
-                t_, ts, fs, f_left, f_right, mode))
-            return f(t)
+            return self.__interpolate(t, ts, fs, f_left, f_right, mode)
         else:
             if ts[0] == t:
                 # Early termination; nothing to interpolate
@@ -651,68 +649,40 @@ class OptimizationProblem(metaclass=ABCMeta):
         :param f_right: Function value right of rightmost time stamp.
         :param mode:    Interpolation mode.
 
+        Note that it is assumed that `ts` is sorted. No such assumption is made for `t`
+.
         :returns: The interpolated value.
         """
 
-        if t < ts[0]:
-            if f_left is not None:
-                return f_left
-            else:
-                raise Exception("CSVMixin: Point {} left of range".format(t))
-        if t > ts[-1]:
-            if f_right is not None:
-                return f_right
-            else:
-                raise Exception("CSVMixin: Point {} right of range".format(t))
+        if f_left is None:
+            if (min(t) if hasattr(t, '__iter__') else t) < ts[0]:
+                raise Exception("Interpolation: Point {} left of range".format(t))
 
-        if isinstance(ts, np.ndarray):
-            n = len(ts)
+        if f_right is None:
+            if (max(t) if hasattr(t, '__iter__') else t) > ts[-1]:
+                raise Exception("Interpolation: Point {} right of range".format(t))
+
+        if mode == self.INTERPOLATION_LINEAR:
+            # No need to handle f_left / f_right; NumPy already does this for us
+            return np.interp(t, ts, fs, f_left, f_right)
+        elif mode == self.INTERPOLATION_PIECEWISE_CONSTANT_FORWARD:
+            v = fs[np.maximum(np.searchsorted(ts, t, side='right') - 1, 0)]
+        elif mode == self.INTERPOLATION_PIECEWISE_CONSTANT_BACKWARD:
+            v = fs[np.minimum(np.searchsorted(ts, t, side='left'), len(ts) - 1)]
         else:
-            n = ts.size1()
+            raise NotImplementedError
 
-        if self.equidistant:
-            if n > 1:
-                # We don't cache this, as the user may specify a coarser set of
-                # time stamps for optimization variables.
-                dt = ts[1] - ts[0]
-
-                (k, r) = divmod(t - ts[0], dt)
-                k = int(k)
-
-                # Note that for the case k = n - 1 and r = small epsilon,
-                # we need to add the k + 1 < n check.
-                if r != 0 and k + 1 < n:
-                    if mode == self.INTERPOLATION_LINEAR:
-                        return fs[k] + r * (fs[k + 1] - fs[k]) / dt
-                    elif mode == self.INTERPOLATION_PIECEWISE_CONSTANT_FORWARD:
-                        return fs[k]
-                    elif mode == self.INTERPOLATION_PIECEWISE_CONSTANT_BACKWARD:
-                        return fs[k + 1]
-                    else:
-                        raise NotImplementedError
-                else:
-                    return fs[k]
-            else:
-                return fs[0]
+        # Handle f_left / f_right:
+        if hasattr(t, "__iter__"):
+            v[t < ts[0]] = f_left
+            v[t > ts[-1]] = f_right
         else:
-            for i in range(n - 1):
-                if t >= ts[i]:
-                    if t <= ts[i]:
-                        # This special case is needed to avoid interpolation if
-                        # not absolutely necessary.  Interpolation is
-                        # problematic if one of the interpolants is NaN.
-                        return fs[i]
-                    elif t < ts[i + 1]:
-                        if mode == self.INTERPOLATION_LINEAR:
-                            return fs[i] + (fs[i + 1] - fs[i]) / (ts[i + 1] - ts[i]) * (t - ts[i])
-                        elif mode == self.INTERPOLATION_PIECEWISE_CONSTANT_FORWARD:
-                            return fs[i]
-                        elif mode == self.INTERPOLATION_PIECEWISE_CONSTANT_BACKWARD:
-                            return fs[i + 1]
-                        else:
-                            raise NotImplementedError
-            if t == ts[-1]:
-                return fs[-1]
+            if t < ts[0]:
+                v = f_left
+            elif t > ts[-1]:
+                v = f_right
+
+        return v
 
     @abstractproperty
     def controls(self) -> List[str]:

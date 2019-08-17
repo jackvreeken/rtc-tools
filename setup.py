@@ -42,7 +42,7 @@ setup(
     packages = find_packages("src"),
     package_dir = {"": "src"},
     install_requires = ["casadi >= 3.2.0",
-                        "numpy >= 1.14.0",
+                        "numpy >= 1.16.0",
                         "scipy >= 1.0.0",
                         "pymoca >= 0.4.1",
                         "rtc-tools-channel-flow >= 1.1.0a1"],
