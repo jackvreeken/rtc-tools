@@ -155,5 +155,9 @@ class TestLinearGoalOrder(TestCase):
         self.assertEqual(self.problem2_linear.objective_value, self.problem2_linear_overrule.objective_value)
 
     def test_order_2_per_timestep_equal(self):
-        self.assertEqual(self.problem2_linear_per_timestep.objective_value,
-                         self.problem2_linear.objective_value)
+        # Sometimes an error in the last decimal, probably due to different
+        # order of instructions.
+        self.assertAlmostEqual(
+            self.problem2_linear_per_timestep.objective_value,
+            self.problem2_linear.objective_value,
+            1e-8)
