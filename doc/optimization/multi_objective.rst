@@ -31,14 +31,14 @@ Minimize absolute value
 Linearized order
 ~~~~~~~~~~~~~~~~
 
-.. autoclass:: rtctools.optimization.linearized_order_gpmixin.LinearizedOrderGoalProgrammingMixin
+.. autoclass:: rtctools.optimization.linearized_order_goal_programming_mixin.LinearizedOrderGoalProgrammingMixin
     :members: goal_programming_options
     :show-inheritance:
 
-.. autoclass:: rtctools.optimization.linearized_order_gpmixin.LinearizedOrderGoal
+.. autoclass:: rtctools.optimization.linearized_order_goal_programming_mixin.LinearizedOrderGoal
     :members:
     :show-inheritance:
 
-.. autoclass:: rtctools.optimization.linearized_order_gpmixin.LinearizedOrderStateGoal
+.. autoclass:: rtctools.optimization.linearized_order_goal_programming_mixin.LinearizedOrderStateGoal
     :members: __init__
     :show-inheritance:
