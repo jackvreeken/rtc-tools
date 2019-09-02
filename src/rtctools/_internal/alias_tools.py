@@ -166,5 +166,10 @@ class AliasDict(Generic[KT, VT]):
     def items(self) -> Iterator[Tuple[KT, VT]]:
         return self.__d.items()
 
+    def copy(self):
+        copy = AliasDict(self.__relation, None, self.__signed_values)
+        copy.__d = self.__d.copy()
+        return copy
+
     def __repr__(self):
         return self.__d.__repr__()
