@@ -1043,6 +1043,10 @@ class Timeseries:
         self.__end_datetime = end_datetime
 
     @property
+    def path(self):
+        return self.__path_xml
+
+    @property
     def binary_path(self):
         """
         The path for the binary data .bin file.
