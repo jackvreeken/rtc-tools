@@ -165,3 +165,6 @@ class AliasDict(Generic[KT, VT]):
 
     def items(self) -> Iterator[Tuple[KT, VT]]:
         return self.__d.items()
+
+    def __repr__(self):
+        return self.__d.__repr__()
