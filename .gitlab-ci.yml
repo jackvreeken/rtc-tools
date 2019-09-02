@@ -8,6 +8,7 @@ stages:
   - build
   - test
   - coverage
+  - examples
   - deploy
 
 # style
@@ -61,6 +62,34 @@ py37:linux:
     TOXENV: py37
   tags:
     - docker
+
+# run examples (only for tags)
+.job_template: &examples
+  stage: examples
+  script:
+    - tox -vv
+  only:
+    - tags
+  tags:
+    - docker
+
+examples35:linux:
+  <<: *examples
+  image: python:3.5-jessie
+  variables:
+    TOXENV: examples35
+
+examples36:linux:
+  <<: *examples
+  image: python:3.6-jessie
+  variables:
+    TOXENV: examples36
+
+examples37:linux:
+  <<: *examples
+  image: python:3.7-stretch
+  variables:
+    TOXENV: examples37
 
 # coverage
 coverage:
