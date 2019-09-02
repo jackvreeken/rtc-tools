@@ -177,6 +177,9 @@ class DataStore(metaclass=ABCMeta):
             raise KeyError("ensemble_member {} does not exist".format(ensemble_member))
         return self.__timeseries_datetimes, self.__timeseries_values[ensemble_member][variable]
 
+    def get_timeseries_names(self, ensemble_member: int = 0) -> Iterable[str]:
+        return self.__timeseries_values[ensemble_member].keys()
+
     def set_timeseries_sec(self,
                            times_in_sec: np.ndarray,
                            values: np.ndarray,
