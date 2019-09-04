@@ -70,7 +70,7 @@ class CSVMixin(IOMixin):
                 os.path.join(self._input_folder, 'parameters.csv'),
                 delimiter=self.csv_delimiter)
             for key in _parameters.dtype.names:
-                self.set_parameter(key, float(_parameters[key]))
+                self.io.set_parameter(key, float(_parameters[key]))
             logger.debug("CSVMixin: Read parameters.")
         except IOError:
             pass
@@ -87,7 +87,7 @@ class CSVMixin(IOMixin):
             self.__initial_state = {}
 
         # Check for collisions in __initial_state and __timeseries
-        for collision in set(self.__initial_state) & self.get_variables():
+        for collision in set(self.__initial_state) & set(self.get_variables()):
             if self.__initial_state[collision] == self.get_timeseries_values(collision)[0]:
                 continue
             else:

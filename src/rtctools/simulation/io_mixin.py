@@ -86,7 +86,7 @@ class IOMixin(SimulationProblem, metaclass=ABCMeta):
 
     def __set_input_variables(self, t_idx):
         for variable in self.get_variables():
-            if variable in self.__input_variables:
+            if variable in self.io.get_timeseries_names(0):
                 _, values = self.io.get_timeseries_sec(variable)
                 value = values[t_idx]
                 if np.isfinite(value):
