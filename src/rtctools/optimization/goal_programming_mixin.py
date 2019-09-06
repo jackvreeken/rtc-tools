@@ -97,6 +97,7 @@ class Goal(metaclass=ABCMeta):
         * The target provided must be contained in the function range.
         * The function nominal is used to scale the constraints.
         * If both a target_min and a target_max are set, the target maximum must be at least equal to minimum one.
+        * In a path goal, the target can be a Timeseries.
 
     In minimization goals:
         * The function range is not used and therefore cannot be set.
