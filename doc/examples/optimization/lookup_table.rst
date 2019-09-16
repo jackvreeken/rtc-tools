@@ -111,7 +111,7 @@ we declare a new ``pre()`` method, call ``super().pre()`` to ensure
 that the original method runs unmodified, and add in a variable declaration to
 store our list of intermediate results.
 
-We also want to convert our water level rane goal into a water volume range
+We also want to convert our water level range goal into a water volume range
 goal. We can access the spline function describing the water level-storage
 relation using the ``lookup_table()`` method. We cache the functions for
 convenience. The ``lookup_storage_V()`` method can convert timeseries objects,
