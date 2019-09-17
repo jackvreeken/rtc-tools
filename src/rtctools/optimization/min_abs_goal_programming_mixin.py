@@ -206,7 +206,7 @@ class MinAbsGoalProgrammingMixin(GoalProgrammingMixin):
                     else:
                         value = value.item()
 
-                seed[ensemble_member][goal.abs_variable.name()] = value
+                seed[ensemble_member][goal.abs_variable.name()] = np.abs(value)
 
         return seed
 
