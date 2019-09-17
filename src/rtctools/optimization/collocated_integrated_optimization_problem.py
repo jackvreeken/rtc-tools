@@ -110,6 +110,9 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
         A list of states that are integrated rather than collocated.
 
         .. warning:: This is an experimental feature.
+
+        .. deprecated:: 2.4
+           Support for integrated states will be removed in a future release.
         """
         return []
 
@@ -220,6 +223,10 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                 dt = times[1] - times[0]
 
             self.__initial_derivative_nominals[initial_der_name] = self.variable_nominal(variable) / dt
+
+        if self.integrated_states:
+            warnings.warn("Integrated states are deprecated and support will be removed in a future version.",
+                          FutureWarning)
 
         # Variables that are integrated states are not yet allowed to have size > 1
         for variable in self.integrated_states:
