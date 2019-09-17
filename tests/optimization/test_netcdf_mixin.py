@@ -116,7 +116,7 @@ class TestNetCDFMixin(TestCase):
 
     def test_write(self):
         self.problem.optimize()
-        self.results = self.problem.extract_results()
+        self.results = [self.problem.extract_results(i) for i in range(self.problem.ensemble_size)]
 
         bounds = self.problem.bounds()
         self.assertTrue(np.array_equal(bounds['u'][0].values, self.problem.get_timeseries('u_min').values))
@@ -174,8 +174,8 @@ class TestNetCDFMixin(TestCase):
             data = ma.filled(y[:, i], np.nan)
             if i == loc_c_index:
                 self.assertAlmostEqual(data[0], 1.98, delta=self.tolerance)
-                for j in range(1, 22):
-                    self.assertAlmostEqual(data[j], 3.0, delta=self.tolerance)
+                np.testing.assert_allclose(data, self.results[i]['y'], rtol=self.tolerance, atol=self.tolerance)
+                self.assertAlmostEqual(data[-1], 3.0, delta=self.tolerance)
             else:
                 self.assertTrue(np.all(np.isnan(data)))
 
