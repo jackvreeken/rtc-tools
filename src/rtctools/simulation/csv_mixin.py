@@ -123,7 +123,7 @@ class CSVMixin(IOMixin):
         times = self._simulation_times
 
         # Write output
-        names = ['time'] + sorted(set(self.__output.keys()))
+        names = ['time'] + sorted(set(self.output.keys()))
         formats = ['O'] + (len(names) - 1) * ['f8']
         dtype = {'names': names, 'formats': formats}
         data = np.zeros(len(times), dtype=dtype)
