@@ -165,7 +165,8 @@ class OptimizationProblem(DataStoreAccessor, metaclass=ABCMeta):
         :returns: A dictionary of solver options. See the CasADi and
                   respective solver documentation for details.
         """
-        options = {'optimized_num_dir': 3,
+        options = {'error_on_fail': False,
+                   'optimized_num_dir': 3,
                    'casadi_solver': ca.nlpsol}
 
         if self.__mixed_integer:

@@ -206,7 +206,7 @@ class SimulationProblem(DataStoreAccessor):
         self.__res_vals = ca.Function("res_vals", [X, parameters], [dae_residual])
 
         # Use rootfinder() to make a function that takes a step forward in time by trying to zero res_vals()
-        options = {'nlpsol': 'ipopt', 'nlpsol_options': self.solver_options()}
+        options = {'nlpsol': 'ipopt', 'nlpsol_options': self.solver_options(), 'error_on_fail': False}
         self.__do_step = ca.rootfinder("next_state", "nlpsol", self.__res_vals, options)
 
         # Call parent class for default behaviour.
@@ -747,7 +747,10 @@ class SimulationProblem(DataStoreAccessor):
 
         :returns: A dictionary of CasADi :class:`root_finder` options.  See the CasADi documentation for details.
         """
-        return {'ipopt.fixed_variable_treatment': 'make_parameter', 'ipopt.print_level': 0, 'print_time': False}
+        return {'ipopt.fixed_variable_treatment': 'make_parameter',
+                'ipopt.print_level': 0,
+                'print_time': False,
+                'error_on_fail': False}
 
     def get_variable_nominal(self, variable) -> Union[float, ca.MX]:
         """
