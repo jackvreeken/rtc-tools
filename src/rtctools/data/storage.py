@@ -70,7 +70,7 @@ class DataStore(metaclass=ABCMeta):
 
     @reference_datetime.setter
     def reference_datetime(self, value):
-        if self.__reference_datetime_fixed:
+        if self.__reference_datetime_fixed and value != self.__reference_datetime:
             raise RuntimeError("Cannot change reference datetime after times in seconds has been requested.")
         self.__reference_datetime = value
 
