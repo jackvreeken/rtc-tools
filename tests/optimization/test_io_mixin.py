@@ -182,7 +182,7 @@ class TestOptimizationProblem(TestCase):
 
     def test_bounds(self):
         bounds = self.problem.bounds()
-        self.assertEqual(bounds['x'], [float("-inf"), float("inf")])
+        self.assertEqual(bounds['x'], (float("-inf"), float("inf")))
 
         min_u = bounds['u'][0]
         max_u = bounds['u'][1]
