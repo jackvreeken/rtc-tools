@@ -229,6 +229,12 @@ class PIMixin(IOMixin):
         # Write output file to disk
         self.__timeseries_export.write()
 
+    def set_timeseries(self, variable: str, *args, unit: str = None, **kwargs):
+        if unit is not None:
+            self.__timeseries_import.set_unit(variable, unit, 0)
+
+        super().set_timeseries(variable, *args, **kwargs)
+
     @property
     def timeseries_import(self):
         """
