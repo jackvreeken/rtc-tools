@@ -36,7 +36,7 @@ class DummyIOMixin(IOMixin):
         }
 
         for key, value in values.items():
-            self.io.set_timeseries(datetimes, np.array(value), key)
+            self.io.set_timeseries(key, datetimes, np.array(value))
 
     def write(self):
         pass
@@ -211,9 +211,9 @@ class TestOptimizationProblem(TestCase):
 
     def test_seed(self):
         # add another variable containing some nans
-        self.problem.io.set_timeseries_sec(self.problem.io.times_sec,
-                                           np.array([np.nan, 0.1, 0.2, np.nan, 3.1, np.nan]),
-                                           'some_missing')
+        self.problem.io.set_timeseries_sec('some_missing',
+                                           self.problem.io.times_sec,
+                                           np.array([np.nan, 0.1, 0.2, np.nan, 3.1, np.nan]))
         self.problem.dae_variables['free_variables'].append(ca.MX().sym('some_missing'))
 
         seed = self.problem.seed(0)

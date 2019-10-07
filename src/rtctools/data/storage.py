@@ -129,17 +129,17 @@ class DataStore(metaclass=ABCMeta):
             self.__reference_datetime_fixed = True
 
     def set_timeseries(self,
+                       variable: str,
                        datetimes: Iterable[datetime],
                        values: np.ndarray,
-                       variable: str,
                        ensemble_member: int = 0,
                        check_duplicates: bool = False) -> None:
         """
         Stores input time series values in the internal data store.
 
+        :param variable:         Variable name.
         :param datetimes:        Times as datetime objects.
         :param values:           The values to be stored.
-        :param variable:         Variable name.
         :param ensemble_member:  The ensemble member index.
         :param check_duplicates: If True, a warning will be given when overwriting values.
                                  If False, existing values can be silently overwritten with new values.
@@ -181,9 +181,9 @@ class DataStore(metaclass=ABCMeta):
         return self.__timeseries_values[ensemble_member].keys()
 
     def set_timeseries_sec(self,
+                           variable: str,
                            times_in_sec: np.ndarray,
                            values: np.ndarray,
-                           variable: str,
                            ensemble_member: int = 0,
                            check_duplicates: bool = False) -> None:
         """
@@ -192,9 +192,9 @@ class DataStore(metaclass=ABCMeta):
         Note that once this method is called, it is no longer allowed to
         change :py:attr:`reference_datetime`.
 
+        :param variable:         Variable name.
         :param times_in_sec:     The times in seconds.
         :param values:           The values to be stored.
-        :param variable:         Variable name.
         :param ensemble_member:  The ensemble member index.
         :param check_duplicates: If True, a warning will be given when overwriting values.
                                  If False, existing values can be silently overwritten with new values.

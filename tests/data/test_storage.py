@@ -32,7 +32,7 @@ class TestDummyDataStore(TestCase):
         expected_times_sec = np.array([-7200, -3600, 0, 3600, 7200, 9800], dtype=np.float64)
         expected_datetimes = [ref_datetime + timedelta(seconds=x) for x in expected_times_sec]
 
-        self.datastore.io.set_timeseries(expected_datetimes, np.zeros((6,)), 'dummyVar')
+        self.datastore.io.set_timeseries('dummyVar', expected_datetimes, np.zeros((6,)))
 
         actual_datetimes = self.datastore.io.datetimes
         self.assertEqual(actual_datetimes, expected_datetimes)
@@ -54,7 +54,7 @@ class TestDummyDataStore(TestCase):
         datetimes = [ref_datetime + timedelta(seconds=x) for x in times_sec]
 
         expected_values = np.array([3.1, 2.4, 2.5])
-        self.datastore.io.set_timeseries(datetimes, expected_values, 'myNewVariable')
+        self.datastore.io.set_timeseries('myNewVariable', datetimes, expected_values)
         _, actual_values = self.datastore.io.get_timeseries('myNewVariable')
         self.assertTrue(np.array_equal(actual_values, expected_values))
 
@@ -74,7 +74,7 @@ class TestDummyDataStore(TestCase):
 
         # Set timeseries with times in seconds
         expected_values = np.array([1.1, 1.4, 1.5])
-        self.datastore.io.set_timeseries_sec(times_sec, expected_values, 'ensembleVariable', ensemble_member=1)
+        self.datastore.io.set_timeseries_sec('ensembleVariable', times_sec, expected_values, ensemble_member=1)
         with self.assertRaises(KeyError):
             self.datastore.io.get_timeseries('ensembleVariable', 0)
         _, actual_values = self.datastore.io.get_timeseries('ensembleVariable', 1)
@@ -83,7 +83,7 @@ class TestDummyDataStore(TestCase):
         # expect a warning when overwriting a timeseries with check_duplicates=True
         new_values = np.array([2.1, 1.1, 0.1])
         with self.assertLogs(logger, level='WARN') as cm:
-            self.datastore.io.set_timeseries(datetimes, new_values, 'myNewVariable', check_duplicates=True)
+            self.datastore.io.set_timeseries('myNewVariable', datetimes, new_values, check_duplicates=True)
             self.assertEqual(cm.output,
                              ['WARNING:rtctools:Time series values for ensemble member 0 and variable '
                               'myNewVariable set twice. Overwriting old values.'])
@@ -93,7 +93,7 @@ class TestDummyDataStore(TestCase):
         # By default we expect no warning when verwriting old values
         newest_values = np.array([-0.4, 2.14, 29.1])
         with self.assertLogs(logger, level='WARN') as cm:
-            self.datastore.io.set_timeseries(datetimes, newest_values, 'myNewVariable')
+            self.datastore.io.set_timeseries('myNewVariable', datetimes, newest_values)
             self.assertEqual(cm.output, [])
             logger.warning('All is well')  # if no log message occurs, assertLogs will throw an AssertionError
         _, actual_values = self.datastore.io.get_timeseries('myNewVariable')

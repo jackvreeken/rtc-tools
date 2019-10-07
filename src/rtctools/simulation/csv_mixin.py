@@ -59,9 +59,9 @@ class CSVMixin(IOMixin):
 
         for key in _timeseries.dtype.names[1:]:
             self.io.set_timeseries(
+                key,
                 self.__timeseries_times,
-                np.asarray(_timeseries[key], dtype=np.float64),
-                key)
+                np.asarray(_timeseries[key], dtype=np.float64))
 
         logger.debug("CSVMixin: Read timeseries.")
 

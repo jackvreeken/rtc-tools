@@ -113,7 +113,7 @@ class PIMixin(IOMixin):
 
         for ensemble_member in range(self.__timeseries_import.ensemble_size):
             for variable, values in self.__timeseries_import.items(ensemble_member):
-                self.io.set_timeseries(timeseries_import_times, values, variable, ensemble_member)
+                self.io.set_timeseries(variable, timeseries_import_times, values, ensemble_member)
 
             # store the parameters in the internal data store. Note that we
             # are effectively broadcasting parameters, as ParameterConfig does

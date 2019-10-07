@@ -94,14 +94,14 @@ class NetCDFMixin(IOMixin):
                     if dataset.ensemble_member_variable.dimensions[0] in dataset.variable_dimensions(parameter):
                         for ensemble_member_index in range(self.__timeseries_import.ensemble_size):
                             values = dataset.read_timeseries_values(i, parameter, ensemble_member_index)
-                            self.io.set_timeseries(self.__timeseries_times, values, name, ensemble_member_index)
+                            self.io.set_timeseries(name, self.__timeseries_times, values, ensemble_member_index)
                     else:
                         values = dataset.read_timeseries_values(i, parameter, 0)
                         for ensemble_member_index in range(self.__timeseries_import.ensemble_size):
-                            self.io.set_timeseries(self.__timeseries_times, values, name, ensemble_member_index)
+                            self.io.set_timeseries(name, self.__timeseries_times, values, ensemble_member_index)
                 else:
                     values = dataset.read_timeseries_values(i, parameter, 0)
-                    self.io.set_timeseries(self.__timeseries_times, values, name, 0)
+                    self.io.set_timeseries(name, self.__timeseries_times, values, 0)
 
                 logger.debug('Read timeseries data for station id "{}" and parameter "{}", '
                              'stored under variable name "{}"'

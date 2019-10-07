@@ -151,7 +151,7 @@ class IOMixin(OptimizationProblem, metaclass=ABCMeta):
             # Construct a new values range with length of self.io.get_times()
             values = stretch_values(timeseries, t_pos)
 
-        self.io.set_timeseries(self.io.datetimes, values, variable, ensemble_member)
+        self.io.set_timeseries(variable, self.io.datetimes, values, ensemble_member)
 
     def min_timeseries_id(self, variable: str) -> str:
         """

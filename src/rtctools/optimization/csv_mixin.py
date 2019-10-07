@@ -93,9 +93,9 @@ class CSVMixin(IOMixin):
 
                 for key in _timeseries.dtype.names[1:]:
                     self.io.set_timeseries(
+                        key,
                         self.__timeseries_times,
                         np.asarray(_timeseries[key], dtype=np.float64),
-                        key,
                         ensemble_member_index
                     )
             logger.debug("CSVMixin: Read timeseries")
@@ -133,7 +133,7 @@ class CSVMixin(IOMixin):
             self.io.reference_datetime = self.__timeseries_times[0]
 
             for key in _timeseries.dtype.names[1:]:
-                self.io.set_timeseries(self.__timeseries_times, np.asarray(_timeseries[key], dtype=np.float64), key)
+                self.io.set_timeseries(key, self.__timeseries_times, np.asarray(_timeseries[key], dtype=np.float64))
             logger.debug("CSVMixin: Read timeseries.")
 
             try:

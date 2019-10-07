@@ -24,7 +24,7 @@ class DummyIOMixin(IOMixin):
         }
 
         for key, value in values.items():
-            self.io.set_timeseries(datetimes, np.array(value), key)
+            self.io.set_timeseries(key, datetimes, np.array(value))
 
         # set some parameters as well
         self.io.set_parameter('k', 1.01)

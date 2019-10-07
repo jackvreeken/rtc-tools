@@ -110,7 +110,7 @@ class PIMixin(IOMixin):
 
         debug = logger.getEffectiveLevel() == logging.DEBUG
         for variable, values in self.__timeseries_import.items():
-            self.io.set_timeseries(timeseries_import_times, values, variable)
+            self.io.set_timeseries(variable, timeseries_import_times, values)
             if debug and variable in self.get_variables():
                 logger.debug('PIMixin: Timeseries {} replaced another aliased timeseries.'.format(variable))
 
@@ -201,7 +201,7 @@ class PIMixin(IOMixin):
                 self.__timeseries_export.set(variable, values, unit=unit)
 
         self.__timeseries_import.set(variable, values, unit=unit)
-        self.io.set_timeseries(self.io.datetimes, values, variable)
+        self.io.set_timeseries(variable, self.io.datetimes, values)
 
     def get_timeseries(self, variable):
         _, values = self.io.get_timeseries(variable)
