@@ -2,8 +2,8 @@ import casadi as ca
 
 import numpy as np
 
-from rtctools.optimization.goal_programming_mixin import Goal, GoalProgrammingMixin, StateGoal
-from rtctools.optimization.goal_programming_mixin import _GoalConstraint
+from rtctools.optimization.goal_programming_mixin_base import Goal, StateGoal, _GoalProgrammingMixinBase
+from rtctools.optimization.goal_programming_mixin_base import _GoalConstraint
 
 
 class LinearizedOrderGoal(Goal):
@@ -79,7 +79,7 @@ class LinearizedOrderStateGoal(LinearizedOrderGoal, StateGoal):
     pass
 
 
-class LinearizedOrderGoalProgrammingMixin(GoalProgrammingMixin):
+class LinearizedOrderGoalProgrammingMixin(_GoalProgrammingMixinBase):
     """
     Adds support for linearization of the goal objective functions, i.e. the
     violation variables to a certain power. This can be used to keep a problem

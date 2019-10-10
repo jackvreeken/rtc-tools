@@ -6,8 +6,10 @@ import casadi as ca
 
 import numpy as np
 
-from .goal_programming_mixin import Goal, GoalProgrammingMixin, StateGoal
-from .goal_programming_mixin import _EmptyEnsembleList, _EmptyEnsembleOrderedDict, _GoalConstraint
+from .goal_programming_mixin import GoalProgrammingMixin
+from .goal_programming_mixin_base import Goal, StateGoal, _GoalProgrammingMixinBase
+from .goal_programming_mixin_base import _EmptyEnsembleList, _EmptyEnsembleOrderedDict, _GoalConstraint
+from .single_pass_goal_programming_mixin import SinglePassGoalProgrammingMixin
 from .timeseries import Timeseries
 
 
@@ -47,7 +49,7 @@ class _ConvertedMinAbsGoal(Goal):
             return optimization_problem.extra_variable(self.abs_variable.name(), ensemble_member)
 
 
-class MinAbsGoalProgrammingMixin(GoalProgrammingMixin):
+class MinAbsGoalProgrammingMixin(_GoalProgrammingMixinBase):
     """
     Similar behavior to :py:class:`.GoalProgrammingMixin`, but any
     :py:class:`MinAbsGoal` passed to :py:meth:`.min_abs_goals` or
@@ -278,21 +280,32 @@ class MinAbsGoalProgrammingMixin(GoalProgrammingMixin):
         super().priority_started(priority)
 
         # Enable constraints and auxiliary variables that we need starting
-        # from this priority.
-        for a, b in zip(self.__problem_constraints, self.__subproblem_constraints[priority]):
-            a.extend(b)
+        # from this priority when using GoalProgrammingMixin. When using
+        # SinglePassGoalProgrammingMixin, we need to add all constraints from
+        # the start.
+        if isinstance(self, GoalProgrammingMixin):
+            priorities = [priority]
+        elif isinstance(self, SinglePassGoalProgrammingMixin):
+            if self.__first_run:
+                priorities = self.__subproblem_constraints.keys()
+            else:
+                priorities = []
 
-        self.__problem_vars.extend(self.__subproblem_vars[priority])
+        for p in priorities:
+            for a, b in zip(self.__problem_constraints, self.__subproblem_constraints[p]):
+                a.extend(b)
 
-        for a, b in zip(self.__problem_path_constraints, self.__subproblem_path_constraints[priority]):
-            a.extend(b)
+            self.__problem_vars.extend(self.__subproblem_vars[p])
 
-        self.__problem_path_vars.extend(self.__subproblem_path_vars[priority])
+            for a, b in zip(self.__problem_path_constraints, self.__subproblem_path_constraints[p]):
+                a.extend(b)
+
+            self.__problem_path_vars.extend(self.__subproblem_path_vars[p])
 
         # Calculate the seed needed for goals/variables introduced in this
         # priority. We can only calculate a seed if this is not the first
         # priority.
-        if not self.__first_run:
+        if not self.__first_run and isinstance(self, GoalProgrammingMixin):
             self.__seeds = self.__calculate_seed(self.__subproblem_abs_goals[priority], False)
             self.__path_seeds = self.__calculate_seed(self.__subproblem_path_abs_goals[priority], True)
 

@@ -72,7 +72,8 @@ def run_optimization_problem(optimization_problem_class,
     # Check for some common mistakes in inheritance order
     suggested_order = OrderedSet([
         'HomotopyMixin',
-        'MinAbsGoalProgrammingMixin', 'LinearizedOrderGoalProgrammingMixin', 'GoalProgrammingMixin',
+        'MinAbsGoalProgrammingMixin', 'LinearizedOrderGoalProgrammingMixin',
+        'SinglePassGoalProgrammingMixin', 'GoalProgrammingMixin',
         'PIMixin', 'CSVMixin', 'ModelicaMixin',
         'ControlTreeMixin', 'CollocatedIntegratedOptimizationProblem', 'OptimizationProblem'])
     base_names = OrderedSet([b.__name__ for b in optimization_problem_class.__bases__])

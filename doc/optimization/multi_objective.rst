@@ -13,6 +13,14 @@ Multi-objective optimization
     :members: goal_programming_options, goals, path_goals, priority_started, priority_completed
     :show-inheritance:
 
+.. autoclass:: rtctools.optimization.single_pass_goal_programming_mixin.SinglePassGoalProgrammingMixin
+    :members: goal_programming_options, goals, path_goals, priority_started, priority_completed
+    :show-inheritance:
+
+
+.. autoclass:: rtctools.optimization.single_pass_goal_programming_mixin.CachingQPSol
+    :show-inheritance:
+
 Minimize absolute value
 ~~~~~~~~~~~~~~~~~~~~~~~
 

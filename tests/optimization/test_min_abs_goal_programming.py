@@ -118,7 +118,7 @@ class ModelTargetMinimizeU(ModelTargetU):
         return [GoalTargetU(self)]
 
 
-class ModelInvalidAbsoluteGoal(ModelTargetU, MinAbsGoalProgrammingMixin):
+class ModelInvalidAbsoluteGoal(ModelTargetU, MinAbsGoalProgrammingMixin, GoalProgrammingMixin):
 
     def min_abs_goals(self):
         return [InvalidGoalTargetAbsU()]
@@ -130,7 +130,7 @@ class ModelMinimizeSqU(ModelTargetU):
         return [GoalMinimizeSqU()]
 
 
-class ModelMinimizeAbsU(ModelTargetU, MinAbsGoalProgrammingMixin):
+class ModelMinimizeAbsU(ModelTargetU, MinAbsGoalProgrammingMixin, GoalProgrammingMixin):
 
     def min_abs_goals(self):
         return [GoalMinimizeAbsU()]
