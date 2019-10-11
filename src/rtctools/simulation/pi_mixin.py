@@ -139,7 +139,8 @@ class PIMixin(IOMixin):
 
         # For all variables that are output variables the values are
         # extracted from the results.
-        for variable, values in self.output.items():
+        for variable in self.output_variables:
+            values = self.output[variable]
             # Check if ID mapping is present
             try:
                 self.__data_config.pi_variable_ids(variable)
