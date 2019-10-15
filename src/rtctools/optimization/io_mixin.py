@@ -302,7 +302,7 @@ class IOMixin(OptimizationProblem, metaclass=ABCMeta):
 
     @property
     def output_variables(self):
-        variables = super().output_variables
+        variables = super().output_variables.copy()
         variables.extend([ca.MX.sym(variable) for variable in self.__output_timeseries])
         return variables
 
