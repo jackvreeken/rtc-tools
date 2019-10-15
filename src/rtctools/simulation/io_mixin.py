@@ -74,15 +74,15 @@ class IOMixin(SimulationProblem, metaclass=ABCMeta):
         self._simulation_times.append(self.get_current_time())
 
         # Empty output
-        self.__output_variables = self.get_output_variables()
-        self.__output = AliasDict(self.alias_relation)
+        self._io_output_variables = self.get_output_variables()
+        self._io_output = AliasDict(self.alias_relation)
 
         # Call super, which will also initialize the model itself
         super().initialize(config_file)
 
         # Extract consistent t0 values
-        for variable in self.__output_variables:
-            self.__output[variable] = np.array([self.get_var(variable)])
+        for variable in self._io_output_variables:
+            self._io_output[variable] = np.array([self.get_var(variable)])
 
     def __set_input_variables(self, t_idx):
         for variable in self.get_variables():
@@ -114,16 +114,8 @@ class IOMixin(SimulationProblem, metaclass=ABCMeta):
         super().update(dt)
 
         # Extract results
-        for variable, values in self.__output.items():
-            self.__output[variable] = np.append(values, self.get_var(variable))
-
-    @property
-    def output_variables(self):
-        return self.__output_variables
-
-    @property
-    def output(self):
-        return self.__output
+        for variable, values in self._io_output.items():
+            self._io_output[variable] = np.append(values, self.get_var(variable))
 
     @cached
     def parameters(self):

@@ -81,9 +81,9 @@ class TestDummyIOMixin(TestCase):
         self.assertEqual(self.problem.get_var('constant_output'), 0.9)  # constant_output = constant_input
         # todo add check for x_delayed once delay is properly implemented
 
-        for output_variable in self.problem.output_variables:
+        for output_variable in self.problem._io_output_variables:
             self.assertEqual(
-                self.problem.output[output_variable][0],
+                self.problem._io_output[output_variable][0],
                 self.problem.get_var(output_variable)
             )
 
@@ -100,9 +100,9 @@ class TestDummyIOMixin(TestCase):
         self.assertEqual(self.problem.get_var('switched'), 2.0)  # 1.0 if x > 0.5 else 2.0
         self.assertEqual(self.problem.get_var('constant_output'), 1.2)  # constant_output = constant_input
 
-        for output_variable in self.problem.output_variables:
+        for output_variable in self.problem._io_output_variables:
             self.assertEqual(
-                self.problem.output[output_variable][-1],
+                self.problem._io_output[output_variable][-1],
                 self.problem.get_var(output_variable)
             )
 

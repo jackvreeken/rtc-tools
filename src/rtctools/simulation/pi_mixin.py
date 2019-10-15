@@ -139,8 +139,8 @@ class PIMixin(IOMixin):
 
         # For all variables that are output variables the values are
         # extracted from the results.
-        for variable in self.output_variables:
-            values = self.output[variable]
+        for variable in self._io_output_variables:
+            values = self._io_output[variable]
             # Check if ID mapping is present
             try:
                 self.__data_config.pi_variable_ids(variable)
@@ -214,4 +214,4 @@ class PIMixin(IOMixin):
 
         :returns: An AliasDict of output variables and results array format.
         """
-        return self.output
+        return self._io_output

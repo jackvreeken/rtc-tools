@@ -123,13 +123,13 @@ class CSVMixin(IOMixin):
         times = self._simulation_times
 
         # Write output
-        names = ['time'] + sorted(set(self.output_variables))
+        names = ['time'] + sorted(set(self._io_output_variables))
         formats = ['O'] + (len(names) - 1) * ['f8']
         dtype = {'names': names, 'formats': formats}
         data = np.zeros(len(times), dtype=dtype)
         data['time'] = self.io.sec_to_datetime(times, self.io.reference_datetime)
-        for variable in self.output_variables:
-            data[variable] = self.output[variable]
+        for variable in self._io_output_variables:
+            data[variable] = self._io_output[variable]
 
         fname = os.path.join(self._output_folder, self.timeseries_export_basename + '.csv')
         csv.save(fname, data, delimiter=self.csv_delimiter, with_time=True)
