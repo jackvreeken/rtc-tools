@@ -254,7 +254,7 @@ class GoalProgrammingMixin(_GoalProgrammingMixinBase):
         required.
 
         When using the default solver (IPOPT), its barrier parameter ``mu`` is
-        normally re-initialized a every iteration of the goal programming
+        normally re-initialized at every iteration of the goal programming
         algorithm, unless mu_reinit is set to ``False``.  Use of this option
         is normally not required.
 
