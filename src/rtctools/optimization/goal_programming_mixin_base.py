@@ -639,7 +639,7 @@ class _GoalProgrammingMixinBase(OptimizationProblem, metaclass=ABCMeta):
                         .format(goal))
                 if np.any(goal_m[indices] > goal_ub[indices]):
                     raise Exception(
-                        'Target minimum should be smaller than the upper bound of the function range for goal {}'
+                        'Target minimum should not be greater than the upper bound of the function range for goal {}'
                         .format(goal))
             if goal.has_target_max and not goal.critical:
                 indices = np.where(np.isfinite(goal_M))
@@ -649,7 +649,7 @@ class _GoalProgrammingMixinBase(OptimizationProblem, metaclass=ABCMeta):
                         .format(goal))
                 if np.any(goal_M[indices] < goal_lb[indices]):
                     raise Exception(
-                        'Target maximum should be larger than the lower bound of the function range for goal {}'
+                        'Target maximum should not be smaller than the lower bound of the function range for goal {}'
                         .format(goal))
 
             if goal.relaxation < 0.0:
