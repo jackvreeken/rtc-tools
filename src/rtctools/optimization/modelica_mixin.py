@@ -206,8 +206,10 @@ class ModelicaMixin(OptimizationProblem):
         return parameters
 
     @cached
-    def initial_state(self, ensemble_member):
-        initial_state = AliasDict(self.alias_relation)
+    def history(self, ensemble_member):
+        history = super().history(ensemble_member)
+
+        initial_time = np.array([self.initial_time])
 
         # Parameter values
         parameters = self.parameters(ensemble_member)
@@ -228,12 +230,12 @@ class ModelicaMixin(OptimizationProblem):
 
                     start = v.python_type(start)
 
-                initial_state[sym_name] = start
+                history[sym_name] = Timeseries(initial_time, start)
 
                 if logger.getEffectiveLevel() == logging.DEBUG:
                     logger.debug("ModelicaMixin: Initial state variable {} = {}".format(sym_name, start))
 
-        return initial_state
+        return history
 
     @property
     def initial_residual(self):

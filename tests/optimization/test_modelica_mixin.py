@@ -619,7 +619,8 @@ class TestModelicaMixinSymbolicParameters(TestCase, unittest.TestCase):
         self.assertTrue(np.all(self.problem.seed(0)['w'].values == 0.2))
 
     def test_symbolic_initial_state(self):
-        self.assertEqual(self.problem.initial_state(0)['x'], 1.1)
+        history = self.problem.history(0)
+        self.assertEqual(history['x'].values[-1], 1.1)
         self.problem.optimize()
         self.assertAlmostEqual(self.problem.extract_results()['x'][0], 1.1, self.tolerance)
 

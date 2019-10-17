@@ -8,6 +8,7 @@ import rtctools.data.csv as csv
 from rtctools._internal.alias_tools import AliasDict
 from rtctools._internal.caching import cached
 from rtctools.optimization.io_mixin import IOMixin
+from rtctools.optimization.timeseries import Timeseries
 
 logger = logging.getLogger("rtctools")
 
@@ -182,21 +183,24 @@ class CSVMixin(IOMixin):
             return 1.0
 
     @cached
-    def initial_state(self, ensemble_member):
+    def history(self, ensemble_member):
         # Call parent class first for default values.
-        initial_state = super().initial_state(ensemble_member)
+        history = super().history(ensemble_member)
+
+        initial_time = np.array([self.initial_time])
 
         # Load parameters from parameter config
         for variable in self.dae_variables['free_variables']:
             variable = variable.name()
             try:
-                initial_state[variable] = self.__initial_state[ensemble_member][variable]
+                history[variable] = Timeseries(initial_time,
+                                               self.__initial_state[ensemble_member][variable])
             except (KeyError, ValueError):
                 pass
             else:
                 if logger.getEffectiveLevel() == logging.DEBUG:
                     logger.debug("CSVMixin: Read initial state {}".format(variable))
-        return initial_state
+        return history
 
     def write(self):
         # Call parent class first for default behaviour.

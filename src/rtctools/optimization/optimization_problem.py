@@ -36,6 +36,10 @@ class OptimizationProblem(DataStoreAccessor, metaclass=ABCMeta):
         :returns: True on success.
         """
 
+        # Deprecations / removals
+        if hasattr(self, 'initial_state'):
+            raise RuntimeError("Support for `initial_state()` has been removed. Please use `history()` instead.")
+
         logger.info("Entering optimize()")
 
         # Do any preprocessing, which may include changing parameter values on
@@ -400,17 +404,13 @@ class OptimizationProblem(DataStoreAccessor, metaclass=ABCMeta):
 
     def history(self, ensemble_member: int) -> AliasDict[str, Timeseries]:
         """
-        Returns the state history.  Uses the initial_state() method by default.
+        Returns the state history.
 
         :param ensemble_member: The ensemble member index.
 
         :returns: A dictionary of variable names and historical time series (up to and including t0).
         """
-        initial_state = self.initial_state(ensemble_member)
-        return AliasDict(
-            self.alias_relation,
-            {variable: Timeseries(np.array([self.initial_time]), np.array([state]))
-             for variable, state in initial_state.items()})
+        return AliasDict(self.alias_relation)
 
     def variable_is_discrete(self, variable: str) -> bool:
         """
@@ -439,23 +439,6 @@ class OptimizationProblem(DataStoreAccessor, metaclass=ABCMeta):
         The initial time in seconds.
         """
         return self.times()[0]
-
-    def initial_state(self, ensemble_member: int) -> AliasDict[str, float]:
-        """
-        The initial state.
-
-        The default implementation uses t0 data returned by the ``history`` method.
-
-        :param ensemble_member: The ensemble member index.
-
-        :returns: A dictionary of variable names and initial state (t0) values.
-        """
-        t0 = self.initial_time
-        history = self.history(ensemble_member)
-        return AliasDict(
-            self.alias_relation,
-            {variable: self.interpolate(t0, timeseries.times, timeseries.values)
-             for variable, timeseries in history.items()})
 
     @property
     def initial_residual(self) -> ca.MX:

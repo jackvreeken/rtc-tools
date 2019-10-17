@@ -67,8 +67,8 @@ class TestCSVMixin(TestCase):
         self.assertEqual(params["k"], 1.01)
 
     def test_initial_state(self):
-        initial_state = self.problem.initial_state(0)
-        self.assertAlmostEqual(initial_state["x"], 1.02, self.tolerance)
+        history = self.problem.history(0)
+        self.assertAlmostEqual(history["x"].values[-1], 1.02, self.tolerance)
 
     def test_objective_value(self):
         objective_value_tol = 1e-6
