@@ -205,7 +205,6 @@ class GoalProgrammingMixin(_GoalProgrammingMixinBase):
 
         delattr(self, '_loop_breaker_solver_options')
 
-        # Done
         return options
 
     def goal_programming_options(self) -> Dict[str, Union[float, bool]]:
