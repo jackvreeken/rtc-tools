@@ -184,7 +184,6 @@ class SinglePassGoalProgrammingMixin(_GoalProgrammingMixinBase):
         if not hasattr(self, '_loop_breaker_goal_programming_options'):
             if not self.goal_programming_options()['mu_reinit']:
                 ipopt_options['mu_strategy'] = 'monotone'
-                ipopt_options['gather_stats'] = True
                 if not self.__first_run:
                     ipopt_options['mu_init'] = self.solver_stats['iterations'][
                         'mu'][-1]
