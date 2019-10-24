@@ -41,6 +41,9 @@ class PIMixin(IOMixin):
     #: Check for duplicate parameters
     pi_check_for_duplicate_parameters = True
 
+    #: Ensemble member to read from input
+    pi_ensemble_member = 0
+
     def __init__(self, **kwargs):
         # Call parent class first for default behaviour.
         super().__init__(**kwargs)
@@ -109,7 +112,7 @@ class PIMixin(IOMixin):
         self.io.reference_datetime = self.__timeseries_import.forecast_datetime
 
         debug = logger.getEffectiveLevel() == logging.DEBUG
-        for variable, values in self.__timeseries_import.items():
+        for variable, values in self.__timeseries_import.items(self.pi_ensemble_member):
             self.io.set_timeseries(variable, timeseries_import_times, values)
             if debug and variable in self.get_variables():
                 logger.debug('PIMixin: Timeseries {} replaced another aliased timeseries.'.format(variable))
