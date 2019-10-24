@@ -489,10 +489,11 @@ class Timeseries:
             # Check if the time steps of all series match the time steps of the global
             # time range.
             if pi_validate_times:
+                ref_times_set = set(self.__times)
                 for series in self.__xml_root.findall('pi:series', ns):
                     events = series.findall('pi:event', ns)
-                    times = [self.__parse_date_time(e) for e in events]
-                    if not set(self.__times).issuperset(set(times)):
+                    times = {self.__parse_date_time(e) for e in events}
+                    if not ref_times_set.issuperset(times):
                         raise ValueError(
                             'PI: Not all timeseries share the same time step spacing. Make sure '
                             'the time steps of all series are a subset of the global time steps.')
