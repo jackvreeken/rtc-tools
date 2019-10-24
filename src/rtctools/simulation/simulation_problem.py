@@ -149,6 +149,8 @@ class SimulationProblem(DataStoreAccessor):
         # Construct a dict to look up symbols by name (or iterate over)
         self.__sym_dict = OrderedDict(((sym.name(), sym) for sym in self.__sym_list))
 
+        self.__indices = {k: i for i, k in enumerate(self.__sym_dict.keys())}
+
         # Assemble some symbolics, including those needed for a backwards Euler derivative approximation
         X = ca.vertcat(*self.__sym_list[:self.__states_end_index])
         X_prev = ca.vertcat(*[ca.MX.sym(sym.name() + '_prev') for sym in self.__sym_list[:self.__states_end_index]])
@@ -179,7 +181,7 @@ class SimulationProblem(DataStoreAccessor):
         unscaled_symbols = []
         scaled_symbols = []
         for sym_name, nominal in self.__nominals.items():
-            index = self.__get_state_vector_index(sym_name)
+            index = self.__indices[sym_name]
             # If the symbol is a state, Add the symbol to the lists
             if index <= self.__states_end_index:
                 unscaled_symbols.append(X[index])
@@ -585,7 +587,7 @@ class SimulationProblem(DataStoreAccessor):
         name, sign = self.alias_relation.canonical_signed(name)
 
         # Get the raw value of the canonical var
-        index = self.__get_state_vector_index(name)
+        index = self.__indices[name]
         value = self.__state_vector[index]
 
         # Adjust sign if needed
@@ -671,13 +673,6 @@ class SimulationProblem(DataStoreAccessor):
     def get_output_variables(self):
         return self.__pymoca_model.outputs
 
-    @cached
-    def __get_state_vector_index(self, variable):
-        index = next((i for i, sym in enumerate(self.__sym_list) if sym.name() == variable), None)
-        if index is None:
-            raise KeyError(str(variable) + " does not exist!")
-        return index
-
     def __warn_for_nans(self):
         """
         Test state vector for missing values and warn
@@ -709,7 +704,7 @@ class SimulationProblem(DataStoreAccessor):
                 raise Exception("Cannot set parameters after initialize() has been called.")
 
         # Adjust for nominal value if not default
-        index = self.__get_state_vector_index(name)
+        index = self.__indices[name]
         if index <= self.__states_end_index:
             nominal = self.get_variable_nominal(name)
             value /= nominal
