@@ -436,8 +436,8 @@ class SinglePassGoalProgrammingMixin(_GoalProgrammingMixinBase):
                 lb, ub = obj_val, obj_val
                 self.linear_collocation = False  # Disable solver option jac_c_constant for IPOPT
             else:
-                lb, ub = -np.inf, obj_val
                 obj_val += options['constraint_relaxation']
+                lb, ub = -np.inf, obj_val
 
             if self.single_pass_method == SinglePassMethod.APPEND_CONSTRAINTS_OBJECTIVE:
                 self.__additional_constraints.append((self.__objectives[self.__current_priority - 1], lb, ub))
