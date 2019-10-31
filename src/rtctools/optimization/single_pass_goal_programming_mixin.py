@@ -370,6 +370,16 @@ class SinglePassGoalProgrammingMixin(_GoalProgrammingMixinBase):
 
             self.__first_run = False
 
+            # To match GoalProgrammingMixin's behavior of applying the
+            # constraint_relaxation value at priority 2 on the objective of
+            # priority 2 (and not that of priority 1), we have to store the
+            # two relevant options here for later use.
+            options = self.goal_programming_options()
+            self.__objective_constraint_options = {
+                k: v for k, v in options.items()
+                if k in {'fix_minimized_values', 'constraint_relaxation'}
+            }
+
             # Store results.  Do this here, to make sure we have results even
             # if a subsequent priority fails.
             self.__results_are_current = False
@@ -393,8 +403,6 @@ class SinglePassGoalProgrammingMixin(_GoalProgrammingMixinBase):
         return success
 
     def transcribe(self):
-
-        options = self.goal_programming_options()
 
         def _objective_func(subproblem_objectives, subproblem_path_objectives):
             val = 0.0
@@ -428,6 +436,8 @@ class SinglePassGoalProgrammingMixin(_GoalProgrammingMixinBase):
 
         # Add constraint on the objective of previous priority
         if self.__current_priority > 0:
+            options = self.__objective_constraint_options
+
             previous_objective = self.__objectives[self.__current_priority - 1]
             f = ca.Function('tmp', [self.solver_input], [previous_objective])
             obj_val = float(f(self.solver_output))
