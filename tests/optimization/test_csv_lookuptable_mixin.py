@@ -25,7 +25,6 @@ class Model(
     CollocatedIntegratedOptimizationProblem,
 ):
 
-    csv_lookup_table_debug = True
     model_name = "ModelWithLookupTable"
 
     def __init__(self, **kwargs):
