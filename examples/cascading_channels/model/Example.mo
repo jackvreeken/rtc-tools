@@ -2,7 +2,7 @@ model Example
   // Model Elements
   Deltares.ChannelFlow.Hydraulic.BoundaryConditions.Discharge Inflow annotation(Placement(visible = true, transformation(origin = {-86, 34}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Deltares.ChannelFlow.Hydraulic.BoundaryConditions.Level DrinkingWaterPlant(H = 10.) annotation(Placement(visible = true, transformation(origin = {38, 44}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  Deltares.ChannelFlow.Hydraulic.BoundaryConditions.Level Level(H = 0.) annotation(Placement(visible = true, transformation(origin = {66, -32}, extent = {{-10, 10}, {10, -10}}, rotation = 0)));
+  Deltares.ChannelFlow.Hydraulic.BoundaryConditions.Level Level annotation(Placement(visible = true, transformation(origin = {66, -32}, extent = {{-10, 10}, {10, -10}}, rotation = 0)));
   Deltares.ChannelFlow.Hydraulic.Branches.HomotopicLinear LowerChannel(
     H(each max = 1.0),
     H_b_down = -2.0,
