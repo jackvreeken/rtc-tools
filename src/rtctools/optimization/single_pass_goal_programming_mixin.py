@@ -68,7 +68,7 @@ class SinglePassGoalProgrammingMixin(_GoalProgrammingMixinBase):
 
         # Initialize instance variables, so that the overridden methods may be
         # called outside of the goal programming loop, for example in pre().
-        self.__first_run = True
+        self._gp_first_run = True
         self.__results_are_current = False
 
         self.__constraint_store = _EmptyEnsembleOrderedDict()
@@ -135,7 +135,7 @@ class SinglePassGoalProgrammingMixin(_GoalProgrammingMixinBase):
         return parameters
 
     def seed(self, ensemble_member):
-        assert self.__first_run
+        assert self._gp_first_run
         return super().seed(ensemble_member)
 
     def constraints(self, ensemble_member):
@@ -184,7 +184,7 @@ class SinglePassGoalProgrammingMixin(_GoalProgrammingMixinBase):
         if not hasattr(self, '_loop_breaker_goal_programming_options'):
             if not self.goal_programming_options()['mu_reinit']:
                 ipopt_options['mu_strategy'] = 'monotone'
-                if not self.__first_run:
+                if not self._gp_first_run:
                     ipopt_options['mu_init'] = self.solver_stats['iterations'][
                         'mu'][-1]
 
@@ -312,7 +312,7 @@ class SinglePassGoalProgrammingMixin(_GoalProgrammingMixinBase):
         self.__problem_path_epsilons = []
         self.__problem_path_timeseries = []
 
-        self.__first_run = True
+        self._gp_first_run = True
         self.__results_are_current = False
 
         self.__current_priority = 0
@@ -368,7 +368,7 @@ class SinglePassGoalProgrammingMixin(_GoalProgrammingMixinBase):
             if not success:
                 break
 
-            self.__first_run = False
+            self._gp_first_run = False
 
             # To match GoalProgrammingMixin's behavior of applying the
             # constraint_relaxation value at priority 2 on the objective of
@@ -417,7 +417,7 @@ class SinglePassGoalProgrammingMixin(_GoalProgrammingMixinBase):
 
             return val
 
-        if self.__first_run:
+        if self._gp_first_run:
             discrete, lbx, ubx, lbg, ubg, x0, nlp = super().transcribe()
             self.__original_transcribe = (discrete, lbx, ubx, lbg, ubg, x0, nlp)
 
@@ -471,7 +471,7 @@ class SinglePassGoalProgrammingMixin(_GoalProgrammingMixinBase):
 
         nlp['f'] = self.__objectives[self.__current_priority]
 
-        if not self.__first_run:
+        if not self._gp_first_run:
             x0 = self.solver_output.copy()
 
         return discrete, lbx, ubx, lbg, ubg, x0, nlp

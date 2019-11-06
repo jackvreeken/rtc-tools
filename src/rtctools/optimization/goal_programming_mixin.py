@@ -27,7 +27,7 @@ class GoalProgrammingMixin(_GoalProgrammingMixinBase):
 
         # Initialize instance variables, so that the overridden methods may be
         # called outside of the goal programming loop, for example in pre().
-        self.__first_run = True
+        self._gp_first_run = True
         self.__results_are_current = False
         self.__subproblem_epsilons = []
         self.__subproblem_objectives = []
@@ -109,7 +109,7 @@ class GoalProgrammingMixin(_GoalProgrammingMixinBase):
         return parameters
 
     def seed(self, ensemble_member):
-        if self.__first_run:
+        if self._gp_first_run:
             seed = super().seed(ensemble_member)
         else:
             # Seed with previous results
@@ -198,7 +198,7 @@ class GoalProgrammingMixin(_GoalProgrammingMixinBase):
         if not hasattr(self, '_loop_breaker_goal_programming_options'):
             if not self.goal_programming_options()['mu_reinit']:
                 ipopt_options['mu_strategy'] = 'monotone'
-                if not self.__first_run:
+                if not self._gp_first_run:
                     ipopt_options['mu_init'] = self.solver_stats['iterations'][
                         'mu'][-1]
 
@@ -601,7 +601,7 @@ class GoalProgrammingMixin(_GoalProgrammingMixinBase):
         self.__problem_path_epsilons = []
         self.__problem_path_timeseries = []
 
-        self.__first_run = True
+        self._gp_first_run = True
         self.__results_are_current = False
         self.__original_constant_input_keys = {}
         self.__original_parameter_keys = {}
@@ -631,7 +631,7 @@ class GoalProgrammingMixin(_GoalProgrammingMixinBase):
             if not success:
                 break
 
-            self.__first_run = False
+            self._gp_first_run = False
 
             # Store results.  Do this here, to make sure we have results even
             # if a subsequent priority fails.
