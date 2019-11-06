@@ -306,7 +306,7 @@ class ModelicaMixin(OptimizationProblem):
 
             start = var.start
 
-            if isinstance(start, float) and start != 0.0 or isinstance(start, ca.MX):
+            if isinstance(start, ca.MX) or start != 0.0:
                 sym_name = var.symbol.name()
 
                 # If start contains symbolics, try substituting parameter values
