@@ -855,6 +855,10 @@ class SimulationProblem(DataStoreAccessor):
         # Eliminate variables starting with underscores.
         compiler_options['eliminable_variable_expression'] = r'(.*[.]|^)_\w+(\[[\d,]+\])?\Z'
 
+        # Pymoca currently requires `expand_mx` to be set for
+        # `eliminable_variable_expression` to work.
+        compiler_options['expand_mx'] = True
+
         # Automatically detect and eliminate alias variables.
         compiler_options['detect_aliases'] = True
 
