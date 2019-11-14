@@ -312,6 +312,8 @@ class CSVLookupTableMixin(OptimizationProblem):
                 "CSVLookupTableMixin: Output is {}, inputs are {}.".format(output, inputs))
 
             tck = None
+            function = None
+
             # If tck file is newer than the csv file, first try to load the cached values from the tck file
             tck_filename = filename.replace('.csv', '.tck')
             valid_cache = False
@@ -326,7 +328,7 @@ class CSVLookupTableMixin(OptimizationProblem):
                         'CSVLookupTableMixin: Attempting to use cached tck values for {}'.format(output))
                     with open(tck_filename, 'rb') as f:
                         try:
-                            tck = pickle.load(f)
+                            tck, function = pickle.load(f)
                         except Exception:
                             valid_cache = False
             if not valid_cache:
@@ -358,8 +360,10 @@ class CSVLookupTableMixin(OptimizationProblem):
                                output], linestyle='', marker='x', markersize=10)
                     figure_filename = filename.replace('.csv', '.png')
                     pylab.savefig(figure_filename)
+
                 symbols = [ca.SX.sym(inputs[0])]
-                function = ca.Function('f', symbols, [BSpline1D(*tck)(symbols[0])])
+                if not valid_cache:
+                    function = ca.Function('f', symbols, [BSpline1D(*tck)(symbols[0])])
                 self.__lookup_tables[output] = LookupTable(symbols, function, tck)
 
             elif len(csvinput.dtype.names) == 3:
@@ -393,7 +397,8 @@ class CSVLookupTableMixin(OptimizationProblem):
                     figure_filename = filename.replace('.csv', '.png')
                     pylab.savefig(figure_filename)
                 symbols = [ca.SX.sym(inputs[0]), ca.SX.sym(inputs[1])]
-                function = ca.Function('f', symbols, [BSpline2D(*tck)(symbols[0], symbols[1])])
+                if not valid_cache:
+                    function = ca.Function('f', symbols, [BSpline2D(*tck)(symbols[0], symbols[1])])
                 self.__lookup_tables[output] = LookupTable(symbols, function, tck)
 
             else:
@@ -402,7 +407,9 @@ class CSVLookupTableMixin(OptimizationProblem):
                         len(csvinput.dtype.names)))
 
             if not valid_cache:
-                pickle.dump(tck, open(filename.replace('.csv', '.tck'), 'wb'), protocol=pickle.HIGHEST_PROTOCOL)
+                pickle.dump((tck, function),
+                            open(filename.replace('.csv', '.tck'), 'wb'),
+                            protocol=pickle.HIGHEST_PROTOCOL)
 
     def lookup_tables(self, ensemble_member):
         # Call parent class first for default values.
