@@ -7,6 +7,37 @@ import numpy as np
 logger = logging.getLogger("rtctools")
 
 
+def _boolean_to_nan(data, fname):
+    """
+    Empty columns are detected as boolean full of "False". We instead want this to be np.nan.
+    We cannot distinguish between explicitly desired boolean columns, so instead we convert all
+    boolean columns to np.nan, and raise a warning.
+    """
+    data = data.copy()
+
+    dtypes_in = []
+    for i in range(0, len(data.dtype)):
+        dtypes_in.append(data.dtype.descr[i])
+
+    convert_to_nan = []
+    dtypes_out = []
+    for i, name in enumerate(data.dtype.names):
+        if dtypes_in[i][1][1] == 'b':
+            convert_to_nan.append(name)
+            dtypes_out.append((dtypes_in[i][0], '<f8'))
+        else:
+            dtypes_out.append(dtypes_in[i])
+
+    if convert_to_nan:
+        logger.warning("Column(s) {} were detected as boolean in '{}'; converting to NaN".format(
+            ", ".join(["'{}'".format(name) for name in convert_to_nan]), fname))
+        data = data.astype(dtypes_out)
+        for name in convert_to_nan:
+            data[name] = np.nan
+
+    return data
+
+
 def load(fname, delimiter=',', with_time=False):
     """
     Check delimiter of csv and read contents to an array. Assumes no date-time conversion needed.
@@ -46,7 +77,8 @@ def load(fname, delimiter=',', with_time=False):
     try:
         if len(c):  # Converters exist, so use them.
             try:
-                return np.genfromtxt(fname, delimiter=delimiter, deletechars='', dtype=None, names=True, converters=c)
+                data = np.genfromtxt(fname, delimiter=delimiter, deletechars='', dtype=None, names=True, converters=c)
+                return _boolean_to_nan(data, fname)
             except np.lib._iotools.ConverterError:  # value does not conform to expected date-time format
                 type, value, traceback = sys.exc_info()
                 logger.error(
@@ -55,7 +87,8 @@ def load(fname, delimiter=',', with_time=False):
                     'CSVMixin: wrong date time or value format in {}. '
                     'Should be %Y-%m-%d %H:%M:%S and numerical values everywhere.'.format(fname))
         else:
-            return np.genfromtxt(fname, delimiter=delimiter, deletechars='', dtype=None, names=True)
+            data = np.genfromtxt(fname, delimiter=delimiter, deletechars='', dtype=None, names=True)
+            return _boolean_to_nan(data, fname)
     except ValueError:  # can occur when delimiter changes after first 1024 bytes of file, or delimiter is not , or ;
         type, value, traceback = sys.exc_info()
         logger.error(
