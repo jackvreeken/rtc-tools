@@ -117,5 +117,5 @@ def download_examples(*args):
 
     try:
         os.remove(local_filename)
-    except (OSError, FileNotFoundError):
+    except OSError:
         pass
