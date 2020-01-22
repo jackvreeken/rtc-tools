@@ -116,3 +116,50 @@ class TestCheckMatrixCoefficients(TestCase):
             'assertNotIn',
             tol_range=1E4,
         )
+
+
+class ModelLinearDependenceDoubleAssignment(Model):
+
+    def path_objective(self, ensemble_member):
+        return self.state('y')
+
+    def path_constraints(self, ensemble_member):
+        return [(2.0 * self.state('x'), 6.0, 6.0),
+                (2.0 * self.state('x'), 6.0, 6.0)]
+
+
+class ModelLinearDependenceEqualBoundsAssignment(Model):
+
+    def path_objective(self, ensemble_member):
+        return self.state('y')
+
+    def bounds(self):
+        bounds = super().bounds()
+        bounds['x'] = (3.0, 3.0)
+        return bounds
+
+    def path_constraints(self, ensemble_member):
+        return [(2.0 * self.state('x'), 6.0, 6.0)]
+
+
+class TestCheckLinearDependence(TestCase):
+
+    def _run_test(self, class_, message):
+        problem = class_()
+        problem._debug_check_level = lambda level, name: name.endswith("__debug_check_linear_independence")
+
+        with self.assertLogs('rtctools', level='INFO') as cm:
+            problem.optimize()
+
+        self.assertIn(message, cm.output)
+
+    def test_linear_dependence_double_assignment(self):
+        self._run_test(
+            ModelLinearDependenceDoubleAssignment,
+            "INFO:rtctools:Variable 'x__e0__t0' has duplicate constraints setting its value:")
+
+    def test_linear_dependence_equal_bounds_assignment(self):
+        self._run_test(
+            ModelLinearDependenceEqualBoundsAssignment,
+            "INFO:rtctools:Variable 'x__e0__t0' has equal bounds (value = 3.0), "
+            "but also the following equality constraints:")

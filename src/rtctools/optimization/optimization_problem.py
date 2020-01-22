@@ -7,7 +7,7 @@ import casadi as ca
 import numpy as np
 
 from rtctools._internal.alias_tools import AliasDict
-from rtctools._internal.debug_check_helpers import DebugLevel
+from rtctools._internal.debug_check_helpers import DebugLevel, debug_check
 from rtctools.data.storage import DataStoreAccessor
 
 from .timeseries import Timeseries
@@ -86,6 +86,9 @@ class OptimizationProblem(DataStoreAccessor, metaclass=ABCMeta):
             nlp['f'] = f_sx
             nlp['g'] = g_sx
             nlp['x'] = X_sx
+
+        # Debug check for linear independence of the constraints
+        self.__debug_check_linear_independence(lbx, ubx, lbg, ubg, nlp)
 
         # Solver option
         my_solver = options['solver']
@@ -1070,3 +1073,62 @@ class OptimizationProblem(DataStoreAccessor, metaclass=ABCMeta):
         :returns: An :class:`MX` expression evaluating `expr` over the entire time horizon.
         """
         raise NotImplementedError
+
+    @debug_check(DebugLevel.VERYHIGH)
+    def __debug_check_linear_independence(self, lbx, ubx, lbg, ubg, nlp):
+        x = nlp['x']
+        f = nlp['f']
+        g = nlp['g']
+
+        expand_f_g = ca.Function('f_g', [x], [f, g]).expand()
+        x_sx = ca.SX.sym('X', *x.shape)
+        f_sx, g_sx = expand_f_g(x_sx)
+
+        x, f, g = x_sx, f_sx, g_sx
+
+        lbg = np.array(ca.vertsplit(ca.veccat(*lbg))).ravel()
+        ubg = np.array(ca.vertsplit(ca.veccat(*ubg))).ravel()
+
+        # Find the linear constraints
+        g_sjac = ca.Function('Af', [x], [ca.jtimes(g, x, x.ones(*x.shape))])
+
+        res = g_sjac(np.nan)
+        res = np.array(res).ravel()
+        g_is_linear = ~np.isnan(res)
+
+        # Find the rows in the jacobian with only a single entry
+        g_jac_csr = ca.DM(ca.Function('tmp', [x], [g]).sparsity_jac(0, 0)).tocsc().tocsr()
+        g_single_variable = (np.diff(g_jac_csr.indptr) == 1)
+
+        # Find the rows which are equality constraints
+        g_eq_constraint = (lbg == ubg)
+
+        # The intersection of all selections are constraints like we want
+        g_constant_assignment = g_is_linear & g_single_variable & g_eq_constraint
+
+        # Map of variable (index) to constraints/row numbers
+        var_index_assignment = {}
+        for i in range(g.size1()):
+            if g_constant_assignment[i]:
+                var_ind = g_jac_csr.getrow(i).indices[0]
+                var_index_assignment.setdefault(var_ind, []).append(i)
+
+        var_names, named_x, named_f, named_g = self._debug_get_named_nlp(nlp)
+
+        for vi, g_inds in var_index_assignment.items():
+            if len(g_inds) > 1:
+                logger.info("Variable '{}' has duplicate constraints setting its value:".format(var_names[vi]))
+                for g_i in g_inds:
+                    logger.info("row {}: {} = {}".format(g_i, named_g[g_i], lbg[g_i]))
+
+        # Find variables for which the bounds are equal, but also an equality
+        # constraint is set. This would result in a constraint `1 = 1` with
+        # the default IPOPT option `fixed_variable_treatment = make_parameter`
+        x_inds = np.flatnonzero(lbx == ubx)
+
+        for vi in x_inds:
+            if vi in var_index_assignment:
+                logger.info("Variable '{}' has equal bounds (value = {}), but also the following equality constraints:"
+                            .format(var_names[vi], lbx[vi]))
+                for g_i in var_index_assignment[vi]:
+                    logger.info("row {}: {} = {}".format(g_i, named_g[g_i], lbg[g_i]))
