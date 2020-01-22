@@ -87,6 +87,9 @@ class OptimizationProblem(DataStoreAccessor, metaclass=ABCMeta):
             nlp['g'] = g_sx
             nlp['x'] = X_sx
 
+        # Debug check for non-linearity in constraints
+        self.__debug_check_linearity_constraints(nlp)
+
         # Debug check for linear independence of the constraints
         self.__debug_check_linear_independence(lbx, ubx, lbg, ubg, nlp)
 
@@ -1073,6 +1076,26 @@ class OptimizationProblem(DataStoreAccessor, metaclass=ABCMeta):
         :returns: An :class:`MX` expression evaluating `expr` over the entire time horizon.
         """
         raise NotImplementedError
+
+    @debug_check(DebugLevel.HIGH)
+    def __debug_check_linearity_constraints(self, nlp):
+        x = nlp['x']
+        f = nlp['f']
+        g = nlp['g']
+
+        expand_f_g = ca.Function('f_g', [x], [f, g]).expand()
+        X_sx = ca.SX.sym('X', *x.shape)
+        f_sx, g_sx = expand_f_g(X_sx)
+
+        jac = ca.Function('j', [X_sx], [ca.jacobian(g_sx, X_sx)]).expand()
+        if jac(np.nan).is_regular():
+            logger.info("The constraints are linear")
+        else:
+            hes = ca.Function('j', [X_sx], [ca.jacobian(ca.jacobian(g_sx, X_sx), X_sx)]).expand()
+            if hes(np.nan).is_regular():
+                logger.info("The constraints are quadratic")
+            else:
+                logger.info("The constraints are nonlinear")
 
     @debug_check(DebugLevel.VERYHIGH)
     def __debug_check_linear_independence(self, lbx, ubx, lbg, ubg, nlp):

@@ -118,6 +118,54 @@ class TestCheckMatrixCoefficients(TestCase):
         )
 
 
+class ModelConstraintsLinear(Model):
+
+    def path_objective(self, ensemble_member):
+        return self.state('x')**2
+
+    def path_constraints(self, ensemble_member):
+        return [(self.state('x') - self.state('y'), 0.0, np.inf)]
+
+
+class ModelConstraintsQuadratic(ModelConstraintsLinear):
+
+    def path_constraints(self, ensemble_member):
+        return [(self.state('x') - self.state('y')**2, 0.0, np.inf)]
+
+
+class ModelConstraintsNonlinear(ModelConstraintsLinear):
+
+    def path_constraints(self, ensemble_member):
+        return [(self.state('x') - self.state('y')**3, 0.0, np.inf)]
+
+
+class TestCheckConstraintLinearity(TestCase):
+
+    def _run_test(self, class_, message):
+        problem = class_()
+        problem._debug_check_level = lambda level, name: name.endswith("__debug_check_linearity_constraints")
+
+        with self.assertLogs('rtctools', level='INFO') as cm:
+            problem.optimize()
+
+        self.assertIn(message, cm.output)
+
+    def test_constraints_linear(self):
+        self._run_test(
+            ModelConstraintsLinear,
+            "INFO:rtctools:The constraints are linear")
+
+    def test_constraints_quadratic(self):
+        self._run_test(
+            ModelConstraintsQuadratic,
+            "INFO:rtctools:The constraints are quadratic")
+
+    def test_constraints_nonlinear(self):
+        self._run_test(
+            ModelConstraintsNonlinear,
+            "INFO:rtctools:The constraints are nonlinear")
+
+
 class ModelLinearDependenceDoubleAssignment(Model):
 
     def path_objective(self, ensemble_member):
