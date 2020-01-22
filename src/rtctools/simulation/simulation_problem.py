@@ -16,6 +16,7 @@ import pymoca.backends.casadi.api
 
 from rtctools._internal.alias_tools import AliasDict
 from rtctools._internal.caching import cached
+from rtctools._internal.debug_check_helpers import DebugLevel
 from rtctools.data.storage import DataStoreAccessor
 
 logger = logging.getLogger("rtctools")
@@ -30,6 +31,9 @@ class SimulationProblem(DataStoreAccessor):
     :cvar modelica_library_folders: Folders containing any referenced Modelica libraries. Default is an empty list.
 
     """
+
+    _debug_check_level = DebugLevel.MEDIUM
+    _debug_check_options = {}
 
     # Folders in which the referenced Modelica libraries are found
     modelica_library_folders = []

@@ -7,6 +7,7 @@ import casadi as ca
 import numpy as np
 
 from rtctools._internal.alias_tools import AliasDict
+from rtctools._internal.debug_check_helpers import DebugLevel
 from rtctools.data.storage import DataStoreAccessor
 
 from .timeseries import Timeseries
@@ -22,6 +23,9 @@ class OptimizationProblem(DataStoreAccessor, metaclass=ABCMeta):
     """
     Base class for all optimization problems.
     """
+
+    _debug_check_level = DebugLevel.MEDIUM
+    _debug_check_options = {}
 
     def __init__(self, **kwargs):
         # Call parent class first for default behaviour.
