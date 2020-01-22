@@ -10,6 +10,7 @@ import numpy as np
 from rtctools._internal.alias_tools import AliasDict
 from rtctools._internal.casadi_helpers import \
     interpolate, is_affine, nullvertcat, reduce_matvec, substitute_in_external
+from rtctools._internal.debug_check_helpers import DebugLevel, debug_check
 
 from .optimization_problem import OptimizationProblem
 from .timeseries import Timeseries
@@ -1546,6 +1547,9 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
         # Done
         logger.info("Done transcribing problem")
 
+        # Debug check coefficients
+        self.__debug_check_transcribe_linear_coefficients(discrete, lbx, ubx, lbg, ubg, x0, nlp)
+
         return discrete, lbx, ubx, lbg, ubg, x0, nlp
 
     def clear_transcription_cache(self):
@@ -2188,3 +2192,309 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
         all_values = ca.horzcat(initial_values, values)
 
         return ca.transpose(all_values)
+
+    def _debug_get_named_nlp(self, nlp):
+        x = nlp['x']
+        f = nlp['f']
+        g = nlp['g']
+
+        expand_f_g = ca.Function('f_g', [x], [f, g]).expand()
+        x_sx = ca.SX.sym('X', *x.shape)
+        f_sx, g_sx = expand_f_g(x_sx)
+
+        x, f, g = x_sx, f_sx, g_sx
+
+        # Build a vector of symbols with the descriptive names for useful
+        # logging of constraints. Some decision variables may be shared
+        # between ensemble members, so first we build a complete mapping of
+        # state_index -> (canonical name, ensemble members, time step index)
+        state_index_map = {}
+        for ensemble_member in range(self.ensemble_size):
+            indices = self.__indices_as_lists[ensemble_member]
+            for k, v in indices.items():
+                for t_i, i in enumerate(v):
+                    if i in state_index_map:
+                        # Shared state vector entry between ensemble members
+                        assert k == state_index_map[i][0]
+                        assert t_i == state_index_map[i][2]
+
+                        state_index_map[i][1].append(ensemble_member)
+                    else:
+                        state_index_map[i] = [k, [ensemble_member], t_i]
+
+        assert len(state_index_map) == x.size1()
+
+        # Build descriptive decision variables for each state vector entry
+        var_names = []
+        for i in range(len(state_index_map)):
+            var_name, ensemble_members, t_i = state_index_map[i]
+
+            if len(ensemble_members) == 1:
+                ensemble_members = ensemble_members[0]
+            else:
+                ensemble_members = "[{}]".format(",".join((str(x) for x in sorted(ensemble_members))))
+
+            var_names.append('{}__e{}__t{}'.format(var_name, ensemble_members, t_i))
+
+        # Create named versions of the constraints
+        named_x = ca.vertcat(*(ca.SX.sym(v) for v in var_names))
+        named_g = ca.vertsplit(ca.Function('tmp', [x], [g])(named_x))
+        named_f = ca.vertsplit(ca.Function('tmp', [x], [f])(named_x))[0]
+
+        return var_names, named_x, named_f, named_g
+
+    @debug_check(DebugLevel.VERYHIGH)
+    def __debug_check_transcribe_linear_coefficients(self, discrete, lbx, ubx, lbg, ubg, x0, nlp,
+                                                     tol_rhs=1E6,
+                                                     tol_zero=1E-12,
+                                                     tol_up=1E2,
+                                                     tol_down=1E-2,
+                                                     tol_range=1E3):
+        expand_f_g = ca.Function('f_g', [nlp['x']], [nlp['f'], nlp['g']]).expand()
+        X_sx = ca.SX.sym('X', *nlp['x'].shape)
+        f_sx, g_sx = expand_f_g(X_sx)
+
+        nlp['x'] = X_sx
+        nlp['f'] = f_sx
+        nlp['g'] = g_sx
+
+        lbg = np.array(ca.veccat(*lbg)).ravel()
+        ubg = np.array(ca.veccat(*ubg)).ravel()
+
+        var_names, named_x, named_f, named_g = self._debug_get_named_nlp(nlp)
+
+        def constr_to_str(i):
+            c_str = str(named_g[i])
+
+            lb, ub = lbg[i], ubg[i]
+
+            if np.isfinite(lb) and np.isfinite(ub) and lb == ub:
+                c_str = "{} = {}".format(c_str, lb)
+            elif np.isfinite(lb) and np.isfinite(ub):
+                c_str = "{} <= {} <= {}".format(lb, c_str, ub)
+            elif np.isfinite(lb):
+                c_str = "{} >= {}".format(c_str, lb)
+            elif np.isfinite(ub):
+                c_str = "{} <= {}".format(c_str, ub)
+
+            return c_str
+
+        # Checking for right hand side of constraints
+        logger.info("Sanity check of lbg and ubg, checking for small values (<{})".format(tol_zero))
+
+        lbg_abs_no_zero = np.abs(lbg.copy())
+        lbg_abs_no_zero[lbg_abs_no_zero == 0.0] = +np.inf
+        ind = np.argmin(lbg_abs_no_zero)
+        if np.any(np.isfinite(lbg_abs_no_zero)):
+            logger.info("Smallest (absolute) lbg coefficient {}".format(lbg_abs_no_zero[ind]))
+            logger.info("E.g., {}".format(constr_to_str(ind)))
+        lbg_inds = (lbg_abs_no_zero < tol_zero)
+        if np.any(lbg_inds):
+            logger.info("Too small of a (absolute) lbg found: {}".format(min(lbg[lbg_inds])))
+
+        ubg_abs_no_zero = np.abs(ubg.copy())
+        ubg_abs_no_zero[ubg_abs_no_zero == 0.0] = +np.inf
+        ind = np.argmin(ubg_abs_no_zero)
+        if np.any(np.isfinite(ubg_abs_no_zero)):
+            logger.info("Smallest (absolute) ubg coefficient {}".format(ubg_abs_no_zero[ind]))
+            logger.info("E.g., {}".format(constr_to_str(ind)))
+        ubg_inds = (ubg_abs_no_zero < tol_zero)
+        if np.any(ubg_inds):
+            logger.info("Too small of a (absolute) ubg found: {}".format(min(ubg[ubg_inds])))
+
+        logger.info("Sanity check of lbg and ubg, checking for large values (>{})".format(tol_rhs))
+
+        lbg_abs_no_inf = np.abs(lbg.copy())
+        lbg_abs_no_inf[~np.isfinite(lbg_abs_no_inf)] = -np.inf
+        ind = np.argmax(lbg_abs_no_inf)
+        if np.any(np.isfinite(lbg_abs_no_inf)):
+            logger.info("Largest (absolute) lbg coefficient {}".format(lbg_abs_no_inf[ind]))
+            logger.info("E.g., {}".format(constr_to_str(ind)))
+
+        lbg_inds = (lbg_abs_no_inf > tol_rhs)
+        if np.any(lbg_inds):
+            raise Exception("Too large of a (absolute) lbg found: {}".format(max(lbg[lbg_inds])))
+
+        ubg_abs_no_inf = np.abs(ubg.copy())
+        ubg_abs_no_inf[~np.isfinite(ubg)] = -np.inf
+        ind = np.argmax(ubg_abs_no_inf)
+        if np.any(np.isfinite(ubg_abs_no_inf)):
+            logger.info("Largest (absolute) ubg coefficient {}".format(ubg_abs_no_inf[ind]))
+            logger.info("E.g., {}".format(constr_to_str(ind)))
+
+        ubg_inds = (ubg_abs_no_inf > tol_rhs)
+        if np.any(ubg_inds):
+            raise Exception("Too large of a (absolute) ubg found: {}".format(max(ubg[ubg_inds])))
+
+        # Check coefficient matrix
+        logger.info("Sanity check on objective and constraints Jacobian matrix /constant coefficients values")
+
+        in_var = nlp['x']
+        out = []
+        for o in [nlp['f'], nlp['g']]:
+            Af = ca.Function('Af', [in_var], [ca.jacobian(o, in_var)])
+            bf = ca.Function('bf', [in_var], [o])
+
+            A = Af(x0)
+            A = ca.sparsify(A)
+
+            b = bf(0)
+            b = ca.sparsify(b)
+
+            out.append((A.tocsc().tocoo(), b.tocsc().tocoo()))
+
+        # Objective
+        A_obj, b_obj = out[0]
+        logger.info("Statistics of objective: max & min of abs(jac(f, x0))) f(x0), constants")
+        max_obj_A = max(np.abs(A_obj.data), default=None)
+        min_obj_A = min(np.abs(A_obj.data[A_obj.data != 0.0]), default=None)
+        obj_x0 = np.array(ca.Function('tmp', [in_var], [nlp['f']])(x0)).ravel()[0]
+        obj_b = b_obj.data[0] if len(b_obj.data) > 0 else 0.0
+
+        logger.info("{} & {}, {}, {}".format(max_obj_A, min_obj_A, obj_x0, obj_b))
+
+        if abs(obj_b) > tol_up:
+            logger.info("Constant '{}' in objective exceeds upper tolerance of '{}'".format(obj_b, tol_up))
+        if abs(obj_b) > tol_up:
+            logger.info("Objective value at x0 '{}' exceeds upper tolerance of '{}'".format(obj_x0, tol_up))
+
+        # Constraints
+        A_constr, b_constr = out[1]
+        logger.info("Statistics of constraints: max & min of abs(jac(g, x0))), max & min of abs(g(x0))")
+        max_constr_A = max(np.abs(A_constr.data), default=None)
+        min_constr_A = min(np.abs(A_constr.data[A_constr.data != 0.0]), default=None)
+        max_constr_b = max(np.abs(b_constr.data), default=None)
+        min_constr_b = min(np.abs(b_constr.data[b_constr.data != 0.0]), default=None)
+        logger.info("{} & {}, {} & {}".format(max_constr_A, min_constr_A, max_constr_b, min_constr_b))
+
+        maxs = [x for x in [max_constr_A, max_constr_b, max_obj_A, obj_b] if x is not None]
+        mins = [x for x in [min_constr_A, min_constr_b, min_obj_A, obj_b] if x is not None]
+        if (maxs and max(maxs) > tol_up) or (mins and min(mins) < tol_down):
+            logger.info("Jacobian matrix /constants coefficients values outside typical range!")
+
+        # Check on individual constraints. (Only check values of constraint's Jacobian.)
+        A_constr_csr = A_constr.tocsr()
+
+        exceedences = []
+
+        for i in range(A_constr_csr.shape[0]):
+            r = A_constr_csr.getrow(i)
+            data = r.data
+
+            try:
+                max_r = max(np.abs(data))
+                min_r = min(np.abs(data))
+            except ValueError:
+                # Emtpy constraint?
+                continue
+
+            assert min_r != 0.0
+
+            if max_r > tol_up or min_r < tol_down or max_r / min_r > tol_range:
+                c_str = constr_to_str(i)
+                exceedences.append((i, c_str))
+
+        if exceedences:
+            logger.info("Exceedence in jacobian of constraints evaluated at x0"
+                        " (max > {:g}, min < {:g}, or max / min > {:g}):"
+                        .format(tol_up, tol_down, tol_range))
+
+            for i, (r, c) in enumerate(exceedences):
+                logger.info("row {}:  {}".format(r, c))
+
+                if i >= 9:
+                    logger.info("Too many warnings of same type ({} others remain).".format(len(exceedences) - 10))
+                    break
+
+        # Columns
+        A_constr_csc = A_constr.tocsc()
+
+        coeffs = []
+
+        max_range_found = 1.0
+
+        logger.info("Checking for range exceedence for each variable (i.e., check Jacobian matrix columns)")
+        exceedences = []
+
+        for c in range(A_constr_csc.shape[1]):
+            cur_col = A_constr_csc.getcol(c)
+            cur_coeffs = cur_col.data
+
+            if len(cur_coeffs) == 0:
+                coeffs.append(None)
+                continue
+
+            abs_coeffs = np.abs(cur_coeffs)
+
+            max_r_i = np.argmax(abs_coeffs)
+            min_r_i = np.argmin(abs_coeffs)
+
+            max_r = abs_coeffs[max_r_i]
+            min_r = abs_coeffs[min_r_i]
+
+            assert min_r != 0.0
+
+            max_range_found = max(max_r / min_r, max_range_found)
+
+            if max_r / min_r > tol_range:
+                inds = cur_col.indices
+
+                c_min = inds[min_r_i]
+                c_max = inds[max_r_i]
+
+                r = A_constr_csr.getrow(c_min)
+                c_min_str = constr_to_str(c_min)
+                r = A_constr_csr.getrow(c_max)
+                c_max_str = constr_to_str(c_max)
+
+                exceedences.append((c, max_r / min_r, c_min_str, c_max_str))
+
+            coeffs.append((min_r, max_r))
+
+        logger.info("Max range found: {}".format(max_range_found))
+        if exceedences:
+            logger.info("Exceedence in range per column (max / min > {:g}):".format(tol_range))
+
+            for i, (c, exc, c_min_str, c_max_str) in enumerate(exceedences):
+                logger.info("col {} ({}):  {}".format(c, var_names[c], exc))
+                logger.info(c_min_str)
+                logger.info(c_max_str)
+
+                if i >= 9:
+                    logger.info("Too many warnings of same type ({} others remain).".format(len(exceedences) - 10))
+                    break
+
+        logger.info("Checking for range exceedence for variables in the objective function")
+        max_range_found = 1.0
+
+        exceedences = []
+        for c, d in zip(A_obj.col, A_obj.data):
+            cofc = coeffs[c]
+
+            if cofc is None:
+                # Variable does not appear in constraints
+                continue
+
+            min_r, max_r = cofc
+
+            obj_coeff = abs(d)
+
+            max_range = max(obj_coeff / min_r, max_r / obj_coeff)
+
+            max_range_found = max(max_range, max_range_found)
+
+            if max_range > tol_range:
+                exceedences.append((c, max_range, obj_coeff, min_r, max_r))
+
+        logger.info("Max range found: {}".format(max_range_found))
+        if exceedences:
+            logger.info("Exceedence in range of objective variable (range > {:g}):"
+                        .format(tol_range))
+
+            for i, (c, max_range, obj_coeff, min_r, max_r) in enumerate(exceedences):
+                logger.info("col {} ({}): range: {}, obj: {}, min constr: {}, max constr {}"
+                            .format(c, var_names[c], max_range, obj_coeff, min_r, max_r))
+
+                if i >= 9:
+                    logger.info("Too many warnings of same type ({} others remain).".format(len(exceedences) - 10))
+                    break
