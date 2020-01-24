@@ -27,6 +27,12 @@ class CSVMixin(IOMixin):
     column its probability.  Furthermore, the other XML files appear one level deeper inside the
     filesystem hierarchy, inside subfolders with the names of the ensemble members.
 
+    :cvar csv_initial_state_basename:
+        Initial state file basename. Default is ``initial_state``.
+    :cvar csv_parameters_basename:
+        Parameters file basename. Default is ``parameters``.
+    :cvar csv_ensemble_basename:
+        Ensemble file basename. Default is ``ensemble``.
     :cvar csv_delimiter:
         Column delimiter used in CSV files.  Default is ``,``.
     :cvar csv_equidistant:
@@ -36,6 +42,15 @@ class CSVMixin(IOMixin):
     :cvar csv_validate_timeseries:
         Check consistency of timeseries.  Default is ``True``.
     """
+
+    #: Initial state file basename
+    csv_initial_state_basename = 'initial_state'
+
+    #: Parameters file basename
+    csv_parameters_basename = 'parameters'
+
+    #: Ensemble file basename
+    csv_ensemble_basename = 'ensemble'
 
     #: Column delimiter used in CSV files
     csv_delimiter = ','
@@ -67,13 +82,13 @@ class CSVMixin(IOMixin):
                 raise Exception(
                     'CSVMixin: Initial state file {} contains more than one row of data. '
                     'Please remove the data row(s) that do not describe the initial state.'.format(
-                        os.path.join(self._input_folder, 'initial_state.csv')))
+                        os.path.join(self._input_folder, self.csv_initial_state_basename + '.csv')))
 
         # Read CSV files
         self.__initial_state = []
         if self.csv_ensemble_mode:
             self.__ensemble = np.genfromtxt(
-                os.path.join(self._input_folder, 'ensemble.csv'),
+                os.path.join(self._input_folder, self.csv_ensemble_basename + '.csv'),
                 delimiter=",", deletechars='', dtype=None, names=True, encoding=None)
 
             logger.debug("CSVMixin: Read ensemble description")
@@ -104,7 +119,8 @@ class CSVMixin(IOMixin):
             for ensemble_member_index, ensemble_member_name in enumerate(self.__ensemble['name']):
                 try:
                     _parameters = csv.load(os.path.join(
-                        self._input_folder, ensemble_member_name, 'parameters.csv'), delimiter=self.csv_delimiter)
+                        self._input_folder, ensemble_member_name, self.csv_parameters_basename + '.csv'),
+                        delimiter=self.csv_delimiter)
                     for key in _parameters.dtype.names:
                         self.io.set_parameter(key, float(_parameters[key]), ensemble_member_index)
                 except IOError:
@@ -114,7 +130,8 @@ class CSVMixin(IOMixin):
             for ensemble_member_name in self.__ensemble['name']:
                 try:
                     _initial_state = csv.load(os.path.join(
-                        self._input_folder, ensemble_member_name, 'initial_state.csv'), delimiter=self.csv_delimiter)
+                        self._input_folder, ensemble_member_name, self.csv_initial_state_basename + '.csv'),
+                        delimiter=self.csv_delimiter)
                     check_initial_state_array(_initial_state)
                     _initial_state = {key: float(_initial_state[key]) for key in _initial_state.dtype.names}
                 except IOError:
@@ -139,7 +156,7 @@ class CSVMixin(IOMixin):
 
             try:
                 _parameters = csv.load(os.path.join(
-                    self._input_folder, 'parameters.csv'), delimiter=self.csv_delimiter)
+                    self._input_folder, self.csv_parameters_basename + '.csv'), delimiter=self.csv_delimiter)
                 logger.debug("CSVMixin: Read parameters.")
                 for key in _parameters.dtype.names:
                     self.io.set_parameter(key, float(_parameters[key]))
@@ -148,7 +165,7 @@ class CSVMixin(IOMixin):
 
             try:
                 _initial_state = csv.load(os.path.join(
-                    self._input_folder, 'initial_state.csv'), delimiter=self.csv_delimiter)
+                    self._input_folder, self.csv_initial_state_basename + '.csv'), delimiter=self.csv_delimiter)
                 logger.debug("CSVMixin: Read initial state.")
                 check_initial_state_array(_initial_state)
                 _initial_state = {key: float(_initial_state[key]) for key in _initial_state.dtype.names}
