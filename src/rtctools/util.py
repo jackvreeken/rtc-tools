@@ -14,6 +14,14 @@ from .optimization.pi_mixin import PIMixin as OptimizationPIMixin
 from .simulation.pi_mixin import PIMixin as SimulationPIMixin
 
 
+def _resolve_folder(kwargs, base_folder, subfolder_kw, default):
+    subfolder = kwargs.pop(subfolder_kw, default)
+    if os.path.isabs(subfolder):
+        return subfolder
+    else:
+        return os.path.join(base_folder, subfolder)
+
+
 def run_optimization_problem(optimization_problem_class,
                              base_folder='..', log_level=logging.INFO, profile=False,
                              **kwargs):
@@ -40,9 +48,9 @@ def run_optimization_problem(optimization_problem_class,
         # Resolve base folder relative to script folder
         base_folder = os.path.join(sys.path[0], base_folder)
 
-    model_folder = os.path.join(base_folder, 'model')
-    input_folder = os.path.join(base_folder, 'input')
-    output_folder = os.path.join(base_folder, 'output')
+    model_folder = _resolve_folder(kwargs, base_folder, 'model_folder', 'model')
+    input_folder = _resolve_folder(kwargs, base_folder, 'input_folder', 'input')
+    output_folder = _resolve_folder(kwargs, base_folder, 'output_folder', 'output')
 
     # Set up logging
     logger = logging.getLogger("rtctools")
@@ -143,9 +151,9 @@ def run_simulation_problem(simulation_problem_class,
             # Resolve base folder relative to script folder
             base_folder = os.path.join(sys.path[0], base_folder)
 
-    model_folder = os.path.join(base_folder, 'model')
-    input_folder = os.path.join(base_folder, 'input')
-    output_folder = os.path.join(base_folder, 'output')
+    model_folder = _resolve_folder(kwargs, base_folder, 'model_folder', 'model')
+    input_folder = _resolve_folder(kwargs, base_folder, 'input_folder', 'input')
+    output_folder = _resolve_folder(kwargs, base_folder, 'output_folder', 'output')
 
     # Set up logging
     logger = logging.getLogger("rtctools")
