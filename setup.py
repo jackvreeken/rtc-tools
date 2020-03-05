@@ -48,8 +48,8 @@ setup(
                         "rtc-tools-channel-flow >= 1.1.0a1"],
     tests_require = ['pytest', 'pytest-runner'],
     extras_require = {
-        'netcdf':  ["netCDF4"],
-        'all': ["netCDF4"],
+        'netcdf':  ["netCDF4", "cftime < 1.1.0"],
+        'all': ["netCDF4", "cftime < 1.1.0"],
     },
     python_requires='>=3.5',
     cmdclass = versioneer.get_cmdclass(),
