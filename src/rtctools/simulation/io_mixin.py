@@ -22,6 +22,8 @@ class IOMixin(SimulationProblem, metaclass=ABCMeta):
 
         self._simulation_times = []
 
+        self.__first_update_call = True
+
     def pre(self) -> None:
         # Call read method to read all input
         self.read()
@@ -84,16 +86,18 @@ class IOMixin(SimulationProblem, metaclass=ABCMeta):
         for variable in self._io_output_variables:
             self._io_output[variable] = np.array([self.get_var(variable)])
 
-    def __set_input_variables(self, t_idx):
-        for variable in self.get_variables():
-            if variable in self.io.get_timeseries_names(0):
-                _, values = self.io.get_timeseries_sec(variable)
-                value = values[t_idx]
-                if np.isfinite(value):
-                    self.set_var(variable, value)
-                else:
-                    logger.debug("IOMixin: Found bad value {} at index [{}] in timeseries aliased to input {}"
-                                 .format(value, t_idx, variable))
+    def __set_input_variables(self, t_idx, use_cache=False):
+        if not use_cache:
+            self.__cache_loop_variables = [v for v in self.get_variables() if v in self.io.get_timeseries_names(0)]
+
+        for variable in self.__cache_loop_variables:
+            _, values = self.io.get_timeseries_sec(variable)
+            value = values[t_idx]
+            if np.isfinite(value):
+                self.set_var(variable, value)
+            else:
+                logger.debug("IOMixin: Found bad value {} at index [{}] in timeseries aliased to input {}"
+                             .format(value, t_idx, variable))
 
     def update(self, dt):
         # Time step
@@ -108,7 +112,7 @@ class IOMixin(SimulationProblem, metaclass=ABCMeta):
         t_idx = bisect.bisect_left(self.io.times_sec, t + dt)
 
         # Set input values
-        self.__set_input_variables(t_idx)
+        self.__set_input_variables(t_idx, not self.__first_update_call)
 
         # Call super
         super().update(dt)
@@ -116,6 +120,8 @@ class IOMixin(SimulationProblem, metaclass=ABCMeta):
         # Extract results
         for variable, values in self._io_output.items():
             self._io_output[variable] = np.append(values, self.get_var(variable))
+
+        self.__first_update_call = False
 
     @cached
     def parameters(self):
