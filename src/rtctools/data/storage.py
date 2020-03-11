@@ -112,7 +112,7 @@ class DataStore(metaclass=ABCMeta):
         """
         self._datetimes_to_seconds()
 
-        return self.__timeseries_times_sec.copy()
+        return self.__timeseries_times_sec
 
     def _datetimes_to_seconds(self):
         if self.__reference_datetime_fixed:
@@ -126,6 +126,7 @@ class DataStore(metaclass=ABCMeta):
                 raise Exception("Reference datetime {} should be equal to one of the timeseries datetimes {}".format(
                     self.reference_datetime, self.__timeseries_datetimes))
             self.__timeseries_times_sec = self.datetime_to_sec(self.__timeseries_datetimes, self.reference_datetime)
+            self.__timeseries_times_sec.flags.writeable = False
             self.__reference_datetime_fixed = True
 
     def set_timeseries(self,
