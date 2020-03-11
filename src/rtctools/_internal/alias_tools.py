@@ -119,6 +119,8 @@ class AliasDict(Generic[KT, VT]):
                 self.__d[var] = (-val[1], -val[0])
             else:
                 self.__d[var] = val
+        elif isinstance(val, list) and sign < 0:
+            self.__d[var] = [-x for x in val]
         else:
             self.__d[var] = -val if sign < 0 else val
 
@@ -130,6 +132,8 @@ class AliasDict(Generic[KT, VT]):
                 return (-val[1], -val[0])
             else:
                 return val
+        elif isinstance(val, list) and sign < 0:
+            return [-x for x in val]
         else:
             return -val if sign < 0 else val
 
