@@ -463,6 +463,10 @@ class SimulationProblem(DataStoreAccessor):
         # clear that that does not work
         self.__parameters_set_var = False
 
+        self.__parameter_names_including_aliases = set()
+        for p in self.__parameters.keys():
+            self.__parameter_names_including_aliases |= self.alias_relation.aliases(p)
+
     def pre(self):
         """
         Any preprocessing takes place here.
@@ -707,7 +711,7 @@ class SimulationProblem(DataStoreAccessor):
 
         # Check if it is a parameter, and if it is allowed to be set
         if not self.__parameters_set_var:
-            if name in self.__parameters:
+            if name in self.__parameter_names_including_aliases:
                 raise Exception("Cannot set parameters after initialize() has been called.")
 
         # Get the index of the canonical state and sign
