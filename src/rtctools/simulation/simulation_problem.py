@@ -153,7 +153,16 @@ class SimulationProblem(DataStoreAccessor):
         # Construct a dict to look up symbols by name (or iterate over)
         self.__sym_dict = OrderedDict(((sym.name(), sym) for sym in self.__sym_list))
 
-        self.__indices = {k: i for i, k in enumerate(self.__sym_dict.keys())}
+        # Generate a dictionary that we can use to lookup the index in the state vector.
+        # To avoid repeated and relatively expensive `canonical_signed` calls, we
+        # make a dictionary for all variables and their aliases.
+        self.__indices = {}
+        for i, k in enumerate(self.__sym_dict.keys()):
+            for alias in self.alias_relation.aliases(k):
+                if alias.startswith('-'):
+                    self.__indices[alias[1:]] = (i, -1.0)
+                else:
+                    self.__indices[alias] = (i, 1.0)
 
         # Assemble some symbolics, including those needed for a backwards Euler derivative approximation
         X = ca.vertcat(*self.__sym_list[:self.__states_end_index])
@@ -185,7 +194,9 @@ class SimulationProblem(DataStoreAccessor):
         unscaled_symbols = []
         scaled_symbols = []
         for sym_name, nominal in self.__nominals.items():
-            index = self.__indices[sym_name]
+            # Note that sym_name is always a canonical state
+            index, _ = self.__indices[sym_name]
+
             # If the symbol is a state, Add the symbol to the lists
             if index <= self.__states_end_index:
                 unscaled_symbols.append(X[index])
@@ -587,11 +598,8 @@ class SimulationProblem(DataStoreAccessor):
         :returns: The value of the variable.
         """
 
-        # Get the canonical name and sign
-        name, sign = self.alias_relation.canonical_signed(name)
-
-        # Get the raw value of the canonical var
-        index = self.__indices[name]
+        # Get the index of the canonical state and sign
+        index, sign = self.__indices[name]
         value = self.__state_vector[index]
 
         # Adjust sign if needed
@@ -697,18 +705,17 @@ class SimulationProblem(DataStoreAccessor):
 
         # TODO: sanitize input
 
-        # Get the canonical name, adjust sign if needed
-        name, sign = self.alias_relation.canonical_signed(name)
-        if sign < 0:
-            value *= sign
-
         # Check if it is a parameter, and if it is allowed to be set
         if not self.__parameters_set_var:
             if name in self.__parameters:
                 raise Exception("Cannot set parameters after initialize() has been called.")
 
+        # Get the index of the canonical state and sign
+        index, sign = self.__indices[name]
+        if sign < 0:
+            value *= sign
+
         # Adjust for nominal value if not default
-        index = self.__indices[name]
         if index <= self.__states_end_index:
             nominal = self.get_variable_nominal(name)
             value /= nominal
