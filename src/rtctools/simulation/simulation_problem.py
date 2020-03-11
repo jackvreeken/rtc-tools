@@ -526,7 +526,7 @@ class SimulationProblem(DataStoreAccessor):
             logger.debug('Residual maximum magnitude: {:.2E}'.format(float(largest_res)))
 
         # Update state vector
-        self.__state_vector[:self.__states_end_index] = next_state.T
+        self.__state_vector[:self.__states_end_index] = next_state.toarray().ravel()
 
     def simulate(self):
         """
