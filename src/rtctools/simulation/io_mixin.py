@@ -88,10 +88,15 @@ class IOMixin(SimulationProblem, metaclass=ABCMeta):
 
     def __set_input_variables(self, t_idx, use_cache=False):
         if not use_cache:
-            self.__cache_loop_variables = [v for v in self.get_variables() if v in self.io.get_timeseries_names(0)]
+            self.__cache_loop_timeseries = {}
 
-        for variable in self.__cache_loop_variables:
-            _, values = self.io.get_timeseries_sec(variable)
+            timeseries_names = set(self.io.get_timeseries_names(0))
+            for v in self.get_variables():
+                if v in timeseries_names:
+                    _, values = self.io.get_timeseries_sec(v)
+                    self.__cache_loop_timeseries[v] = values
+
+        for variable, values in self.__cache_loop_timeseries.items():
             value = values[t_idx]
             if np.isfinite(value):
                 self.set_var(variable, value)
