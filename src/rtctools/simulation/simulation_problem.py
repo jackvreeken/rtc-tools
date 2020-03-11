@@ -206,10 +206,10 @@ class SimulationProblem(DataStoreAccessor):
                 X.size1(), dae_residual.size1()))
 
         # Construct function parameters
-        parameters = ca.vertcat(dt, X_prev, *self.__sym_list[self.__states_end_index:])
+        parameters = ca.vertcat(X_prev, *self.__sym_list[self.__states_end_index:])
 
         # Construct a function res_vals that returns the numerical residuals of a numerical state
-        self.__res_vals = ca.Function("res_vals", [X, parameters], [dae_residual])
+        self.__res_vals = ca.Function("res_vals", [X, dt, parameters], [dae_residual])
 
         # Use rootfinder() to make a function that takes a step forward in time by trying to zero res_vals()
         options = {'nlpsol': 'ipopt', 'nlpsol_options': self.solver_options(), 'error_on_fail': False}
@@ -499,7 +499,7 @@ class SimulationProblem(DataStoreAccessor):
 
         # take a step
         guess = self.__state_vector[:self.__states_end_index]
-        next_state = self.__do_step(guess, ca.vertcat(dt, *self.__state_vector))
+        next_state = self.__do_step(guess, dt, self.__state_vector)
 
         # Check convergence of rootfinder
         rootfinder_stats = self.__do_step.stats()
