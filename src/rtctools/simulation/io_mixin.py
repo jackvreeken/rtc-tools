@@ -1,6 +1,7 @@
 import bisect
 import logging
 from abc import ABCMeta, abstractmethod
+from math import isfinite
 
 import numpy as np
 
@@ -98,7 +99,7 @@ class IOMixin(SimulationProblem, metaclass=ABCMeta):
 
         for variable, values in self.__cache_loop_timeseries.items():
             value = values[t_idx]
-            if np.isfinite(value):
+            if isfinite(value):
                 self.set_var(variable, value)
             else:
                 logger.debug("IOMixin: Found bad value {} at index [{}] in timeseries aliased to input {}"
