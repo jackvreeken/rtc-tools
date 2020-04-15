@@ -129,7 +129,7 @@ class CSVMixin(IOMixin):
         data = np.zeros(len(times), dtype=dtype)
         data['time'] = self.io.sec_to_datetime(times, self.io.reference_datetime)
         for variable in self._io_output_variables:
-            data[variable] = self._io_output[variable]
+            data[variable] = np.array(self._io_output[variable])
 
         fname = os.path.join(self._output_folder, self.timeseries_export_basename + '.csv')
         csv.save(fname, data, delimiter=self.csv_delimiter, with_time=True)

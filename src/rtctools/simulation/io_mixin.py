@@ -84,7 +84,7 @@ class IOMixin(SimulationProblem, metaclass=ABCMeta):
 
         # Extract consistent t0 values
         for variable in self._io_output_variables:
-            self._io_output[variable] = np.array([self.get_var(variable)])
+            self._io_output[variable] = [self.get_var(variable)]
 
     def __set_input_variables(self, t_idx, use_cache=False):
         if not use_cache:
@@ -119,7 +119,7 @@ class IOMixin(SimulationProblem, metaclass=ABCMeta):
 
         # Extract results
         for variable, values in self._io_output.items():
-            self._io_output[variable] = np.append(values, self.get_var(variable))
+            values.append(self.get_var(variable))
 
         self.__first_update_call = False
 
