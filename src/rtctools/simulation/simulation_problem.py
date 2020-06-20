@@ -526,7 +526,7 @@ class SimulationProblem(DataStoreAccessor):
 
         if logger.getEffectiveLevel() == logging.DEBUG:
             # compute max residual
-            largest_res = ca.norm_inf(self.__res_vals(next_state, ca.vertcat(self.__dt, *self.__state_vector)))
+            largest_res = ca.norm_inf(self.__res_vals(next_state, self.__dt, self.__state_vector))
             logger.debug('Residual maximum magnitude: {:.2E}'.format(float(largest_res)))
 
         # Update state vector
