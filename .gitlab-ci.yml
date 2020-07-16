@@ -1,4 +1,4 @@
-image: python:3.7
+image: python:3.8
 
 before_script:
   - pip install tox
@@ -47,19 +47,19 @@ py35:linux:
   tags:
     - docker
 
-py36:linux:
-  <<: *unittests
-  image: python:3.6-jessie
-  variables:
-    TOXENV: py36
-  tags:
-    - docker
-
 py37:linux:
   <<: *unittests
   image: python:3.7-stretch
   variables:
     TOXENV: py37
+  tags:
+    - docker
+
+py38:linux:
+  <<: *unittests
+  image: python:3.8-buster
+  variables:
+    TOXENV: py38
   tags:
     - docker
 
@@ -79,17 +79,17 @@ examples35:linux:
   variables:
     TOXENV: examples35
 
-examples36:linux:
-  <<: *examples
-  image: python:3.6-jessie
-  variables:
-    TOXENV: examples36
-
 examples37:linux:
   <<: *examples
   image: python:3.7-stretch
   variables:
     TOXENV: examples37
+
+examples38:linux:
+  <<: *examples
+  image: python:3.8-buster
+  variables:
+    TOXENV: examples38
 
 # coverage
 coverage:
