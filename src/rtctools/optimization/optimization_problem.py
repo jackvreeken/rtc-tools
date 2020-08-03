@@ -399,6 +399,16 @@ class OptimizationProblem(DataStoreAccessor, metaclass=ABCMeta):
         """
         return AliasDict(self.alias_relation)
 
+    def string_parameters(self, ensemble_member: int) -> Dict[str, str]:
+        """
+        Returns a dictionary of string parameters.
+
+        :param ensemble_member: The ensemble member index.
+
+        :returns: A dictionary of string parameter names and values.
+        """
+        return {}
+
     def constant_inputs(self, ensemble_member: int) -> AliasDict[str, Timeseries]:
         """
         Returns a dictionary of constant inputs.

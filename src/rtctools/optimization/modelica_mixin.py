@@ -60,6 +60,8 @@ class ModelicaMixin(OptimizationProblem):
         self.__mx['derivatives'] = [v.symbol for v in self.__pymoca_model.der_states]
         self.__mx['algebraics'] = [v.symbol for v in self.__pymoca_model.alg_states]
         self.__mx['parameters'] = [v.symbol for v in self.__pymoca_model.parameters]
+        self.__mx['string_parameters'] = [v.name for v in (*self.__pymoca_model.string_parameters,
+                                                           *self.__pymoca_model.string_constants)]
         self.__mx['control_inputs'] = []
         self.__mx['constant_inputs'] = []
         self.__mx['lookup_tables'] = []
@@ -205,6 +207,18 @@ class ModelicaMixin(OptimizationProblem):
 
         # Return parameter values from pymoca model
         parameters.update({v.symbol.name(): v.value for v in self.__pymoca_model.parameters})
+
+        # Done
+        return parameters
+
+    @cached
+    def string_parameters(self, ensemble_member):
+        # Call parent class first for default values.
+        parameters = super().string_parameters(ensemble_member)
+
+        # Return parameter values from pymoca model
+        parameters.update({v.name: v.value for v in self.__pymoca_model.string_parameters})
+        parameters.update({v.name: v.value for v in self.__pymoca_model.string_constants})
 
         # Done
         return parameters
