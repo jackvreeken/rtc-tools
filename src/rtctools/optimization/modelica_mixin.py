@@ -169,6 +169,9 @@ class ModelicaMixin(OptimizationProblem):
         # Automatically detect and eliminate alias variables.
         compiler_options['detect_aliases'] = True
 
+        # Disallow aliasing to derivative states
+        compiler_options['allow_derivative_aliases'] = False
+
         # Cache the model on disk
         compiler_options['cache'] = True
 
