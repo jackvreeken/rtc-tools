@@ -25,10 +25,12 @@ class HomotopyMixin(OptimizationProblem):
 
     def seed(self, ensemble_member):
         seed = super().seed(ensemble_member)
+        options = self.homotopy_options()
+
         # Overwrite the seed only when the results of the latest run are
         # stored within this class. That is, when the GoalProgrammingMixin
         # class is not used or at the first run of the goal programming loop.
-        if self.__theta > 0 and getattr(self, '_gp_first_run', True):
+        if self.__theta > options['theta_start'] and getattr(self, '_gp_first_run', True):
             for key, result in self.__results[ensemble_member].items():
                 times = self.times(key)
                 if ((result.ndim == 1 and len(result) == len(times))
@@ -63,6 +65,8 @@ class HomotopyMixin(OptimizationProblem):
         +------------------------+------------+---------------+
         | Option                 | Type       | Default value |
         +========================+============+===============+
+        | ``theta_start``        | ``float``  | ``0.0``       |
+        +------------------------+------------+---------------+
         | ``delta_theta_0``      | ``float``  | ``1.0``       |
         +------------------------+------------+---------------+
         | ``delta_theta_min``    | ``float``  | ``0.01``      |
@@ -71,7 +75,7 @@ class HomotopyMixin(OptimizationProblem):
         +------------------------+------------+---------------+
 
         The homotopy process is controlled by the homotopy parameter in the model, specified
-        by the option ``homotopy_parameter``.  The homotopy parameter is initialized to ``0.0``,
+        by the option ``homotopy_parameter``.  The homotopy parameter is initialized to ``theta_start``,
         and increases to a value of ``1.0`` with a dynamically changing step size.  This step
         size is initialized with the value of the option ``delta_theta_0``.  If this step
         size is too large, i.e., if the problem with the increased homotopy parameter fails to
@@ -81,7 +85,8 @@ class HomotopyMixin(OptimizationProblem):
         :returns: A dictionary of homotopy options.
         """
 
-        return {'delta_theta_0': 1.0,
+        return {'theta_start': 0.0,
+                'delta_theta_0': 1.0,
                 'delta_theta_min': 0.01,
                 'homotopy_parameter': 'theta'}
 
@@ -101,11 +106,11 @@ class HomotopyMixin(OptimizationProblem):
         if preprocessing:
             self.pre()
 
-        # Homotopy loop
-        self.__theta = 0.0
-
         options = self.homotopy_options()
         delta_theta = options['delta_theta_0']
+
+        # Homotopy loop
+        self.__theta = options['theta_start']
 
         while self.__theta <= 1.0:
             logger.info("Solving with homotopy parameter theta = {}.".format(self.__theta))
@@ -123,7 +128,7 @@ class HomotopyMixin(OptimizationProblem):
                     self.clear_transcription_cache()
 
             else:
-                if self.__theta == 0.0:
+                if self.__theta == options['theta_start']:
                     break
 
                 self.__theta -= delta_theta
