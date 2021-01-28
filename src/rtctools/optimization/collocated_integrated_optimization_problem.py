@@ -2193,6 +2193,11 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
 
         return ca.transpose(all_values)
 
+    def solver_success(self, *args, **kwargs):
+        self.__debug_check_state_output_scaling()
+
+        return super().solver_success(*args, **kwargs)
+
     def _debug_get_named_nlp(self, nlp):
         x = nlp['x']
         f = nlp['f']
@@ -2498,3 +2503,65 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                 if i >= 9:
                     logger.info("Too many warnings of same type ({} others remain).".format(len(exceedences) - 10))
                     break
+
+    @debug_check(DebugLevel.VERYHIGH)
+    def __debug_check_state_output_scaling(self, tol_up=1E4, tol_down=1E-2, ignore_all_zero=True):
+        """
+        Check the scaling using the resulting/optimized solver output.
+
+        Exceedences of the (absolute) state vector of `tol_up` are rather
+        unambiguously bad. If a certain variable has _any_ violation, we
+        report it.
+
+        Exceedences on `tol_down` are more difficult as maybe the scaling is
+        correct, but the answer just happened to be (almost) zero. We only
+        report if _all_ values are in violation (and even then can't really be
+        certain).
+        """
+
+        abs_output = np.abs(self.solver_output)
+
+        inds_up = np.flatnonzero(abs_output >= tol_up)
+        inds_down = np.flatnonzero(abs_output <= tol_down)
+
+        indices = self.__indices_as_lists
+
+        variable_to_all_indices = {k: set(v) for k, v in indices[0].items()}
+        for ensemble_indices in indices[1:]:
+            for k, v in ensemble_indices.items():
+                variable_to_all_indices[k] |= v
+
+        if len(inds_up) > 0:
+            exceedences = []
+
+            for k, v in variable_to_all_indices.items():
+                inds = v.intersection(inds_up)
+                if inds:
+                    exceedences.append((k, max(abs_output[list(inds)])))
+
+            exceedences = sorted(exceedences, key=lambda x: x[1], reverse=True)
+
+            logger.info("Variables with at least one (absolute) state vector entry/entries larger than {}"
+                        .format(tol_up))
+
+            for k, v in exceedences:
+                logger.info("{}: abs max = {}".format(k, v))
+
+        if len(inds_down) > 0:
+            exceedences = []
+
+            for k, v in variable_to_all_indices.items():
+                if v.issubset(inds_down):
+                    exceedences.append((k, max(abs_output[list(v)])))
+
+            exceedences = sorted(exceedences, key=lambda x: x[1], reverse=True)
+
+            ignore_all_zero_string = " (but not all zero)" if ignore_all_zero else ""
+            logger.info("Variables with all (absolute) state vector entry/entries smaller than {}{}"
+                        .format(tol_down, ignore_all_zero_string))
+
+            for k, v in exceedences:
+                if ignore_all_zero and v == 0.0:
+                    continue
+
+                logger.info("{}: abs max = {}".format(k, v))
