@@ -357,7 +357,7 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                     self.__indices_as_lists[ensemble_member][k] = [int(i) for i in v]
 
         # Initialize bound and seed vectors
-        discrete = np.zeros(X.size1(), dtype=np.bool)
+        discrete = np.zeros(X.size1(), dtype=bool)
 
         lbx = -np.inf * np.ones(X.size1())
         ubx = np.inf * np.ones(X.size1())
@@ -1719,7 +1719,7 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
         return x0
 
     def _collint_get_discrete(self, count, indices):
-        discrete = np.zeros(count, dtype=np.bool)
+        discrete = np.zeros(count, dtype=bool)
 
         for ensemble_member in range(self.ensemble_size):
             for variable, inds in indices[ensemble_member].items():
