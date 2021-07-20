@@ -36,3 +36,17 @@ class TestTimeseries(unittest.TestCase):
         ts = Timeseries([1, 2, 3], vals)
         self.assertTrue(np.array_equal(ts.values, np.array(vals, dtype=np.float64)))
         self.assertEqual(ts.values.dtype, np.float64)
+
+    def test_equal(self):
+        ts_int = Timeseries([1, 2, 3], [4, 5, 6])
+        ts_float = Timeseries([1, 2, 3], [4.0, 5.0, 6.0])
+
+        ts_diff_values = Timeseries([1, 2, 3], [1, 2, 3])
+        ts_diff_times = Timeseries([4, 5, 6], [4, 5, 6])
+
+        self.assertEqual(ts_int, ts_int)
+        self.assertEqual(ts_float, ts_float)
+        self.assertEqual(ts_int, ts_float)
+
+        self.assertNotEqual(ts_float, ts_diff_times)
+        self.assertNotEqual(ts_float, ts_diff_values)
