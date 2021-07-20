@@ -2397,15 +2397,17 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
 
             if max_r > tol_up or min_r < tol_down or max_r / min_r > tol_range:
                 c_str = constr_to_str(i)
-                exceedences.append((i, c_str))
+                exceedences.append((i, max_r, min_r, c_str))
 
         if exceedences:
             logger.info("Exceedence in jacobian of constraints evaluated at x0"
                         " (max > {:g}, min < {:g}, or max / min > {:g}):"
                         .format(tol_up, tol_down, tol_range))
 
-            for i, (r, c) in enumerate(exceedences):
-                logger.info("row {}:  {}".format(r, c))
+            exceedences = sorted(exceedences, key=lambda x: x[1] / x[2], reverse=True)
+
+            for i, (r, max_r, min_r, c) in enumerate(exceedences):
+                logger.info("row {} (max: {}, min: {}, range: {}):  {}".format(r, max_r, min_r, max_r / min_r, c))
 
                 if i >= 9:
                     logger.info("Too many warnings of same type ({} others remain).".format(len(exceedences) - 10))
@@ -2452,16 +2454,18 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                 r = A_constr_csr.getrow(c_max)
                 c_max_str = constr_to_str(c_max)
 
-                exceedences.append((c, max_r / min_r, c_min_str, c_max_str))
+                exceedences.append((c, max_r / min_r, min_r, max_r, c_min_str, c_max_str))
 
             coeffs.append((min_r, max_r))
+
+        exceedences = sorted(exceedences, key=lambda x: x[1], reverse=True)
 
         logger.info("Max range found: {}".format(max_range_found))
         if exceedences:
             logger.info("Exceedence in range per column (max / min > {:g}):".format(tol_range))
 
-            for i, (c, exc, c_min_str, c_max_str) in enumerate(exceedences):
-                logger.info("col {} ({}):  {}".format(c, var_names[c], exc))
+            for i, (c, exc, min_, max_, c_min_str, c_max_str) in enumerate(exceedences):
+                logger.info("col {} ({}):  range {}, min {}, max {}".format(c, var_names[c], exc, min_, max_))
                 logger.info(c_min_str)
                 logger.info(c_max_str)
 
@@ -2541,8 +2545,9 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
 
             exceedences = sorted(exceedences, key=lambda x: x[1], reverse=True)
 
-            logger.info("Variables with at least one (absolute) state vector entry/entries larger than {}"
-                        .format(tol_up))
+            if exceedences:
+                logger.info("Variables with at least one (absolute) state vector entry/entries larger than {}"
+                            .format(tol_up))
 
             for k, v in exceedences:
                 logger.info("{}: abs max = {}".format(k, v))
@@ -2556,9 +2561,10 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
 
             exceedences = sorted(exceedences, key=lambda x: x[1], reverse=True)
 
-            ignore_all_zero_string = " (but not all zero)" if ignore_all_zero else ""
-            logger.info("Variables with all (absolute) state vector entry/entries smaller than {}{}"
-                        .format(tol_down, ignore_all_zero_string))
+            if next((v for k, v in exceedences if not ignore_all_zero or v > 0.0), None):
+                ignore_all_zero_string = " (but not all zero)" if ignore_all_zero else ""
+                logger.info("Variables with all (absolute) state vector entry/entries smaller than {}{}"
+                            .format(tol_down, ignore_all_zero_string))
 
             for k, v in exceedences:
                 if ignore_all_zero and v == 0.0:
