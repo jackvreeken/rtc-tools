@@ -2254,7 +2254,8 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                                                      tol_zero=1E-12,
                                                      tol_up=1E2,
                                                      tol_down=1E-2,
-                                                     tol_range=1E3):
+                                                     tol_range=1E3,
+                                                     evaluate_at_x0=False):
         expand_f_g = ca.Function('f_g', [nlp['x']], [nlp['f'], nlp['g']]).expand()
         X_sx = ca.SX.sym('X', *nlp['x'].shape)
         f_sx, g_sx = expand_f_g(X_sx)
@@ -2331,6 +2332,9 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
         if np.any(ubg_inds):
             raise Exception("Too large of a (absolute) ubg found: {}".format(max(ubg[ubg_inds])))
 
+        eval_point = x0 if evaluate_at_x0 else 1.0
+        eval_point_str = "x0" if evaluate_at_x0 else "1.0"
+
         # Check coefficient matrix
         logger.info("Sanity check on objective and constraints Jacobian matrix /constant coefficients values")
 
@@ -2340,7 +2344,7 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
             Af = ca.Function('Af', [in_var], [ca.jacobian(o, in_var)])
             bf = ca.Function('bf', [in_var], [o])
 
-            A = Af(x0)
+            A = Af(eval_point)
             A = ca.sparsify(A)
 
             b = bf(0)
@@ -2350,10 +2354,11 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
 
         # Objective
         A_obj, b_obj = out[0]
-        logger.info("Statistics of objective: max & min of abs(jac(f, x0))) f(x0), constants")
+        logger.info("Statistics of objective: max & min of abs(jac(f, {}))) f({}), constants"
+                    .format(eval_point_str, eval_point_str))
         max_obj_A = max(np.abs(A_obj.data), default=None)
         min_obj_A = min(np.abs(A_obj.data[A_obj.data != 0.0]), default=None)
-        obj_x0 = np.array(ca.Function('tmp', [in_var], [nlp['f']])(x0)).ravel()[0]
+        obj_x0 = np.array(ca.Function('tmp', [in_var], [nlp['f']])(eval_point)).ravel()[0]
         obj_b = b_obj.data[0] if len(b_obj.data) > 0 else 0.0
 
         logger.info("{} & {}, {}, {}".format(max_obj_A, min_obj_A, obj_x0, obj_b))
