@@ -2256,6 +2256,8 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                                                      tol_down=1E-2,
                                                      tol_range=1E3,
                                                      evaluate_at_x0=False):
+        nlp = nlp.copy()
+
         expand_f_g = ca.Function('f_g', [nlp['x']], [nlp['f'], nlp['g']]).expand()
         X_sx = ca.SX.sym('X', *nlp['x'].shape)
         f_sx, g_sx = expand_f_g(X_sx)
