@@ -1453,6 +1453,9 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
 
             # Constraints
             constraints = self.constraints(ensemble_member)
+            if constraints is None:
+                raise Exception("The `constraints` method returned None, but should always return a list.")
+
             if logger.getEffectiveLevel() == logging.DEBUG:
                 for constraint in constraints:
                     logger.debug(
