@@ -35,7 +35,7 @@ setup(
     author = 'Jorn Baayen',
     description = DOCLINES[0],
     long_description = '\n'.join(DOCLINES[2:]),
-    url = 'http://www.deltares.nl/en/software/rtc-tools/',
+    url = 'https://oss.deltares.nl/web/rtc-tools/home',
     download_url='http://gitlab.com/deltares/rtc-tools/',
     classifiers = [_f for _f in CLASSIFIERS.split('\n') if _f],
     platforms = ['Windows', 'Linux', 'Mac OS-X', 'Unix'],

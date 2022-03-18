@@ -16,7 +16,7 @@ This is the documentation for RTC-Tools, the `Deltares
 <https://www.deltares.nl/>`_ toolbox for control and optimization of
 environmental systems.
 
-Visit the `RTC-Tools website <https://www.deltares.nl/en/software/rtc-tools/>`_
+Visit the `RTC-Tools website <https://oss.deltares.nl/web/rtc-tools/home>`_
 for a general product description and information on available services.
 
 This first chapter covers getting the software running on your computer.  The
