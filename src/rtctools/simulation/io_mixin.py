@@ -129,6 +129,14 @@ class IOMixin(SimulationProblem, metaclass=ABCMeta):
 
         self.__first_update_call = False
 
+    def extract_results(self):
+        """
+        Extracts the results of output
+
+        :returns: An AliasDict of output variables and results array format.
+        """
+        return self._io_output
+
     @cached
     def parameters(self):
         """

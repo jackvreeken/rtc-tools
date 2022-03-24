@@ -210,11 +210,3 @@ class PIMixin(IOMixin):
     def get_timeseries(self, variable):
         _, values = self.io.get_timeseries(variable)
         return values
-
-    def extract_results(self):
-        """
-        Extracts the results of output
-
-        :returns: An AliasDict of output variables and results array format.
-        """
-        return self._io_output
