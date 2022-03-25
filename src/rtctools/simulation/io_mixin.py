@@ -135,7 +135,11 @@ class IOMixin(SimulationProblem, metaclass=ABCMeta):
 
         :returns: An AliasDict of output variables and results array format.
         """
-        return self._io_output
+        io_outputs_arrays = self._io_output.copy()
+        for k in io_outputs_arrays.keys():
+            io_outputs_arrays[k] = np.array(io_outputs_arrays[k])
+
+        return io_outputs_arrays
 
     @cached
     def parameters(self):
