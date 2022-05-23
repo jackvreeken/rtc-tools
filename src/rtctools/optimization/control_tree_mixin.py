@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, List, Union
+from typing import Dict, List, Tuple, Union
 
 import numpy as np
 
@@ -71,7 +71,7 @@ class ControlTreeMixin(OptimizationProblem):
         # with branching time t1.
         branches = {}
 
-        def branch(current_branch):
+        def branch(current_branch: Tuple[int]):
             if len(current_branch) >= n_branching_times:
                 return
 
@@ -121,7 +121,7 @@ class ControlTreeMixin(OptimizationProblem):
             for i in range(options['k']):
                 if idx >= 0:
                     branches[current_branch +
-                             str(i)] = [branches[current_branch][idx]]
+                             (i, )] = [branches[current_branch][idx]]
 
                     available.remove(branches[current_branch][idx])
 
@@ -138,27 +138,27 @@ class ControlTreeMixin(OptimizationProblem):
                     if min_distances[idx] <= 0:
                         idx = -1
                 else:
-                    branches[current_branch + str(i)] = []
+                    branches[current_branch + (i, )] = []
 
             # Cluster remaining ensemble members to branches
             for member_i in available:
                 min_i = 0
                 min_distance = np.inf
                 for i in range(options['k']):
-                    branch2 = branches[current_branch + str(i)]
+                    branch2 = branches[current_branch + (i, )]
                     if len(branch2) > 0:
                         distance = distances[
                             reverse[member_i], reverse[branch2[0]]]
                         if distance < min_distance:
                             min_distance = distance
                             min_i = i
-                branches[current_branch + str(min_i)].append(member_i)
+                branches[current_branch + (min_i, )].append(member_i)
 
             # Recurse
             for i in range(options['k']):
-                branch(current_branch + str(i))
+                branch(current_branch + (i, ))
 
-        current_branch = ''
+        current_branch = ()
         branches[current_branch] = list(range(self.ensemble_size))
         branch(current_branch)
 
