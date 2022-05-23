@@ -13,6 +13,11 @@ class ControlTreeMixin(OptimizationProblem):
     Adds a stochastic control tree to your optimization problem.
     """
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.__branches = {}
+
     def control_tree_options(self) -> Dict[str, Union[List[str], List[float], int]]:
         """
         Returns a dictionary of options controlling the creation of a k-ary stochastic tree.
@@ -165,6 +170,8 @@ class ControlTreeMixin(OptimizationProblem):
         logger.debug("ControlTreeMixin:  Control tree is:")
         logger.debug(branches)
 
+        self.__branches = branches
+
         # Map ensemble members to control inputs
         # (variable, (ensemble member, step)) -> control_index
         self.__control_indices = [{} for ensemble_member in range(self.ensemble_size)]
@@ -195,3 +202,15 @@ class ControlTreeMixin(OptimizationProblem):
 
         # Return number of control variables
         return count, discrete, lbx, ubx, x0, self.__control_indices
+
+    @property
+    def control_tree_branches(self) -> Dict[Tuple[int], List[int]]:
+        """
+        Returns a dictionary mapping the branch id (a Tuple of ints) to a list
+        of ensemble members in said branch.
+
+        Note that the root branch is an empty tuple containing all ensemble
+        members.
+        """
+
+        return self.__branches.copy()
