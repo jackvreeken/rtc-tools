@@ -580,13 +580,13 @@ class TestModelicaMixinMixedInteger(TestCase):
 
     def test_booleans(self):
         self.assertAlmostEqual(
-            self.results["choice"], np.zeros(21, dtype=np.bool), self.tolerance
+            self.results["choice"], np.zeros(21, dtype=bool), self.tolerance
         )
         self.assertAlmostEqual(
-            self.results["other_choice"], np.ones(21, dtype=np.bool), self.tolerance
+            self.results["other_choice"], np.ones(21, dtype=bool), self.tolerance
         )
         self.assertAlmostEqual(
-            self.results["y"], -1 * np.ones(21, dtype=np.bool), self.tolerance
+            self.results["y"], -1 * np.ones(21, dtype=bool), self.tolerance
         )
 
 

@@ -86,7 +86,7 @@ class LookupTable(LookupTableBase):
         return np.vectorize(
             lambda *args: np.nan
             if np.any(np.isnan(args))
-            else np.float(self.function(*args))
+            else float(self.function(*args))
         )
 
     def __call__(

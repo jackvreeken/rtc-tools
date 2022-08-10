@@ -793,7 +793,7 @@ class Timeseries:
 
                 # Write output
                 if self.__binary:
-                    f.write(values.astype(self.__pi_dtype).tostring())
+                    f.write(values.astype(self.__pi_dtype).tobytes())
                 else:
                     events = series.findall('pi:event', ns)
 
