@@ -44,7 +44,7 @@ class SimulationProblem(DataStoreAccessor):
 
     def __init__(self, **kwargs):
         # Check arguments
-        assert('model_folder' in kwargs)
+        assert ('model_folder' in kwargs)
 
         # Log pymoca version
         logger.debug("Using pymoca {}.".format(pymoca.__version__))
@@ -514,6 +514,9 @@ class SimulationProblem(DataStoreAccessor):
 
         # take a step
         guess = self.__state_vector[:self.__states_end_index]
+
+        self.__warn_for_nans()
+
         next_state = self.__do_step(guess, dt, self.__state_vector)
 
         # Check convergence of rootfinder

@@ -250,6 +250,23 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
         # Parameter symbols
         symbolic_parameters = ca.vertcat(*self.dae_variables['parameters'])
 
+        def _interpolate_constant_inputs(variables, raw_constant_inputs):
+            constant_inputs_interpolated = {}
+            for variable in variables:
+                variable = variable.name()
+                try:
+                    constant_input = raw_constant_inputs[variable]
+                except KeyError:
+                    raise Exception(
+                        "No values found for constant input {}".format(variable))
+                else:
+                    values = constant_input.values
+                    interpolation_method = self.interpolation_method(variable)
+                    constant_inputs_interpolated[variable] = self.interpolate(
+                        collocation_times, constant_input.times, values, 0.0, 0.0, interpolation_method)
+
+            return constant_inputs_interpolated
+
         # Create a store of all ensemble-member-specific data for all ensemble members
         # N.B. Don't use n * [{}], as it creates n refs to the same dict.
         ensemble_store = [{} for i in range(self.ensemble_size)]
@@ -289,27 +306,10 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
             # Store constant inputs
             raw_constant_inputs = self.constant_inputs(ensemble_member)
 
-            def _interpolate_constant_inputs(variables):
-                constant_inputs_interpolated = {}
-                for variable in variables:
-                    variable = variable.name()
-                    try:
-                        constant_input = raw_constant_inputs[variable]
-                    except KeyError:
-                        raise Exception(
-                            "No values found for constant input {}".format(variable))
-                    else:
-                        values = constant_input.values
-                        interpolation_method = self.interpolation_method(variable)
-                        constant_inputs_interpolated[variable] = self.interpolate(
-                            collocation_times, constant_input.times, values, 0.0, 0.0, interpolation_method)
-
-                return constant_inputs_interpolated
-
             ensemble_data["constant_inputs"] = _interpolate_constant_inputs(
-                self.dae_variables['constant_inputs'])
+                self.dae_variables['constant_inputs'], raw_constant_inputs)
             ensemble_data["extra_constant_inputs"] = _interpolate_constant_inputs(
-                self.__extra_constant_inputs)
+                self.__extra_constant_inputs, raw_constant_inputs)
 
             # Handle all extra constant input data uniformly as 2D arrays
             for k, v in ensemble_data["extra_constant_inputs"].items():

@@ -241,7 +241,7 @@ class CSVLookupTableMixin(OptimizationProblem):
     def __init__(self, **kwargs):
         # Check arguments
         if 'input_folder' in kwargs:
-            assert('lookup_table_folder' not in kwargs)
+            assert ('lookup_table_folder' not in kwargs)
 
             self.__lookup_table_folder = os.path.join(
                 kwargs['input_folder'], 'lookup_tables')

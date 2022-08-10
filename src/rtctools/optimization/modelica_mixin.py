@@ -36,7 +36,7 @@ class ModelicaMixin(OptimizationProblem):
 
     def __init__(self, **kwargs):
         # Check arguments
-        assert('model_folder' in kwargs)
+        assert ('model_folder' in kwargs)
 
         # Log pymoca version
         logger.debug("Using pymoca {}.".format(pymoca.__version__))
