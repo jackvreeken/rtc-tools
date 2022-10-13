@@ -265,7 +265,7 @@ class Goal(metaclass=ABCMeta):
             self.__class__, self.priority, self.target_min, self.target_max, self.function_range)
 
 
-class StateGoal(Goal, metaclass=ABCMeta):
+class StateGoal(Goal):
     r"""
     Base class for lexicographic goal programming path goals that act on a single model state.
 

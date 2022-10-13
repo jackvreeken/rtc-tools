@@ -1,9 +1,7 @@
-from abc import ABCMeta
-
 from casadi import if_else, logic_and
 
 
-class BSpline(metaclass=ABCMeta):
+class BSpline:
     """
     B-Spline base class.
     """

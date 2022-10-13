@@ -44,7 +44,7 @@ class DataStoreAccessor(metaclass=ABCMeta):
         raise NotImplementedError
 
 
-class DataStore(metaclass=ABCMeta):
+class DataStore:
     """
     DataStore class used by the DataStoreAccessor.
     Contains all methods needed to access the internal data store.

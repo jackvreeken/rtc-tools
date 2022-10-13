@@ -19,7 +19,7 @@ logger = logging.getLogger("rtctools")
 BT = Union[float, np.ndarray, Timeseries]
 
 
-class LookupTable(metaclass=ABCMeta):
+class LookupTable:
     """
     Base class for LookupTables.
     """
