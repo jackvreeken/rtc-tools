@@ -16,31 +16,26 @@ to set up and activate a virtual environment.
 
 RTC-Tools, including its dependencies, can be installed using the `pip <https://pip.pypa.io/>`_ package manager::
 
-    # Install RTC-Tools and Channel Flow using pip package manager
-    pip install rtc-tools rtc-tools-channel-flow
+    # Install RTC-Tools using pip package manager
+    pip install rtc-tools
 
 From Source
 -----------
 
-The latest RTC-Tools and Channel Flow source can be downloaded using git::
+The latest RTC-Tools source can be downloaded using git::
 
     # Get RTC-Tools source
     git clone https://gitlab.com/deltares/rtc-tools.git
 
-    # Get RTC-Tools's Modelica library
-    git clone https://gitlab.com/deltares/rtc-tools-channel-flow.git
-
 Then you can install this latest version as follows::
 
     pip install ./rtc-tools
-    pip install ./rtc-tools-channel-flow
 
 Or if you would like to have an editable installation (e.g. as developer)::
 
     pip install -e ./rtc-tools
-    pip install -e ./rtc-tools-channel-flow
 
-
+Note that rtc-tools-channel-flow is a dependency of rtc-tools which is included in the above installations. 
 .. _getting-started-download-examples:
 
 Downloading and running examples
