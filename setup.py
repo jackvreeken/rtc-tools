@@ -31,8 +31,8 @@ Operating System :: MacOS
 setup(
     name = 'rtc-tools',
     version = versioneer.get_version(),
-    maintainer = 'Jorn Baayen',
-    author = 'Jorn Baayen',
+    maintainer = 'Deltares',
+    author = 'Deltares',
     description = DOCLINES[0],
     long_description = '\n'.join(DOCLINES[2:]),
     url = 'https://oss.deltares.nl/web/rtc-tools/home',
