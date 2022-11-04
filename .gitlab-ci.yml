@@ -1,5 +1,8 @@
 image: python:3.8
 
+include:
+  - template: Jobs/SAST.gitlab-ci.yml
+
 before_script:
   - pip install tox
 
