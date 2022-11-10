@@ -423,8 +423,6 @@ class SimulationProblem(DataStoreAccessor):
         # Construct the rootfinder
 
         # Assemble some symbolics, including those needed for a backwards Euler derivative approximation
-        X = ca.vertcat(*self.__sym_list[:self.__states_end_index])
-        X_prev = ca.vertcat(*[ca.MX.sym(sym.name() + '_prev') for sym in self.__sym_list[:self.__states_end_index]])
         dt = ca.MX.sym("delta_t")
         parameters = ca.vertcat(*self.__mx['parameters'])
         constants = ca.vertcat(X_prev, *self.__sym_list[self.__states_end_index:-n_parameters])
