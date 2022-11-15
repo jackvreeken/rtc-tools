@@ -143,18 +143,19 @@ class PIMixin(IOMixin):
         # For all variables that are output variables the values are
         # extracted from the results.
         for variable in self._io_output_variables:
-            values = np.array(self._io_output[variable])
-            # Check if ID mapping is present
-            try:
-                self.__data_config.pi_variable_ids(variable)
-            except KeyError:
-                logger.debug(
-                    'PIMixin: variable {} has no mapping defined in rtcDataConfig '
-                    'so cannot be added to the output file.'.format(variable))
-                continue
-
-            # Add series to output file
-            self.__timeseries_export.set(variable, values, unit=self.__timeseries_import.get_unit(variable))
+            for alias in self.alias_relation.aliases(variable):
+                values = np.array(self._io_output[alias])
+                # Check if ID mapping is present
+                try:
+                    self.__data_config.pi_variable_ids(alias)
+                    # Add series to output file
+                    self.__timeseries_export.set(alias, values, unit=self.__timeseries_import.get_unit(alias))
+                    break
+                except KeyError:
+                    logger.debug(
+                        'PIMixin: variable {} has no mapping defined in rtcDataConfig '
+                        'so cannot be added to the output file.'.format(alias))
+                    continue
 
         # Write output file to disk
         self.__timeseries_export.write()
