@@ -177,41 +177,42 @@ class PIMixin(IOMixin):
             # For all variables that are output variables the values are
             # extracted from the results.
             for variable in [sym.name() for sym in self.output_variables]:
-                try:
-                    values = results[variable]
-                    if len(values) != len(times):
-                        values = self.interpolate(
-                            times, self.times(variable), values, self.interpolation_method(variable))
-                except KeyError:
+                for alias in self.alias_relation.aliases(variable):
                     try:
-                        ts = self.get_timeseries(variable, ensemble_member)
-                        if len(ts.times) != len(times):
+                        values = results[alias]
+                        if len(values) != len(times):
                             values = self.interpolate(
-                                times, ts.times, ts.values)
-                        else:
-                            values = ts.values
+                                times, self.times(alias), values, self.interpolation_method(alias))
                     except KeyError:
-                        logger.error(
-                            'PIMixin: Output requested for non-existent variable {}. '
-                            'Will not be in output file.'.format(variable))
+                        try:
+                            ts = self.get_timeseries(alias, ensemble_member)
+                            if len(ts.times) != len(times):
+                                values = self.interpolate(
+                                    times, ts.times, ts.values)
+                            else:
+                                values = ts.values
+                        except KeyError:
+                            logger.error(
+                                'PIMixin: Output requested for non-existent alias {}. '
+                                'Will not be in output file.'.format(alias))
+                            continue
+
+                    # Check if ID mapping is present
+                    try:
+                        self.__data_config.pi_variable_ids(alias)
+                    except KeyError:
+                        logger.debug(
+                            'PIMixin: variable {} has no mapping defined in rtcDataConfig '
+                            'so cannot be added to the output file.'.format(alias))
                         continue
 
-                # Check if ID mapping is present
-                try:
-                    self.__data_config.pi_variable_ids(variable)
-                except KeyError:
-                    logger.debug(
-                        'PIMixin: variable {} has no mapping defined in rtcDataConfig '
-                        'so cannot be added to the output file.'.format(variable))
-                    continue
-
-                # Add series to output file.
-                # NOTE: We use the unit of the zeroth ensemble member, as
-                # we might be outputting more ensembles than we read in.
-                self.__timeseries_export.set(
-                    variable, values,
-                    unit=self.__timeseries_import.get_unit(variable, ensemble_member=0),
-                    ensemble_member=ensemble_member)
+                    # Add series to output file.
+                    # NOTE: We use the unit of the zeroth ensemble member, as
+                    # we might be outputting more ensembles than we read in.
+                    self.__timeseries_export.set(
+                        alias, values,
+                        unit=self.__timeseries_import.get_unit(alias, ensemble_member=0),
+                        ensemble_member=ensemble_member)
 
         # Write output file to disk
         self.__timeseries_export.write()
