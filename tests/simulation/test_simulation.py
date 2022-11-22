@@ -182,3 +182,64 @@ class TestFailingSimulation(TestCase):
     def test_delay_exception(self):
         with self.assertRaisesRegex(NotImplementedError, 'Delayed states are not supported'):
             self.problem = FailingSimulationModel()
+
+
+class SimulationModelBase(SimulationProblem):
+    _force_zero_delay = True
+
+    def __init__(self):
+        super().__init__(
+            input_folder=data_path(),
+            output_folder=data_path(),
+            model_name="Model_base",
+            model_folder=data_path(),
+        )
+
+
+class SimulationModelNominal(SimulationProblem):
+    _force_zero_delay = True
+
+    def __init__(self):
+        super().__init__(
+            input_folder=data_path(),
+            output_folder=data_path(),
+            model_name="Model_nominal",
+            model_folder=data_path(),
+        )
+
+
+class TestSimulationNominal(TestCase):
+
+    def setUp(self):
+        self.problem_base = SimulationModelBase()
+        self.problem_nominal = SimulationModelNominal()
+
+    def test_model_nominal(self):
+
+        z_base = []
+        z_nominal = []
+
+        start = 0.0
+        dt = 0.1
+        stop = 1.0
+        self.problem_base.setup_experiment(start, stop, dt)
+        self.problem_base.set_var("x", 0)
+        self.problem_base.initialize()
+        i = 0
+        while i < int(stop / dt):
+            self.problem_base.set_var("x", i/100)
+            self.problem_base.update(dt)
+            z_base.append(self.problem_base.get_var("z"))
+            i += 1
+
+        self.problem_nominal.setup_experiment(start, stop, dt)
+        self.problem_nominal.set_var("x", 0)
+        self.problem_nominal.initialize()
+        i = 0
+        while i < int(stop / dt):
+            self.problem_nominal.set_var("x", i/100)
+            self.problem_nominal.update(dt)
+            z_nominal.append(self.problem_nominal.get_var("z"))
+            i += 1
+
+        self.assertAlmostEqual(np.array(z_base), np.array(z_nominal), 1e-5)
