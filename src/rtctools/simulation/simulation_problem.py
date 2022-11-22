@@ -425,7 +425,10 @@ class SimulationProblem(DataStoreAccessor):
         # Assemble some symbolics, including those needed for a backwards Euler derivative approximation
         dt = ca.MX.sym("delta_t")
         parameters = ca.vertcat(*self.__mx['parameters'])
-        constants = ca.vertcat(X_prev, *self.__sym_list[self.__states_end_index:-n_parameters])
+        if n_parameters > 0:
+            constants = ca.vertcat(X_prev, *self.__sym_list[self.__states_end_index:-n_parameters])
+        else:
+            constants = ca.vertcat(X_prev, *self.__sym_list[self.__states_end_index:])
 
         # Make a list of derivative approximations using backwards Euler formulation
         derivative_approximation_residuals = []
@@ -449,8 +452,9 @@ class SimulationProblem(DataStoreAccessor):
         dae_residual = ca.substitute(dae_residual, unscaled_symbols, scaled_symbols)
 
         # Substitute the parameters
-        parameters_values = self.__state_vector[-n_parameters:]
-        dae_residual = ca.substitute(dae_residual, parameters, parameters_values)
+        if n_parameters > 0:
+            parameters_values = self.__state_vector[-n_parameters:]
+            dae_residual = ca.substitute(dae_residual, parameters, parameters_values)
 
         if logger.getEffectiveLevel() == logging.DEBUG:
             logger.debug('SimulationProblem: DAE Residual is ' + str(dae_residual))
@@ -513,8 +517,10 @@ class SimulationProblem(DataStoreAccessor):
 
         # take a step
         guess = self.__state_vector[:self.__states_end_index]
-        next_state = self.__do_step(guess, dt, self.__state_vector[:-len(self.__mx['parameters'])])
-
+        if len(self.__mx['parameters']) > 0:
+            next_state = self.__do_step(guess, dt, self.__state_vector[:-len(self.__mx['parameters'])])
+        else:
+            next_state = self.__do_step(guess, dt, self.__state_vector)
         # Check convergence of rootfinder
         rootfinder_stats = self.__do_step.stats()
 
