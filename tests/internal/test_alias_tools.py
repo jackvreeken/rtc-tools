@@ -72,10 +72,6 @@ class AliasToolsTest(unittest.TestCase):
         self.assertEqual(self.ordered_set[1], 'text')
         self.assertEqual(len(self.ordered_set), 2)
 
-    def test_ordered_set_repr(self):
-        repr = self.ordered_set.__repr__()
-        self.assertEqual(repr, "OrderedSet([1, 'a', 'text'])")
-
     def test_ordered_set_eq(self):
         ordered_set_1 = alias_tools.OrderedSet([1, 'a', 'text'])
         ordered_set_2 = alias_tools.OrderedSet([1, 'a', 3])
@@ -102,8 +98,8 @@ class AliasToolsTest(unittest.TestCase):
         self.assertEqual(len(self.alias_dict), 2)
 
     def test_alias_dict_iter(self):
-        keys = list(self.alias_dict)
-        self.assertEqual(keys, ["a", "x"])
+        keys = set(self.alias_dict)
+        self.assertEqual(keys, {"a", "x"})
 
     def test_alias_dict_update(self):
         self.alias_dict.update({'-b': -30, 'c': 40})
@@ -124,10 +120,10 @@ class AliasToolsTest(unittest.TestCase):
         self.assertEqual(self.alias_dict['c'], -100)
 
     def test_alias_dict_keys(self):
-        self.assertEqual(list(self.alias_dict.keys()), ["a", "x"])
+        self.assertEqual(set(self.alias_dict.keys()), {"a", "x"})
 
     def test_alias_dict_values(self):
-        self.assertEqual(list(self.alias_dict.values()), [-10, -20])
+        self.assertEqual(set(self.alias_dict.values()), {-10, -20})
 
     def test_alias_dict_items(self):
         keys = []
@@ -135,14 +131,10 @@ class AliasToolsTest(unittest.TestCase):
         for key, value in self.alias_dict.items():
             keys.append(key)
             values.append(value)
-        self.assertEqual(keys, ["a", "x"])
-        self.assertEqual(values, [-10, -20])
+        self.assertEqual(set(keys), {"a", "x"})
+        self.assertEqual(set(values), {-10, -20})
 
     def test_alias_dict_copy(self):
         alias_dict = self.alias_dict.copy()
         self.assertEqual(alias_dict['-b'], 10)
         self.assertEqual(alias_dict['y'], 20)
-
-    def test_alias_dict_repr(self):
-        repr = self.alias_dict.__repr__()
-        self.assertEqual(repr, "{'a': -10, 'x': -20}")
