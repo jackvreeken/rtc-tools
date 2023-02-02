@@ -155,12 +155,21 @@ class OptimizationProblem(DataStoreAccessor, metaclass=ABCMeta):
 
         success, log_level = self.solver_success(self.__solver_stats, log_solver_failure_as_error)
 
+        return_status = self.__solver_stats['return_status']
+        if 'secondary_return_status' in self.__solver_stats:
+            return_status = "{}: {}".format(return_status, self.__solver_stats['secondary_return_status'])
+        wall_clock_time = "elapsed time not read"
+        if 't_wall_total' in self.__solver_stats:
+            wall_clock_time = "{} seconds".format(self.__solver_stats['t_wall_total'])
+        elif 't_wall_solver' in self.__solver_stats:
+            wall_clock_time = "{} seconds".format(self.__solver_stats['t_wall_solver'])
+
         if success:
-            logger.log(log_level, "Solver succeeded with status {}".format(
-                self.__solver_stats['return_status']))
+            logger.log(log_level, "Solver succeeded with status {} ({}).".format(
+                return_status, wall_clock_time))
         else:
-            logger.log(log_level, "Solver failed with status {}".format(
-                self.__solver_stats['return_status']))
+            logger.log(log_level, "Solver succeeded with status {} ({}).".format(
+                return_status, wall_clock_time))
 
         # Do any postprocessing
         if postprocessing:
