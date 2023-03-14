@@ -293,6 +293,11 @@ class CSVLookupTableMixin(OptimizationProblem):
                 curve_name, *curvefit_options))
             return tuple(curvefit_options)
 
+        def check_lookup_table(lookup_table):
+            if lookup_table in self.__lookup_tables:
+                raise Exception(
+                    "Cannot add lookup table {},"
+                    "since there is already one with this name.".format(lookup_table))
         # Read CSV files
         logger.info(
             "CSVLookupTableMixin: Generating Splines from lookup table data.")
@@ -365,6 +370,7 @@ class CSVLookupTableMixin(OptimizationProblem):
                 symbols = [ca.SX.sym(inputs[0])]
                 if not valid_cache:
                     function = ca.Function('f', symbols, [BSpline1D(*tck)(symbols[0])])
+                check_lookup_table(output)
                 self.__lookup_tables[output] = LookupTable(symbols, function, tck)
 
             elif len(csvinput.dtype.names) == 3:
@@ -400,6 +406,7 @@ class CSVLookupTableMixin(OptimizationProblem):
                 symbols = [ca.SX.sym(inputs[0]), ca.SX.sym(inputs[1])]
                 if not valid_cache:
                     function = ca.Function('f', symbols, [BSpline2D(*tck)(symbols[0], symbols[1])])
+                check_lookup_table(output)
                 self.__lookup_tables[output] = LookupTable(symbols, function, tck)
 
             else:
