@@ -173,14 +173,14 @@ class OptimizationProblem(DataStoreAccessor, metaclass=ABCMeta):
                 loop_error_indicator = self.loop_over_error[ii][1]
                 try:
                     loop_error = self.loop_over_error[ii][2]
-                    if loop_error_indicator == True and loop_error in return_status:
+                    if loop_error_indicator and loop_error in return_status:
                         log_level = logging.INFO
-                except:
-                    if loop_error_indicator == True:
+                except IndexError:
+                    if loop_error_indicator:
                         log_level = logging.INFO
                 logger.log(log_level, "Solver succeeded with status {} ({}).".format(
                         return_status, wall_clock_time))
-            except:
+            except AttributeError:
                 logger.log(log_level, "Solver succeeded with status {} ({}).".format(
                     return_status, wall_clock_time))
 
