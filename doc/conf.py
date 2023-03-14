@@ -61,7 +61,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'RTC-Tools'
-copyright = '2016 - 2022 Deltares'
+copyright = 'Deltares'
 author = 'Deltares'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -279,7 +279,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'RTC-Tools.tex', 'RTC-Tools Documentation',
-     'Jorn Baayen, Matthijs den Toom, Olav van Duin, Tjerk Vreeken, Jesse VanderWees, Teresa Piovesan', 'manual'),
+     'Deltares', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
