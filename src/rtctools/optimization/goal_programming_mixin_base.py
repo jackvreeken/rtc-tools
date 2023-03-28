@@ -39,74 +39,137 @@ class Goal(metaclass=ABCMeta):
     r"""
     Base class for lexicographic goal programming goals.
 
-    A goal is defined by overriding the :func:`function` method.
+    **Types of goals**
 
-    :cvar function_range:   Range of goal function.  *Required if a target is set*.
-    :cvar function_nominal: Nominal value of function. Used for scaling.  Default is ``1``.
-    :cvar target_min:       Desired lower bound for goal function.  Default is ``numpy.nan``.
-    :cvar target_max:       Desired upper bound for goal function.  Default is ``numpy.nan``.
-    :cvar priority:         Integer priority of goal.  Default is ``1``.
-    :cvar weight:           Optional weighting applied to the goal.  Default is ``1.0``.
-    :cvar order:            Penalization order of goal violation.  Default is ``2``.
+    There are 2 types of goals: minimization goals and target goals.
+
+    *Minimization goals*
+
+    Minimization goals are of the form:
+
+    .. math::
+        \text{minimize } f(x).
+
+    *Target goals*
+
+    Target goals weakly enforce a constraint of the form
+
+    .. math::
+        m_{target} \leq g(x) \leq M_{target},
+
+    by turning it into a minimization problem of the form
+
+    .. math::
+        \text{minimize } & \epsilon^r, \\
+        \text{subject to } &g_{low}(\epsilon) \leq g(x) \leq g_{up}(\epsilon), \\
+        \text{and } &0 \leq \epsilon \leq 1,
+
+    where
+
+    .. math::
+        g_{low}(\epsilon) &:= (1-\epsilon) m_{target} + \epsilon m, \\
+        g_{up}(\epsilon) &:= (1-\epsilon) M_{target} + \epsilon M.
+
+    Here, :math:`m` and :math:`M` are hard constraints for :math:`g(x)`,
+    :math:`m_{target}` and :math:`M_{target}` are target bounds for :math:`g(x)`,
+    :math:`\epsilon` is an auxiliary variable
+    that indicates how strongly the target bounds are violated,
+    and :math:`\epsilon^r` is a function that indicates the variation of :math:`\epsilon`,
+    where the order :math:`r` is by default :math:`2`.
+    We have
+
+    .. math::
+        m\leq m_{target} \leq M_{target} \leq M.
+
+    Note that when :math:`\epsilon=0`,
+    the constraint on :math:`g(x)` becomes
+
+    .. math::
+        m_{target} \leq g(x) \leq M_{target}
+
+    and if :math:`\epsilon=1`, it becomes
+
+    .. math::
+        m \leq g(x) \leq M.
+
+
+    **Scaling goals**
+
+    Goals can be scaled by a nominal value :math:`c_{nom}`
+    to improve the performance of the solvers.
+    In case of a minimization goal, the scaled problem is given by
+
+    .. math::
+        \text{minimize } \hat{f}(x),
+
+    where :math:`\hat{f}(x) := f(x) / c_{nom}`.
+    In case of a target goal, the scaled problem is given by
+
+    .. math::
+        \text{minimize } & \epsilon^r, \\
+        \text{subject to } &\hat{g}_{low}(\epsilon) \leq \hat{g}(x) \leq \hat{g}_{up}(\epsilon), \\
+        \text{and } &0 \leq \epsilon \leq 1,
+
+    where :math:`\hat{g}(x) := g(x) / c_{nom}`,
+    :math:`\hat{g}_{low}(\epsilon) := {g}_{low}(\epsilon) / c_{nom}`,
+    and :math:`\hat{g}_{up}(\epsilon) := {g}_{up}(\epsilon) / c_{nom}`.
+
+
+    **Implementing goals**
+
+    A goal class is created by inheriting from the :py:class:Goal class and
+    overriding the :func:`function` method.
+    This method defines the goal function :math:`f(x)` in case of a minimization goal,
+    and the goal function :math:`g(x)` in case of a target goal.
+    A goal becomes a target goal
+    if either the class attribute ``target_min`` or ``target_max`` is set.
+
+    To further define a goal, the following class attributes can also be set.
+
+    :cvar function_range:   Range of goal function :math:`[m ,M]`.
+                            Only applies to target goals.
+                            Required for a target goal.
+    :cvar function_nominal: Nominal value of a function :math:`c_{nom}`.
+                            Used for scaling. Default is ``1``.
+    :cvar target_min:       Desired lower bound for goal function :math:`m_{target}`.
+                            Default is ``numpy.nan``.
+    :cvar target_max:       Desired upper bound for goal function :math:`M_{target}`.
+                            Default is ``numpy.nan``.
+    :cvar priority:         Priority of a goal. Default is ``1``.
+    :cvar weight:           Optional weighting applied to the goal. Default is ``1.0``.
+    :cvar order:            Penalization order of goal violation :math:`r`. Default is ``2``.
     :cvar critical:         If ``True``, the algorithm will abort if this goal cannot be fully met.
                             Default is ``False``.
     :cvar relaxation:       Amount of slack added to the hard constraints related to the goal.
-                            Must be a nonnegative value. Default is ``0.0``.
+                            Must be a nonnegative value.
+                            The unit is equal to that of the goal function.
+                            Default is ``0.0``.
 
-    The target bounds indicate the range within the function should stay, *if possible*.  Goals
-    are, in that sense, *soft*, as opposed to standard hard constraints.
+    When ``target_min`` is set, but not ``target_max``,
+    the target goal becomes a lower bound target goal
+    and the constraint on :math:`g(x)` becomes
 
-    Four types of goals can be created:
+    .. math::
+        g_{low}(\epsilon) \leq g(x).
 
-    1. Minimization goal if no target bounds are set:
+    Similary, if ``target_max`` is set, but not ``target_min``,
+    the target goal becomes a upper bound target goal
+    and the constraint on :math:`g(x)` becomes
 
-       .. math::
+    .. math::
+        g(x) \leq g_{up}(\epsilon).
 
-            \min f
+    Relaxation is used to loosen the constraints that are set
+    after the optimization of the goal's priority.
 
-    2. Lower bound goal if ``target_min`` is set:
-
-        .. math::
-
-            m \leq f
-
-    3. Upper bound goal if ``target_max`` is set:
-
-        .. math::
-
-            f \leq M
-
-    4. Combined lower and upper bound goal if ``target_min`` and ``target_max`` are both set:
-
-        .. math::
-
-            m \leq f \leq M
-
-    Lower priority goals take precedence over higher priority goals.
-
-    Goals with the same priority are weighted off against each other in a single objective function.
-
-    In goals where a target is set:
-        * The function range interval must be provided as this is used to introduce hard constrains on the value that
-          the function can take. If one is unsure about which value the function can take, it is recommended to
-          overestimate this interval. However, an overestimated interval will negatively influence how accurately the
-          target bounds are met.
-        * The target provided must be contained in the function range.
-        * The function nominal is used to scale the constraints.
-        * If both a target_min and a target_max are set, the target maximum must be at least equal to minimum one.
-        * In a path goal, the target can be a Timeseries.
-
-    In minimization goals:
-        * The function range is not used and therefore cannot be set.
-        * The function nominal is used to scale the function value in the objective function. To ensure that all goals
-          are given a similar importance, it is crucial to provide an accurate estimate of this parameter.
-
-    The goal violation value is taken to the order'th power in the objective function of the final
-    optimization problem.
-
-    Relaxation is used to loosen the constraints that are set after the
-    optimization of the goal's priority. The unit of the relaxation is equal
-    to that of the goal function.
+    Notes:
+        *   If one is unsure about the function range,
+            it is recommended to overestimate this interval.
+            However, this will negatively influence how accurately the target bounds are met.
+        *   In a path goal, the target can be a Timeseries.
+        *   In case of multiple goals with the same priority,
+            it is crucial that an accurate function nominal value is provided.
+            This ensures that all goals are given similar importance.
 
     A goal can be written in vector form. In a vector goal:
         * The goal size determines how many goals there are.
@@ -117,6 +180,8 @@ class Goal(metaclass=ABCMeta):
         * In a goal, the target can either be an array with as many entries as the goal size or have a single value.
         * In a path goal, the target can also be a Timeseries whose values are either a 1-dimensional vector or have
           as many columns as the goal size.
+
+    **Examples**
 
     Example definition of the point goal :math:`x(t) \geq 1.1` for :math:`t=1.0` at priority 1::
 
@@ -140,6 +205,8 @@ class Goal(metaclass=ABCMeta):
             function_range = (1.0, 2.0)
             target_min = 1.1
             priority = 2
+
+    **Note path goals**
 
     Note that for path goals, the ensemble member index is not passed to the call
     to :func:`OptimizationProblem.state`.  This call returns a time-independent symbol
