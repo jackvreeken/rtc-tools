@@ -1,52 +1,12 @@
 Multi-objective optimization
 ============================
 
-.. autoclass:: rtctools.optimization.goal_programming_mixin.Goal
-    :members:
-    :show-inheritance:
+Contents:
 
-.. autoclass:: rtctools.optimization.goal_programming_mixin.StateGoal
-    :members: __init__
-    :show-inheritance:
+.. toctree::
+   :maxdepth: 2
 
-.. autoclass:: rtctools.optimization.goal_programming_mixin.GoalProgrammingMixin
-    :members: goal_programming_options, goals, path_goals, priority_started, priority_completed
-    :show-inheritance:
-
-.. autoclass:: rtctools.optimization.single_pass_goal_programming_mixin.SinglePassGoalProgrammingMixin
-    :members: goal_programming_options, goals, path_goals, priority_started, priority_completed
-    :show-inheritance:
-
-
-.. autoclass:: rtctools.optimization.single_pass_goal_programming_mixin.CachingQPSol
-    :show-inheritance:
-
-Minimize absolute value
-~~~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: rtctools.optimization.min_abs_goal_programming_mixin.MinAbsGoalProgrammingMixin
-    :members: min_abs_goals, min_abs_path_goals
-    :show-inheritance:
-
-.. autoclass:: rtctools.optimization.min_abs_goal_programming_mixin.MinAbsGoal
-    :members:
-    :show-inheritance:
-
-.. autoclass:: rtctools.optimization.min_abs_goal_programming_mixin.MinAbsStateGoal
-    :members: __init__
-    :show-inheritance:
-
-Linearized order
-~~~~~~~~~~~~~~~~
-
-.. autoclass:: rtctools.optimization.linearized_order_goal_programming_mixin.LinearizedOrderGoalProgrammingMixin
-    :members: goal_programming_options
-    :show-inheritance:
-
-.. autoclass:: rtctools.optimization.linearized_order_goal_programming_mixin.LinearizedOrderGoal
-    :members:
-    :show-inheritance:
-
-.. autoclass:: rtctools.optimization.linearized_order_goal_programming_mixin.LinearizedOrderStateGoal
-    :members: __init__
-    :show-inheritance:
+   goal_programming/main_idea
+   goal_programming/goals
+   goal_programming/linearized_order
+   goal_programming/minimize_absolute_value
