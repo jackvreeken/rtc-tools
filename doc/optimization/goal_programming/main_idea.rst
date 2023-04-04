@@ -53,7 +53,8 @@ This is the default way to convert results of a previous optimisation problem
 to a constraint for the next optimisation problem.
 
 There are several options for implementing goal programming.
-These options are set with :py:meth:`GoalProgrammingMixin.goal_programming_options`.
+These options are set with
+:py:meth:`rtctools.optimization.goal_programming_mixin.GoalProgrammingMixin.goal_programming_options`.
 
 .. autoclass:: rtctools.optimization.goal_programming_mixin.GoalProgrammingMixin
     :members: goal_programming_options, goals, path_goals, priority_started, priority_completed
