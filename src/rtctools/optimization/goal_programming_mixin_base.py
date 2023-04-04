@@ -79,7 +79,7 @@ class Goal(metaclass=ABCMeta):
     We have
 
     .. math::
-        m\leq m_{target} \leq M_{target} \leq M.
+        m < m_{target} \leq M_{target} < M.
 
     Note that when :math:`\epsilon=0`,
     the constraint on :math:`g(x)` becomes
@@ -166,6 +166,8 @@ class Goal(metaclass=ABCMeta):
         *   If one is unsure about the function range,
             it is recommended to overestimate this interval.
             However, this will negatively influence how accurately the target bounds are met.
+        *   The function range should be strictly larger than the target range.
+            In particular, :math:`m < m_{target}` and :math:`M_{target} < M`.
         *   In a path goal, the target can be a Timeseries.
         *   In case of multiple goals with the same priority,
             it is crucial that an accurate function nominal value is provided.
