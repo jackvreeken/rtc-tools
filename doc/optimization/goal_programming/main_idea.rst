@@ -51,6 +51,8 @@ In general, the extended problem for priority :math:`p` can be written as
 
 This is the default way to convert results of a previous optimisation problem
 to a constraint for the next optimisation problem.
+Details on converting goals to constraints
+can be found in :ref:`converting-goals-to-constraints`.
 
 There are several options for implementing goal programming.
 These options are set with
