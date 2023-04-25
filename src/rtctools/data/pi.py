@@ -832,7 +832,39 @@ class Timeseries:
         if self.__binary:
             f.close()
 
+        self.format_xml_data()
         self.__tree.write(self.__path_xml)
+
+    def format_xml_data(self):
+        """
+        Format the XML data
+
+        Make sure it has proper indentation and newlines.
+        """
+        self.format_xml_element(self.__xml_root)
+
+    @staticmethod
+    def format_xml_element(element: ET.Element, level=0):
+        """
+        Format an XML element
+
+        Make sure it has proper indentation and newlines.
+        This code is based on
+        https://stackoverflow.com/questions/3095434/inserting-newlines-in-xml-file-generated-via-xml-etree-elementtree-in-python
+        """
+        indent = "\n" + level*"  "
+        if len(element):
+            if not element.text or not element.text.strip():
+                element.text = indent + "  "
+            if not element.tail or not element.tail.strip():
+                element.tail = indent
+            for subelement in element:
+                Timeseries.format_xml_element(subelement, level+1)
+            if not element.tail or not element.tail.strip():
+                element.tail = indent
+        else:
+            if level and (not element.tail or not element.tail.strip()):
+                element.tail = indent
 
     @property
     def contains_ensemble(self):
