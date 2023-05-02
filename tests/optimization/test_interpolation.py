@@ -162,20 +162,20 @@ class TestNumericalLinearInterpolation(TestNumericalInterpolation):
         t = np.array([-1.0, 0.5, 2.0, 3.5, 6.0])
 
         res_arr = self.problem.interpolate(
-                t,
-                self.ts_non_equi,
-                self.fs,
-                -100.0,
-                100.0,
-                self.problem.INTERPOLATION_LINEAR)
+            t,
+            self.ts_non_equi,
+            self.fs,
+            -100.0,
+            100.0,
+            self.problem.INTERPOLATION_LINEAR)
 
         res_scalar = np.array([self.problem.interpolate(
-                x,
-                self.ts_non_equi,
-                self.fs,
-                -100.0,
-                100.0,
-                self.problem.INTERPOLATION_LINEAR) for x in t])
+            x,
+            self.ts_non_equi,
+            self.fs,
+            -100.0,
+            100.0,
+            self.problem.INTERPOLATION_LINEAR) for x in t])
 
         np.testing.assert_array_equal(res_scalar, res_arr)
 

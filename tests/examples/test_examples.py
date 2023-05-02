@@ -61,9 +61,9 @@ class TestExamples(TestCase):
             folder = os.path.relpath(example_path, ec.examples_path).split(os.sep)[0]
             if error_detected:
                 print("An error occured while running '{}' in example folder '{}'.".format(
-                        file, folder))
+                    file, folder))
             else:
                 print("No errors occured while running '{}' in example folder '{}'.".format(
-                        file, folder))
+                    file, folder))
 
         self.assertFalse(any(ec.errors_detected.values()))

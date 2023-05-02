@@ -58,12 +58,15 @@ for c in channels:
 axarr[1].set_ylabel("Flow Rate [m³/s]")
 # add dots to clarify where the decision variables are defined:
 axarr[1].scatter(times, record["Inflow_Q".lower()], linewidth=1, color="mediumorchid")
-#axarr[1].scatter(times,  record["DrinkingWaterExtractionPump_Q_target".lower()], linewidth=1, color="lightskyblue") #these dots were too big to be useful
+# these dots were too big to be useful
+# axarr[1].scatter(times,  record["DrinkingWaterExtractionPump_Q_target".lower()], linewidth=1, color="lightskyblue")
 
 # add horizontal lines to the left of these dots, to indicate that the value is attained over an entire timestep:
 axarr[1].step(times, record["Inflow_Q".lower()], linewidth=2, where='pre', label="Inflow_Q", color="mediumorchid")
-axarr[1].step(times, record["DrinkingWaterExtractionPump_Q_target".lower()], linewidth=6, where='pre', label="ExtractionPump_Q_target", color="lightskyblue")
-axarr[1].step(times, record["DrinkingWaterExtractionPump_Q".lower()], linewidth=1, where='pre', label="ExtractionPump_Q", color="mediumblue")
+axarr[1].step(times, record["DrinkingWaterExtractionPump_Q_target".lower()],
+              linewidth=6, where='pre', label="ExtractionPump_Q_target", color="lightskyblue")
+axarr[1].step(times, record["DrinkingWaterExtractionPump_Q".lower()],
+              linewidth=1, where='pre', label="ExtractionPump_Q", color="mediumblue")
 
 
 axarr[1].set_ylim(bottom=0)
@@ -71,12 +74,14 @@ axarr[1].set_ylim(bottom=0)
 # Lower Subplot
 axarr[2].set_ylabel("Flow Rate [m³/s]")
 
-#the points:
+# the points:
 axarr[2].scatter(times, record["UpperControlStructure_Q".lower()], linewidth=1, color="darkred")
 axarr[2].scatter(times, record["LowerControlStructure_Q".lower()], linewidth=1, color="darkorange")
 # add horizontal lines to the left of these dots, to indicate that the value is attained over an entire timestep:
-axarr[2].step(times, record["UpperControlStructure_Q".lower()], linewidth=2, where='pre', label="UpperControlStructure_Q", color="darkred")
-axarr[2].step(times, record["LowerControlStructure_Q".lower()], linewidth=1, where='pre', label="LowerControlStructure_Q", color="darkorange")
+axarr[2].step(times, record["UpperControlStructure_Q".lower()], linewidth=2,
+              where='pre', label="UpperControlStructure_Q", color="darkred")
+axarr[2].step(times, record["LowerControlStructure_Q".lower()], linewidth=1,
+              where='pre', label="LowerControlStructure_Q", color="darkorange")
 
 axarr[2].set_ylim(bottom=0)
 

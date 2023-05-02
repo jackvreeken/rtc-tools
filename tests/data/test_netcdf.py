@@ -35,13 +35,13 @@ file_associations = {'test_inputfiles': list(range(3)),
 
 # aliases used to variable names in the netCDF-file
 alias_dict = {
-                # primary
-                'time': 'time',
-                'station': 'station_id',
-                'ensemble': 'realization',
-                # other
-                'latitude': 'lat',
-                'longtitude': 'lon'}
+    # primary
+    'time': 'time',
+    'station': 'station_id',
+    'ensemble': 'realization',
+    # other
+    'latitude': 'lat',
+    'longtitude': 'lon'}
 
 
 def get_input_dataset(key):

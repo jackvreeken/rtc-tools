@@ -69,7 +69,7 @@ class PIMixin(IOMixin):
 
         try:
             self.__parameter_config_numerical = pi.ParameterConfig(
-                  self._input_folder, self.pi_parameter_config_numerical_basename)
+                self._input_folder, self.pi_parameter_config_numerical_basename)
         except IOError:
             self.__parameter_config_numerical = None
 

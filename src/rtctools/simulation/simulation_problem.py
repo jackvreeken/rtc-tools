@@ -533,7 +533,7 @@ class SimulationProblem(DataStoreAccessor):
             # compute max residual
             largest_res = ca.norm_inf(
                 self.__res_vals(next_state, self.__dt, self.__state_vector[:-len(self.__mx['parameters'])])
-                )
+            )
             logger.debug('Residual maximum magnitude: {:.2E}'.format(float(largest_res)))
 
         # Update state vector

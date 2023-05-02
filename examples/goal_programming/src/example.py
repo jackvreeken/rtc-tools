@@ -61,6 +61,7 @@ class Example(GoalProgrammingMixin, CSVMixin, ModelicaMixin,
     """
     An introductory example to goal programming in RTC-Tools
     """
+
     def path_constraints(self, ensemble_member):
         # We want to add a few hard constraints to our problem. The goal
         # programming mixin however also generates constraints (and objectives)

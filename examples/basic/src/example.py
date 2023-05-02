@@ -9,6 +9,7 @@ class Example(CSVMixin, ModelicaMixin, CollocatedIntegratedOptimizationProblem):
     """
     A basic example for introducing users to RTC-Tools 2
     """
+
     def objective(self, ensemble_member):
         # Minimize water pumped. The total water pumped is the integral of the
         # water pumped from the starting time until the stoping time. In

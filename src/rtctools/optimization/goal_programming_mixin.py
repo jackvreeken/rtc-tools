@@ -422,7 +422,7 @@ class GoalProgrammingMixin(_GoalProgrammingMixinBase):
                         not goal.has_target_bounds or
                         goal.violation_timeseries_id is not None or
                         goal.function_value_timeseries_id is not None
-                        ):
+                ):
                     goal_functions[j] = goal.function(self, ensemble_member)
 
             if is_path_goal:

@@ -713,13 +713,13 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                      I0,
                      symbolic_parameters,
                      ca.vertcat(*(
-                        [C0[i] for i in range(len(collocated_variables))] +
-                        [CI0[i] for i in range(len(self.dae_variables['constant_inputs']))] +
-                        [dt_sym] +
-                        collocated_variables +
-                        collocated_derivatives +
-                        self.dae_variables['constant_inputs'] +
-                        self.dae_variables['time']))],
+                         [C0[i] for i in range(len(collocated_variables))] +
+                         [CI0[i] for i in range(len(self.dae_variables['constant_inputs']))] +
+                         [dt_sym] +
+                         collocated_variables +
+                         collocated_derivatives +
+                         self.dae_variables['constant_inputs'] +
+                         self.dae_variables['time']))],
                     [dae_residual_integrated],
                     function_options)
 
@@ -743,12 +743,12 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                     'dae_residual_function_collocated',
                     [symbolic_parameters,
                      ca.vertcat(*(
-                        integrated_variables +
-                        collocated_variables +
-                        integrated_derivatives +
-                        collocated_derivatives +
-                        self.dae_variables['constant_inputs'] +
-                        self.dae_variables['time']))],
+                         integrated_variables +
+                         collocated_variables +
+                         integrated_derivatives +
+                         collocated_derivatives +
+                         self.dae_variables['constant_inputs'] +
+                         self.dae_variables['time']))],
                     [dae_residual_collocated],
                     function_options)
                 try:
@@ -860,13 +860,13 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                  integrated_states_0,
                  symbolic_parameters,
                  ca.vertcat(
-                    collocated_states_0,
-                    constant_inputs_0,
-                    dt,
-                    collocated_states_1,
-                    collocated_finite_differences,
-                    constant_inputs_1,
-                    collocation_time_1 - t0)],
+                     collocated_states_0,
+                     constant_inputs_0,
+                     dt,
+                     collocated_states_1,
+                     collocated_finite_differences,
+                     constant_inputs_1,
+                     collocation_time_1 - t0)],
                 False, True)
             accumulated_Y.append(integrated_states_1)
 
@@ -888,24 +888,24 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                 [dae_residual_0] = dae_residual_function_collocated.call(
                     [symbolic_parameters,
                      ca.vertcat(
-                        integrated_states_0,
-                        collocated_states_0,
-                        integrated_finite_differences,
-                        collocated_finite_differences,
-                        constant_inputs_0,
-                        collocation_time_0 - t0)],
+                         integrated_states_0,
+                         collocated_states_0,
+                         integrated_finite_differences,
+                         collocated_finite_differences,
+                         constant_inputs_0,
+                         collocation_time_0 - t0)],
                     False, True)
             if theta > 0:
                 # Obtain state vector
                 [dae_residual_1] = dae_residual_function_collocated.call(
                     [symbolic_parameters,
                      ca.vertcat(
-                        integrated_states_1,
-                        collocated_states_1,
-                        integrated_finite_differences,
-                        collocated_finite_differences,
-                        constant_inputs_1,
-                        collocation_time_1 - t0)],
+                         integrated_states_1,
+                         collocated_states_1,
+                         integrated_finite_differences,
+                         collocated_finite_differences,
+                         constant_inputs_1,
+                         collocation_time_1 - t0)],
                     False, True)
             if theta == 0:
                 accumulated_Y.append(dae_residual_0)
@@ -973,13 +973,13 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                 'initial_residual_total',
                 [symbolic_parameters,
                  ca.vertcat(*(
-                    self.dae_variables['states'] +
-                    self.dae_variables['algebraics'] +
-                    self.dae_variables['control_inputs'] +
-                    integrated_derivatives +
-                    collocated_derivatives +
-                    self.dae_variables['constant_inputs'] +
-                    self.dae_variables['time']))],
+                     self.dae_variables['states'] +
+                     self.dae_variables['algebraics'] +
+                     self.dae_variables['control_inputs'] +
+                     integrated_derivatives +
+                     collocated_derivatives +
+                     self.dae_variables['constant_inputs'] +
+                     self.dae_variables['time']))],
                 [ca.veccat(dae_residual, initial_residual)],
                 function_options)
             self.__initial_residual_with_params_fun_map = initial_residual_with_params_fun.map(
@@ -988,10 +988,10 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
         [res] = initial_residual_with_params_fun_map.call(
             [ensemble_aggregate["parameters"],
              ca.vertcat(*[
-                ensemble_aggregate["initial_state"],
-                ensemble_aggregate["initial_derivatives"],
-                ensemble_aggregate["initial_constant_inputs"],
-                ca.repmat([0.0], 1, self.ensemble_size)])],
+                 ensemble_aggregate["initial_state"],
+                 ensemble_aggregate["initial_derivatives"],
+                 ensemble_aggregate["initial_constant_inputs"],
+                 ca.repmat([0.0], 1, self.ensemble_size)])],
             False, True)
 
         res = ca.vec(res)
@@ -1215,9 +1215,9 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                  ca.repmat(ca.vertcat(parameters, extra_variables), 1, n_collocation_times - 1)))
 
             self.__func_initial_inputs.append([parameters, ca.vertcat(
-                        initial_state, initial_derivatives, initial_constant_inputs, 0.0,
-                        initial_path_variables, initial_extra_constant_inputs),
-                        extra_variables])
+                initial_state, initial_derivatives, initial_constant_inputs, 0.0,
+                initial_path_variables, initial_extra_constant_inputs),
+                extra_variables])
 
             integrators_and_collocation_and_path_constraints = accumulation(
                 *self.__func_mapped_inputs[ensemble_member])
@@ -1367,7 +1367,7 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                     'delay_values',
                     self.dae_variables['time'] + self.dae_variables['constant_inputs'],
                     substituted_delay_durations
-                    ).map(len(collocation_times))
+                ).map(len(collocation_times))
 
                 # Call mapped delay function with inputs as arrays
                 evaluated_delay_durations = mapped_delay_function.call(

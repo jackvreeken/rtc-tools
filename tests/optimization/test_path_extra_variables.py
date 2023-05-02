@@ -231,8 +231,8 @@ class TestNominalsPathExtraVariables(TestCase):
         for p in [self.problem1, self.problem2]:
             inds = list(range(p.solver_input.size1()))
             f = ca.Function('tmp', [p.solver_input], [ca.vertcat(*[
-                    p.state_vector(v) for v in p._additional_var_names]
-                )])
+                p.state_vector(v) for v in p._additional_var_names]
+            )])
 
             state_vector_indices.append(np.array(f(inds), dtype=int).ravel().tolist())
 
@@ -268,8 +268,8 @@ class TestNominalsPathExtraVariables(TestCase):
         for p in [self.problem1, self.problem2]:
             inds = list(range(p.solver_input.size1()))
             f = ca.Function('tmp', [p.solver_input], [ca.vertcat(*[
-                    p.state_vector(v) for v in p._additional_var_names]
-                )])
+                p.state_vector(v) for v in p._additional_var_names]
+            )])
 
             state_vector_indices.append(np.array(f(inds), dtype=int).ravel().tolist())
 

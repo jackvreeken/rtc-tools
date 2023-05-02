@@ -52,15 +52,21 @@ for idx, forecast in enumerate(forecast_names):
         color=get_cmap(cmaps[idx])(shades[1]),
     )
 
-    #middle subplot
-    #put dots to see at which times the decision variables are defined:
+    # middle subplot
+    # put dots to see at which times the decision variables are defined:
     axarr[1].scatter(times, results["q_in"], linewidth=1, color=get_cmap(cmaps[idx])(shades[0]))
     axarr[1].scatter(times, results["q_release"], linewidth=1, color=get_cmap(cmaps[idx])(shades[1]))
 
     # add horizontal lines to the left of these dots, to indicate that the value is attained over an entire timestep:
-    axarr[1].step(times, results["q_in"], linewidth=2, where='pre', label="{}:Inflow".format(forecast), color=get_cmap(cmaps[idx])(shades[0]))
-    axarr[1].step(times, results["q_release"], linewidth=1, where='pre', label="{}:Release".format(forecast), color=get_cmap(cmaps[idx])(shades[1])) 
-      
+    axarr[1].step(
+        times, results["q_in"],
+        linewidth=2, where='pre', label="{}:Inflow".format(forecast),
+        color=get_cmap(cmaps[idx])(shades[0]))
+    axarr[1].step(
+        times, results["q_release"],
+        linewidth=1, where='pre', label="{}:Release".format(forecast),
+        color=get_cmap(cmaps[idx])(shades[1]))
+
     # Lower Subplot
     axarr[2].plot(
         times,
@@ -76,7 +82,7 @@ for idx, forecast in enumerate(forecast_names):
         linewidth=2,
         color=get_cmap(cmaps[idx])(shades[1]),
     )
-   
+
 
 # Format bottom axis labels
 axarr[-1].xaxis.set_major_formatter(mdates.DateFormatter("%m/%d"))

@@ -479,7 +479,7 @@ class _GoalProgrammingMixinBase(OptimizationProblem, metaclass=ABCMeta):
 
     def _gp_n_objectives(self, subproblem_objectives, subproblem_path_objectives, ensemble_member):
         return ca.vertcat(*[o(self, ensemble_member) for o in subproblem_objectives]).size1() \
-               + ca.vertcat(*[o(self, ensemble_member) for o in subproblem_path_objectives]).size1()
+            + ca.vertcat(*[o(self, ensemble_member) for o in subproblem_path_objectives]).size1()
 
     def _gp_objective(self, subproblem_objectives, n_objectives, ensemble_member):
         if len(subproblem_objectives) > 0:

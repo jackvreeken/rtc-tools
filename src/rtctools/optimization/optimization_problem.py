@@ -179,7 +179,7 @@ class OptimizationProblem(DataStoreAccessor, metaclass=ABCMeta):
                     if loop_error_indicator:
                         log_level = logging.INFO
                 logger.log(log_level, "Solver succeeded with status {} ({}).".format(
-                        return_status, wall_clock_time))
+                    return_status, wall_clock_time))
             except (AttributeError, ValueError):
                 logger.log(log_level, "Solver succeeded with status {} ({}).".format(
                     return_status, wall_clock_time))

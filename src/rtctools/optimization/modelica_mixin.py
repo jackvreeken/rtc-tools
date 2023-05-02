@@ -85,7 +85,7 @@ class ModelicaMixin(OptimizationProblem):
         # These are not in @cached dictionary properties for backwards compatibility.
         self.__python_types = AliasDict(self.alias_relation)
         for v in itertools.chain(
-                    self.__pymoca_model.states, self.__pymoca_model.alg_states, self.__pymoca_model.inputs):
+                self.__pymoca_model.states, self.__pymoca_model.alg_states, self.__pymoca_model.inputs):
             self.__python_types[v.symbol.name()] = v.python_type
 
         # Initialize dae, initial residuals, as well as delay arguments

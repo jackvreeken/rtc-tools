@@ -136,7 +136,7 @@ class ControlTreeMixin(OptimizationProblem):
                             for j, member_j in enumerate(branches[current_branch])
                             if member_j not in available and member_k in available])
                         for k, member_k in enumerate(branches[current_branch])
-                        ], dtype=np.float64)
+                    ], dtype=np.float64)
                     min_distances[np.where(min_distances == np.inf)] = -np.inf
 
                     idx = np.argmax(min_distances)
