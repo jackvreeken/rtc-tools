@@ -80,8 +80,8 @@ class IOMixin(OptimizationProblem, metaclass=ABCMeta):
         """
         all_times = self.times_from_input()
         max_number_of_times = len(all_times)
-        if self._number_of_time_steps_to_optimize is not None:
-            number_of_times = self._number_of_time_steps_to_optimize + 1
+        if self._number_of_timesteps_to_optimize is not None:
+            number_of_times = self._number_of_timesteps_to_optimize + 1
         else:
             number_of_times = max_number_of_times
         number_of_times = min(number_of_times, max_number_of_times)
