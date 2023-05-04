@@ -2128,10 +2128,13 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
     def integral(self, variable, t0=None, tf=None, ensemble_member=0):
         x, t = self.__states_times_in(variable, t0, tf, ensemble_member)
 
-        # Integrate knots using trapezoid rule
-        x_avg = 0.5 * (x[:x.size1() - 1] + x[1:])
-        dt = t[1:] - t[:x.size1() - 1]
-        return ca.sum1(x_avg * dt)
+        if x.size1() > 1:
+            # Integrate knots using trapezoid rule
+            x_avg = 0.5 * (x[:x.size1() - 1] + x[1:])
+            dt = t[1:] - t[:x.size1() - 1]
+            return ca.sum1(x_avg * dt)
+        else:
+            return ca.MX(0)
 
     def der(self, variable):
         # Look up the derivative variable for the given non-derivative variable
