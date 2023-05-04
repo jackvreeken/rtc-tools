@@ -87,7 +87,7 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
     @abstractmethod
     def times(self, variable=None):
         """
-        List of time stamps for variable.
+        List of time stamps for variable (to optimize for).
 
         :param variable: Variable name.
 
@@ -213,17 +213,25 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
         history_0 = self.history(0)
         for variable, initial_der_name in zip(self.__differentiated_states, self.__initial_derivative_names):
             times = self.times(variable)
+            default_time_step_size = 0
+            if len(times) > 1:
+                default_time_step_size = times[1] - times[0]
             try:
                 h = history_0[variable]
                 if h.times[0] == times[0] or len(h.values) == 1:
-                    dt = times[1] - times[0]
+                    dt = default_time_step_size
                 else:
                     assert h.times[-1] == times[0]
                     dt = h.times[-1] - h.times[-2]
             except KeyError:
-                dt = times[1] - times[0]
+                dt = default_time_step_size
 
-            self.__initial_derivative_nominals[initial_der_name] = self.variable_nominal(variable) / dt
+            if dt > 0:
+                self.__initial_derivative_nominals[initial_der_name] = (
+                    self.variable_nominal(variable) / dt)
+            else:
+                self.__initial_derivative_nominals[initial_der_name] = (
+                    self.variable_nominal(variable))
 
         if self.integrated_states:
             warnings.warn("Integrated states are deprecated and support will be removed in a future version.",
@@ -944,22 +952,25 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
 
         # Use map/mapaccum to capture integration and collocation constraint generation over the
         # entire time horizon with one symbolic operation. This saves a lot of memory.
-        if len(integrated_variables) > 0:
-            accumulated = ca.Function(
-                'accumulated',
-                self.__func_accumulated_inputs,
-                [accumulated_Y[0], ca.vertcat(*accumulated_Y[1:])],
-                function_options)
-            accumulation = accumulated.mapaccum('accumulation', n_collocation_times - 1)
+        if n_collocation_times > 1:
+            if len(integrated_variables) > 0:
+                accumulated = ca.Function(
+                    'accumulated',
+                    self.__func_accumulated_inputs,
+                    [accumulated_Y[0], ca.vertcat(*accumulated_Y[1:])],
+                    function_options)
+                accumulation = accumulated.mapaccum('accumulation', n_collocation_times - 1)
+            else:
+                # Fully collocated problem. Use map(), so that we can use
+                # parallelization along the time axis.
+                accumulated = ca.Function(
+                    'accumulated',
+                    self.__func_accumulated_inputs,
+                    [ca.vertcat(*accumulated_Y)],
+                    function_options)
+                accumulation = accumulated.map(n_collocation_times - 1, 'openmp')
         else:
-            # Fully collocated problem. Use map(), so that we can use
-            # parallelization along the time axis.
-            accumulated = ca.Function(
-                'accumulated',
-                self.__func_accumulated_inputs,
-                [ca.vertcat(*accumulated_Y)],
-                function_options)
-            accumulation = accumulated.map(n_collocation_times - 1, 'openmp')
+            accumulation = None
 
         # Start collecting constraints
         f = []
@@ -1219,13 +1230,19 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                 initial_path_variables, initial_extra_constant_inputs),
                 extra_variables])
 
-            integrators_and_collocation_and_path_constraints = accumulation(
-                *self.__func_mapped_inputs[ensemble_member])
+            if accumulation is not None:
+                integrators_and_collocation_and_path_constraints = accumulation(
+                    *self.__func_mapped_inputs[ensemble_member])
+            else:
+                integrators_and_collocation_and_path_constraints = None
 
-            if len(integrated_variables) > 0:
+            if accumulation is not None and len(integrated_variables) > 0:
                 integrators = integrators_and_collocation_and_path_constraints[0]
                 integrators_and_collocation_and_path_constraints = integrators_and_collocation_and_path_constraints[1]
-            if integrators_and_collocation_and_path_constraints.numel() > 0:
+            if (
+                accumulation is not None and
+                integrators_and_collocation_and_path_constraints.numel() > 0
+            ):
                 collocation_constraints = ca.vec(integrators_and_collocation_and_path_constraints[
                     :dae_residual_collocated_size,
                     0:n_collocation_times - 1])
