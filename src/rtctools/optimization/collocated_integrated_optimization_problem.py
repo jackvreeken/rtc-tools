@@ -2211,10 +2211,14 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
         f_impl = ca.Function('f_implicit', list(self.__func_accumulated_inputs), [expr_impl]).expand()
 
         # Map
-        fmap = f_impl.map(len(self.times()) - 1)
-        values = fmap(*self.__func_mapped_inputs[ensemble_member])
+        number_of_timeslots = len(self.times())
+        if number_of_timeslots > 1:
+            fmap = f_impl.map(number_of_timeslots - 1)
+            values = fmap(*self.__func_mapped_inputs[ensemble_member])
 
-        all_values = ca.horzcat(initial_values, values)
+            all_values = ca.horzcat(initial_values, values)
+        else:
+            all_values = initial_values
 
         return ca.transpose(all_values)
 
