@@ -199,6 +199,13 @@ class OptimizationProblem(DataStoreAccessor, metaclass=ABCMeta):
 
         return success
 
+    @classmethod
+    def set_number_of_timesteps_to_optimize(cls, number_of_timesteps_to_optimize):
+        """
+        Set the number of timesteps for which to optimize.
+        """
+        cls._number_of_time_steps_to_optimize = number_of_timesteps_to_optimize
+
     def __check_bounds_control_input(self) -> None:
         # Checks if at the control inputs have bounds, log warning when a control input is not bounded.
         bounds = self.bounds()
