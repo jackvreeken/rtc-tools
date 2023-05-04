@@ -64,4 +64,9 @@ class SingleReservoir(
 
 
 # Run
+# First optimize for 0 time steps to check initial conditions.
+SingleReservoir.set_number_of_timesteps_to_optimize(0)
+run_optimization_problem(SingleReservoir)
+# Optimize for all time steps.
+SingleReservoir.set_number_of_timesteps_to_optimize(None)
 run_optimization_problem(SingleReservoir)
