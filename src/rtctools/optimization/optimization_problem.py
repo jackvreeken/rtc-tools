@@ -44,6 +44,9 @@ class OptimizationProblem(DataStoreAccessor, metaclass=ABCMeta):
     Base class for all optimization problems.
     """
 
+    # Number of time steps to optimize for. If None, optimize for all timesteps.
+    _number_of_time_steps_to_optimize = None
+    # Options for debug checks.
     _debug_check_level = DebugLevel.MEDIUM
     _debug_check_options = {}
 

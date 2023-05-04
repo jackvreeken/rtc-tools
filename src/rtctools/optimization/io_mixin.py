@@ -59,15 +59,34 @@ class IOMixin(OptimizationProblem, metaclass=ABCMeta):
         """
         pass
 
+    def times_from_input(self) -> np.ndarray:
+        """
+        Returns the times in seconds from the reference datetime onwards.
+
+        The times are based on the input data.
+        """
+        times_sec = self.io.times_sec
+        time_index = bisect.bisect_left(times_sec, 0.0)
+        times = times_sec[time_index:]
+        return times
+
     def times(self, variable=None) -> np.ndarray:
         """
         Returns the times in seconds from the reference datetime onwards.
 
-        :param variable:
+        The number of times is based on the number of timesteps to optimize for.
+
+        :param variable: variable name
         """
-        times_sec = self.io.times_sec
-        t_idx = bisect.bisect_left(times_sec, 0.0)
-        return times_sec[t_idx:]
+        all_times = self.times_from_input()
+        max_number_of_times = len(all_times)
+        if self._number_of_time_steps_to_optimize is not None:
+            number_of_times = self._number_of_time_steps_to_optimize + 1
+        else:
+            number_of_times = max_number_of_times
+        number_of_times = min(number_of_times, max_number_of_times)
+        times = all_times[:number_of_times]
+        return times
 
     @property
     def equidistant(self):
