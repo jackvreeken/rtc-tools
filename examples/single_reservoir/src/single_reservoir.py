@@ -48,6 +48,8 @@ class SingleReservoir(
     An optimization problem involving a single reservoir.
     """
 
+    _number_of_timesteps_to_optimize = None
+
     def path_constraints(self, ensemble_member):
         constraints = super().path_constraints(ensemble_member)
         constraints.append((self.state('Q_release'), 0, 1.5))

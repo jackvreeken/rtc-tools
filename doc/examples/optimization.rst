@@ -7,10 +7,11 @@ This section provides examples demonstrating key features of RTC-Tools optimizat
    :maxdepth: 2
 
    optimization/basic
-   optimization/mixed_integer
-   optimization/goal_programming
-   optimization/lookup_table
-   optimization/ensemble
    optimization/cascading_channels
    optimization/channel_pulse
    optimization/channel_wave_damping
+   optimization/debugging
+   optimization/ensemble
+   optimization/goal_programming
+   optimization/lookup_table
+   optimization/mixed_integer
