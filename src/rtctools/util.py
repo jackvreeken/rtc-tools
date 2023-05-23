@@ -10,7 +10,11 @@ import casadi
 from . import __version__
 from ._internal.alias_tools import OrderedSet
 from .data import pi
+from .optimization.csv_mixin import CSVMixin as OptimizationCSVMixin
+from .optimization.io_mixin import IOMixin as OptimizationIOMixin
 from .optimization.pi_mixin import PIMixin as OptimizationPIMixin
+from .simulation.csv_mixin import CSVMixin as SimulationCSVMixin
+from .simulation.io_mixin import IOMixin as SimulationIOMixin
 from .simulation.pi_mixin import PIMixin as SimulationPIMixin
 
 
@@ -44,6 +48,18 @@ def run_optimization_problem(optimization_problem_class,
     :returns: :class:`.OptimizationProblem` instance.
     """
 
+    # Do some checks on the problem class
+    if issubclass(optimization_problem_class, SimulationCSVMixin):
+        raise ValueError(
+            "Optimization problem class cannot be derived from simulation.csv_mixin.CSVMixin.")
+    if issubclass(optimization_problem_class, SimulationIOMixin):
+        raise ValueError(
+            "Optimization problem class cannot be derived from simulation.csv_mixin.IOMixin.")
+    if issubclass(optimization_problem_class, SimulationPIMixin):
+        raise ValueError(
+            "Optimization problem class cannot be derived from simulation.csv_mixin.PIMixin.")
+
+    # Set input/output folders
     if not os.path.isabs(base_folder):
         # Resolve base folder relative to script folder
         base_folder = os.path.join(sys.path[0], base_folder)
@@ -132,7 +148,7 @@ def run_simulation_problem(simulation_problem_class,
     """
     Sets up and runs a simulation problem.
 
-    :param simulation_problem_class: Optimization problem class to solve.
+    :param simulation_problem_class: Simulation problem class to solve.
     :param base_folder:              Folder within which subfolders "input", "output", and "model" exist,
                                      containing input and output data, and the model, respectively.
     :param log_level:                The log level to use.
@@ -140,6 +156,18 @@ def run_simulation_problem(simulation_problem_class,
     :returns: :class:`SimulationProblem` instance.
     """
 
+    # Do some checks on the problem class
+    if issubclass(simulation_problem_class, OptimizationCSVMixin):
+        raise ValueError(
+            "Simulation problem class cannot be derived from optimization.csv_mixin.CSVMixin.")
+    if issubclass(simulation_problem_class, OptimizationIOMixin):
+        raise ValueError(
+            "Simulation problem class cannot be derived from optimization.csv_mixin.IOMixin.")
+    if issubclass(simulation_problem_class, OptimizationPIMixin):
+        raise ValueError(
+            "Simulation problem class cannot be derived from optimization.csv_mixin.PIMixin.")
+
+    # Set input/output folders
     if base_folder is None:
         # Check command line arguments
         if len(sys.argv) != 2:
