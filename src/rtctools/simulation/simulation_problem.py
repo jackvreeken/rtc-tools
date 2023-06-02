@@ -525,9 +525,12 @@ class SimulationProblem(DataStoreAccessor):
         rootfinder_stats = self.__do_step.stats()
 
         if not rootfinder_stats['success']:
-            logger.warning(
-                'Simulation has failed to converge at time {}. Solver failed with status {}'.format(
-                    self.get_current_time(), rootfinder_stats['nlpsol']['return_status']))
+            message = (
+                'Simulation has failed to converge at time {}. '
+                'Solver failed with status {}'
+            ).format(self.get_current_time(), rootfinder_stats['nlpsol']['return_status'])
+            logger.error(message)
+            raise Exception(message)
 
         if logger.getEffectiveLevel() == logging.DEBUG:
             # compute max residual

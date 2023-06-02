@@ -99,7 +99,7 @@ class TestSimulation(TestCase):
         # test methods for get_time
         start = 0.0
         stop = 10.0
-        dt = 1.0
+        dt = 0.5
         self.problem.setup_experiment(start, stop, dt)
         self.problem.set_var("x_start", 0.0)
         self.problem.set_var("constant_input", 0.0)
