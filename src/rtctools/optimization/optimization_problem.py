@@ -154,6 +154,10 @@ class OptimizationProblem(DataStoreAccessor, metaclass=ABCMeta):
         # Extract relevant stats
         self.__objective_value = float(results['f'])
         self.__solver_output = np.array(results['x']).ravel()
+        self.__transcribed_problem = {"lbx": lbx, "ubx": ubx, "lbg": lbg, "ubg": ubg, "x0": x0, "nlp": nlp}
+        self.__lam_g = results.get("lam_g")
+        self.__lam_x = results.get("lam_x")
+
         self.__solver_stats = solver.stats()
 
         success, log_level = self.solver_success(self.__solver_stats, log_solver_failure_as_error)
@@ -332,6 +336,20 @@ class OptimizationProblem(DataStoreAccessor, metaclass=ABCMeta):
         The stats from the last NLP solver run.
         """
         return self.__solver_stats
+
+    @property
+    def lagrange_multipliers(self) -> Tuple[Any, Any]:
+        """
+        The lagrange multipliers at the solution.
+        """
+        return self.__lam_g, self.__lam_x
+
+    @property
+    def transcribed_problem(self) -> Dict[str, Any]:
+        """
+        The transcribed problem.
+        """
+        return self.__transcribed_problem
 
     def pre(self) -> None:
         """
