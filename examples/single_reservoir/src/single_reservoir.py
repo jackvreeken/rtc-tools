@@ -48,7 +48,13 @@ class SingleReservoir(
     An optimization problem involving a single reservoir.
     """
 
-    _number_of_timesteps_to_optimize = None
+    only_check_initial_values = False
+
+    def times(self, variable=None):
+        times = super().times(variable)
+        if self.only_check_initial_values:
+            times = times[:1]
+        return times
 
     def path_constraints(self, ensemble_member):
         constraints = super().path_constraints(ensemble_member)
@@ -67,8 +73,8 @@ class SingleReservoir(
 
 # Run
 # First optimize for 0 time steps to check initial conditions.
-SingleReservoir.set_number_of_timesteps_to_optimize(0)
+SingleReservoir.only_check_initial_values = True
 run_optimization_problem(SingleReservoir)
 # Optimize for all time steps.
-SingleReservoir.set_number_of_timesteps_to_optimize(None)
+SingleReservoir.only_check_initial_values = False
 run_optimization_problem(SingleReservoir)

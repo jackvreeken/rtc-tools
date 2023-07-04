@@ -22,14 +22,8 @@ The optimization problem is given below.
 Optimizing for a given number of time steps
 -------------------------------------------
 
-The class attribute ``_number_of_timesteps_to_optimize`` indicates for how many time steps
-the control variables will be optimized.
-By default this value is ``None``,
-which means that the variables will be optimized for all time steps.
-By setting this attribute to, e.g. ``5``, the variables will be optimized
-for only the first 5 time steps.
-This can be useful to find out when a problem becomes infeasable.
-By setting ``_number_of_timesteps_to_optimize`` to ``0``,
-the variables will only be optimized for the initial time.
-This can be useful to check if the optimization problem is infeasable
-due to incompatible initial conditions.
+By overwriting the method ``times``, we can control the times for which the problem is optimized.
+In this case, we optimize for all times
+unless the class attribute ``only_check_initial_values`` is set to ``True``.
+Optimizing for only the initial time can be useful
+to check for infeasibilities due to incompatible initial conditions.
