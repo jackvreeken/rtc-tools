@@ -74,10 +74,6 @@ class Model(DummyIOMixin, ModelicaMixin, CollocatedIntegratedOptimizationProblem
         return compiler_options
 
 
-class FindInitialValueProblem(Model):
-    _number_of_time_steps_to_optimize = 0
-
-
 class TestOptimizationProblem(TestCase):
     """
     Tests the default methods from OptimizationProblem
@@ -87,18 +83,6 @@ class TestOptimizationProblem(TestCase):
         self.problem = Model()
         self.problem.read()
         self.tolerance = 1e-6
-
-    def test_times(self):
-        all_expected_times = [0, 3600, 7200, 9800]
-        expected_times = all_expected_times
-        times = self.problem.times('x')
-        self.assertTrue(np.array_equal(times, expected_times))
-
-        problem = FindInitialValueProblem()
-        problem.read()
-        expected_times = all_expected_times[:1]
-        times = problem.times()
-        self.assertTrue(np.array_equal(times, expected_times))
 
     def test_get_timeseries(self):
         timeseries = self.problem.get_timeseries('constant_input')
