@@ -75,7 +75,7 @@ class Model(DummyIOMixin, ModelicaMixin, CollocatedIntegratedOptimizationProblem
 
 
 class FindInitialValueProblem(Model):
-    _number_of_timesteps_to_optimize = 0
+    _number_of_time_steps_to_optimize = 0
 
 
 class TestOptimizationProblem(TestCase):
