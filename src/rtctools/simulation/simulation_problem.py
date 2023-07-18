@@ -1,6 +1,7 @@
 import copy
 import itertools
 import logging
+import math
 from collections import OrderedDict
 from typing import Union
 
@@ -12,7 +13,6 @@ import pkg_resources
 
 import pymoca
 import pymoca.backends.casadi.api
-
 
 from rtctools._internal.alias_tools import AliasDict
 from rtctools._internal.caching import cached
@@ -86,6 +86,14 @@ class SimulationProblem(DataStoreAccessor):
                 else:
                     # All inputs are constant inputs
                     self.__mx["constant_inputs"].append(v.symbol)
+
+        # Set timestep size
+        self._dt_is_fixed = False
+        self.__dt = None
+        fixed_dt = kwargs.get("fixed_dt", None)
+        if fixed_dt is not None:
+            self._dt_is_fixed = True
+            self.__dt = fixed_dt
 
         # Log variables in debug mode
         if logger.getEffectiveLevel() == logging.DEBUG:
@@ -573,7 +581,7 @@ class SimulationProblem(DataStoreAccessor):
         # Set class vars with start/stop/dt values
         self.__start = start
         self.__stop = stop
-        self.__dt = dt
+        self.set_time_step(dt)
 
         # Set time in state vector
         self.set_var("time", start)
@@ -586,8 +594,9 @@ class SimulationProblem(DataStoreAccessor):
 
         :param dt: Time step size.
         """
-        if dt < 0:
-            dt = self.__dt
+        if dt > 0:
+            self.set_time_step(dt)
+        dt = self.get_time_step()
 
         logger.debug("Taking a step at {} with size {}".format(self.get_current_time(), dt))
 
@@ -789,6 +798,19 @@ class SimulationProblem(DataStoreAccessor):
             for sym, isnan in zip(self.__sym_list, value_is_nan):
                 if isnan:
                     logger.warning("Variable {} has no value.".format(sym))
+
+    def set_time_step(self, dt):
+        """
+        Set the timestep size.
+
+        :param dt: Timestep size of the simulation.
+        """
+        if self._dt_is_fixed:
+            assert math.isclose(
+                self.__dt, dt
+            ), "Timestep size dt is marked as constant and cannot be changed."
+        else:
+            self.__dt = dt
 
     def set_var(self, name, value):
         """
