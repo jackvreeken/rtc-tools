@@ -187,12 +187,16 @@ class SimulationProblem(DataStoreAccessor):
             + self.__mx["constant_inputs"]
             + self.__mx["parameters"]
         )
-        self.__state_vector = np.full(len(self.__sym_list), np.nan)
+        n_elements = np.array([var.numel() for var in self.__sym_list])
+        i_end = n_elements.cumsum()
+        i_start = np.array([0, *(i_end[:-1])])
+        self.__state_vector = np.full(n_elements.sum(), np.nan)
 
-        # A very handy index
-        self.__states_end_index = (
+        # Useful indices
+        self.__n_state_symbols = (
             len(self.__mx["states"]) + len(self.__mx["algebraics"]) + len(self.__mx["derivatives"])
         )
+        self.__n_states = i_end[self.__n_state_symbols - 1]
 
         # NOTE: Backwards compatibility allowing set_var() for parameters. These
         # variables check that this is only done before calling initialize().
@@ -206,13 +210,17 @@ class SimulationProblem(DataStoreAccessor):
         # Generate a dictionary that we can use to lookup the index in the state vector.
         # To avoid repeated and relatively expensive `canonical_signed` calls, we
         # make a dictionary for all variables and their aliases.
-        self.__indices = {}
+        self.__i_start = {}
+        self.__i_end = {}
         for i, k in enumerate(self.__sym_dict.keys()):
             for alias in self.alias_relation.aliases(k):
                 if alias.startswith("-"):
-                    self.__indices[alias[1:]] = (i, -1.0)
+                    self.__i_start[alias[1:]] = (i_start[i], -1.0)
+                    self.__i_end[alias[1:]] = (i_end[i], -1.0)
                 else:
-                    self.__indices[alias] = (i, 1.0)
+                    self.__i_start[alias] = (i_start[i], 1.0)
+                    self.__i_end[alias] = (i_end[i], 1.0)
+        self.__indices = self.__i_start
 
         # Call parent class for default behaviour.
         super().__init__(**kwargs)
@@ -367,9 +375,12 @@ class SimulationProblem(DataStoreAccessor):
         equality_constraints = ca.vertcat(self.__dae_residual, self.__initial_residual)
 
         # The variables that need a mutually consistent initial condition
-        X = ca.vertcat(*self.__sym_list[: self.__states_end_index])
+        X = ca.vertcat(*self.__sym_list[: self.__n_state_symbols])
         X_prev = ca.vertcat(
-            *[ca.MX.sym(sym.name() + "_prev") for sym in self.__sym_list[: self.__states_end_index]]
+            *[
+                ca.MX.sym(sym.name() + "_prev", sym.shape)
+                for sym in self.__sym_list[: self.__n_state_symbols]
+            ]
         )
 
         # Make a list of unscaled symbols and a list of their scaled equivalent
@@ -380,7 +391,7 @@ class SimulationProblem(DataStoreAccessor):
             index, _ = self.__indices[sym_name]
 
             # If the symbol is a state, Add the symbol to the lists
-            if index <= self.__states_end_index:
+            if index <= self.__n_states:
                 unscaled_symbols.append(X[index])
                 scaled_symbols.append(X[index] * nominal)
 
@@ -446,7 +457,7 @@ class SimulationProblem(DataStoreAccessor):
         const_and_par = ca.vertcat(
             *self.__mx["time"], *self.__mx["constant_inputs"], *self.__mx["parameters"]
         )
-        const_and_par_values = self.__state_vector[self.__states_end_index :]
+        const_and_par_values = self.__state_vector[self.__n_states :]
 
         objective_function = ca.substitute(objective_function, const_and_par, const_and_par_values)
         equality_constraints = ca.substitute(
@@ -462,7 +473,7 @@ class SimulationProblem(DataStoreAccessor):
         solver = ca.nlpsol("solver", "ipopt", nlp, self.solver_options())
 
         # Construct guess
-        guess = ca.vertcat(*np.nan_to_num(self.__state_vector[: self.__states_end_index]))
+        guess = ca.vertcat(*np.nan_to_num(self.__state_vector[: self.__n_states]))
 
         # Find initial state
         initial_state = solver(x0=guess, lbx=self.__lbx, ubx=self.__ubx, lbg=lbg, ubg=ubg)
@@ -473,9 +484,7 @@ class SimulationProblem(DataStoreAccessor):
             raise Exception('Initialization Failed with return status "{}"'.format(return_status))
 
         # Update state vector with initial conditions
-        self.__state_vector[: self.__states_end_index] = initial_state["x"][
-            : self.__states_end_index
-        ].T
+        self.__state_vector[: self.__n_states] = initial_state["x"][: self.__n_states].T
 
         # make a copy of the initialized initial state vector in case we want to run the model again
         self.__initialized_state_vector = copy.deepcopy(self.__state_vector)
@@ -498,11 +507,9 @@ class SimulationProblem(DataStoreAccessor):
         dt = ca.MX.sym("delta_t")
         parameters = ca.vertcat(*self.__mx["parameters"])
         if n_parameters > 0:
-            constants = ca.vertcat(
-                X_prev, *self.__sym_list[self.__states_end_index : -n_parameters]
-            )
+            constants = ca.vertcat(X_prev, *self.__sym_list[self.__n_state_symbols : -n_parameters])
         else:
-            constants = ca.vertcat(X_prev, *self.__sym_list[self.__states_end_index :])
+            constants = ca.vertcat(X_prev, *self.__sym_list[self.__n_state_symbols :])
 
         # Make a list of derivative approximations using backwards Euler formulation
         derivative_approximation_residuals = []
@@ -604,7 +611,7 @@ class SimulationProblem(DataStoreAccessor):
         self.set_var("time", self.get_current_time() + dt)
 
         # take a step
-        guess = self.__state_vector[: self.__states_end_index]
+        guess = self.__state_vector[: self.__n_states]
         if len(self.__mx["parameters"]) > 0:
             next_state = self.__do_step(
                 guess, dt, self.__state_vector[: -len(self.__mx["parameters"])]
@@ -631,7 +638,7 @@ class SimulationProblem(DataStoreAccessor):
             logger.debug("Residual maximum magnitude: {:.2E}".format(float(largest_res)))
 
         # Update state vector
-        self.__state_vector[: self.__states_end_index] = next_state.toarray().ravel()
+        self.__state_vector[: self.__n_states] = next_state.toarray().ravel()
 
     def simulate(self):
         """
@@ -712,7 +719,7 @@ class SimulationProblem(DataStoreAccessor):
             value *= sign
 
         # Adjust for nominal value if not default
-        if index <= self.__states_end_index:
+        if index <= self.__n_states:
             nominal = self.get_variable_nominal(name)
             value *= nominal
 
@@ -833,7 +840,7 @@ class SimulationProblem(DataStoreAccessor):
             value *= sign
 
         # Adjust for nominal value if not default
-        if index <= self.__states_end_index:
+        if index <= self.__n_states:
             nominal = self.get_variable_nominal(name)
             value /= nominal
 
