@@ -61,6 +61,7 @@ class TestSimulation(TestCase):
                 "y",
                 "z",
                 "_pymoca_delay_0[1,1]",
+                "_pymoca_delay_0[1,1]_expr",
                 "x_delayed",
             },
         )
@@ -176,8 +177,8 @@ class FailingSimulationModel(SimulationProblem):
 
 
 class TestFailingSimulation(TestCase):
-    def test_delay_exception(self):
-        with self.assertRaisesRegex(NotImplementedError, "Delayed states are not supported"):
+    def test_delay_equation_without_fixed_dt_exception(self):
+        with self.assertRaisesRegex(ValueError, "fixed_dt should be set"):
             self.problem = FailingSimulationModel()
 
 
@@ -238,3 +239,49 @@ class TestSimulationNominal(TestCase):
             i += 1
 
         self.assertAlmostEqual(np.array(z_base), np.array(z_nominal), 1e-5)
+
+
+class SimulationModelDelay(SimulationProblem):
+    def __init__(self, fixed_dt):
+        super().__init__(
+            input_folder=data_path(),
+            output_folder=data_path(),
+            model_name="Model_delay",
+            model_folder=data_path(),
+            fixed_dt=fixed_dt,
+        )
+
+
+class TestSimulationDelay(TestCase):
+    def setUp(self):
+        self.dt = 0.1
+        self.problem_delay = SimulationModelDelay(fixed_dt=self.dt)
+
+    def test_model_delay(self):
+        start = 0.0
+        stop = 1.0
+        dt = self.dt
+        x_start = 1.0
+        x = []
+        z1 = []
+        z2 = []
+        z3 = []
+        self.problem_delay.set_var("x_start", x_start)
+        self.problem_delay.setup_experiment(start, stop, dt)
+        self.problem_delay.initialize()
+        i = 0
+        while i < int(stop / dt):
+            self.problem_delay.update(dt)
+            x.append(self.problem_delay.get_var("x"))
+            z1.append(self.problem_delay.get_var("z1"))
+            z2.append(self.problem_delay.get_var("z2"))
+            z3.append(self.problem_delay.get_var("z3"))
+            i += 1
+        x_ref = 2.0
+        z1_ref = 17.8
+        z2_ref = 189.0
+        z3_ref = 1670.0
+        self.assertAlmostEqual(x[-1], x_ref, 1e-6)
+        self.assertAlmostEqual(z1[-1], z1_ref, 1e-6)
+        self.assertAlmostEqual(z2[-1], z2_ref, 1e-6)
+        self.assertAlmostEqual(z3[-1], z3_ref, 1e-6)

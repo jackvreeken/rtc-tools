@@ -95,6 +95,16 @@ class SimulationProblem(DataStoreAccessor):
             self._dt_is_fixed = True
             self.__dt = fixed_dt
 
+        # Add auxiliary variables for keeping track of delay expressions to the algebraic states
+        n_delay_states = len(self.__pymoca_model.delay_states)
+        self.__delay_times = []
+        if n_delay_states > 0:
+            if fixed_dt is None and not self._force_zero_delay:
+                raise ValueError("fixed_dt should be set when using delay equations.")
+            self.__delay_times = self._get_delay_times()
+            delay_expression_states = self._create_delay_expression_states()
+            self.__mx["algebraics"] += delay_expression_states
+
         # Log variables in debug mode
         if logger.getEffectiveLevel() == logging.DEBUG:
             logger.debug(
@@ -169,9 +179,6 @@ class SimulationProblem(DataStoreAccessor):
             for variable_list in variable_lists
         ]
 
-        if self.__pymoca_model.delay_states and not self._force_zero_delay:
-            raise NotImplementedError("Delayed states are not supported")
-
         self.__dae_residual = self.__pymoca_model.dae_residual_function(*function_arguments)
 
         self.__initial_residual = self.__pymoca_model.initial_residual_function(*function_arguments)
@@ -225,6 +232,51 @@ class SimulationProblem(DataStoreAccessor):
         # Call parent class for default behaviour.
         super().__init__(**kwargs)
 
+    def _get_delay_times(self):
+        """
+        Get the delay times for each delay equation.
+        """
+        if self._force_zero_delay:
+            return [0] * len(self.__pymoca_model.delay_states)
+        parameter_symbols = [v.symbol for v in self.__pymoca_model.parameters]
+        parameter_values = [v.value for v in self.__pymoca_model.parameters]
+        delay_time_expressions = [
+            delay_arg.duration for delay_arg in self.__pymoca_model.delay_arguments
+        ]
+        delay_time_fun = ca.Function(
+            "delay_time_function", parameter_symbols, delay_time_expressions
+        )
+        delay_time_values = delay_time_fun(*parameter_values)
+        if len(delay_time_expressions) == 1:
+            return [delay_time_values]
+        return list(delay_time_values)
+
+    def _create_delay_expression_states(self):
+        """
+        Create auxiliary states for delay equations.
+
+        Create states to keep track of the history of delay expressions.
+        For example, if we have a delay equation of the form
+
+        .. math::
+            x = delay(5 * y, 2 * dt),
+
+        Then we need variables to store :math:`5 * y` at time :math`t` and time :math:`t - dt`
+        (For each state, we also store the previous value,
+        so if we have a state for :math:`5 * y` at :math:`t - dt`,
+        then its previous value is :math:`5 * y` at :math:`t - 2 * dt`).
+        """
+        delay_expression_states = []
+        for delay_state, delay_time in zip(self.__pymoca_model.delay_states, self.__delay_times):
+            if delay_time > 0:
+                n_previous_values = int(np.ceil(delay_time / self.get_time_step()))
+            else:
+                n_previous_values = 1
+            expression_state = delay_state + "_expr"
+            expression_symbol = ca.MX.sym(expression_state, n_previous_values)
+            delay_expression_states.append(expression_symbol)
+        return delay_expression_states
+
     def initialize(self, config_file=None):
         """
         Initialize state vector with default values
@@ -236,6 +288,9 @@ class SimulationProblem(DataStoreAccessor):
             # self.setup_experiment(start,stop)
             # for now, assume that setup_experiment was called beforehand
             raise NotImplementedError
+
+        # Short-hand notation for the model
+        model = self.__pymoca_model
 
         # Set values of parameters defined in the model into the state vector
         for var in self.__pymoca_model.parameters:
@@ -285,6 +340,15 @@ class SimulationProblem(DataStoreAccessor):
         nominal_dict = dict(zip(nominal_vars, evaluated_nominals))
 
         self.__nominals.update(nominal_dict)
+
+        # The variables that need a mutually consistent initial condition
+        X = ca.vertcat(*self.__sym_list[: self.__n_state_symbols])
+        X_prev = ca.vertcat(
+            *[
+                ca.MX.sym(sym.name() + "_prev", sym.shape)
+                for sym in self.__sym_list[: self.__n_state_symbols]
+            ]
+        )
 
         # Assemble initial residuals and set values from start attributes into the state vector
         minimized_residuals = []
@@ -357,6 +421,15 @@ class SimulationProblem(DataStoreAccessor):
         for der_var in self.__mx["derivatives"]:
             self.set_var(der_var.name(), 0.0)
 
+        # Residuals for initial values for the delay states / expressions.
+        for delay_state, delay_argument in zip(model.delay_states, model.delay_arguments):
+            expression_state = delay_state + "_expr"
+            i_delay_state, _ = self.__indices[delay_state]
+            i_expr_start, _ = self.__i_start[expression_state]
+            i_expr_end, _ = self.__i_end[expression_state]
+            minimized_residuals.append(X[i_expr_start:i_expr_end] - delay_argument.expr)
+            minimized_residuals.append(X[i_delay_state] - delay_argument.expr)
+
         # Warn for nans in state vector (verify we didn't miss anything)
         self.__warn_for_nans()
 
@@ -373,15 +446,6 @@ class SimulationProblem(DataStoreAccessor):
         # Assemble symbolics needed to make a function describing the initial condition of the model
         # We constrain every entry in this MX to zero
         equality_constraints = ca.vertcat(self.__dae_residual, self.__initial_residual)
-
-        # The variables that need a mutually consistent initial condition
-        X = ca.vertcat(*self.__sym_list[: self.__n_state_symbols])
-        X_prev = ca.vertcat(
-            *[
-                ca.MX.sym(sym.name() + "_prev", sym.shape)
-                for sym in self.__sym_list[: self.__n_state_symbols]
-            ]
-        )
 
         # Make a list of unscaled symbols and a list of their scaled equivalent
         unscaled_symbols = []
@@ -433,13 +497,17 @@ class SimulationProblem(DataStoreAccessor):
 
         evaluated_bounds = np.array(evaluated_bounds) / np.array(nominals)[:, None]
 
-        # Update with the bounds of delayed states
-        n_delay = len(self.__pymoca_model.delay_states)
-        delay_bounds = np.array([-np.inf, np.inf] * n_delay).reshape((n_delay, 2))
-        offset = len(self.__pymoca_model.states) + len(self.__pymoca_model.alg_states)
-        evaluated_bounds = np.vstack(
-            (evaluated_bounds[:offset, :], delay_bounds, evaluated_bounds[offset:, :])
-        )
+        # Update with the bounds of delayed states / expressions
+        if model.delay_states:
+            i_start_first_delay_state, _ = self.__indices[model.delay_states[0]]
+            i_end_last_delay_expr, _ = self.__i_end[model.delay_states[-1] + "_expr"]
+            n_delay = i_end_last_delay_expr - i_start_first_delay_state
+            delay_bounds = np.array([-np.inf, np.inf] * n_delay).reshape((n_delay, 2))
+            # offset = len(self.__pymoca_model.states) + len(self.__pymoca_model.alg_states)
+            offset = i_start_first_delay_state
+            evaluated_bounds = np.vstack(
+                (evaluated_bounds[:offset, :], delay_bounds, evaluated_bounds[offset:, :])
+            )
 
         # Construct arrays of state bounds (used in the initialize() nlp, but not in __do_step
         # rootfinder)
@@ -518,18 +586,32 @@ class SimulationProblem(DataStoreAccessor):
                 derivative_state - (X[index] - X_prev[index]) / dt
             )
 
-        # Delayed feedback (assuming zero delay)
-        # TODO: implement delayed feedback support for delay != 0
-        delayed_feedback_equations = []
-        for delay_state, delay_argument in zip(
-            self.__pymoca_model.delay_states, self.__pymoca_model.delay_arguments
+        # Delayed feedback
+        delay_equations = []
+        for delay_state, delay_argument, delay_time in zip(
+            model.delay_states,
+            model.delay_arguments,
+            self.__delay_times,
         ):
-            logger.warning("Assuming zero delay for delay state '{}'".format(delay_state))
-            delayed_feedback_equations.append(delay_argument.expr - self.__sym_dict[delay_state])
+            expression_state = delay_state + "_expr"
+            i_delay_state, _ = self.__indices[delay_state]
+            i_expr_start, _ = self.__i_start[expression_state]
+            i_expr_end, _ = self.__i_end[expression_state]
+            delay_equations.append(X[i_expr_start] - delay_argument.expr)
+            delay_equations.append(
+                X[i_expr_start + 1 : i_expr_end] - X_prev[i_expr_start : i_expr_end - 1]
+            )
+            n_previous_values = self.__sym_dict[expression_state].numel()
+            interpolation_weight = n_previous_values - delay_time / self.__dt
+            delay_equations.append(
+                X[i_delay_state]
+                - interpolation_weight * X[i_expr_end - 1]
+                - (1 - interpolation_weight) * X_prev[i_expr_end - 1]
+            )
 
         # Append residuals for derivative approximations
         dae_residual = ca.vertcat(
-            self.__dae_residual, *derivative_approximation_residuals, *delayed_feedback_equations
+            self.__dae_residual, *derivative_approximation_residuals, *delay_equations
         )
 
         # TODO: implement lookup_tables
