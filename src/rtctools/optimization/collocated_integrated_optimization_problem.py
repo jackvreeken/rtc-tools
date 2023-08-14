@@ -180,6 +180,11 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
             Not every CasADi build has support for OpenMP enabled.  For such builds, the `thread` mode offers
             an alternative parallelization mode.
 
+        .. note::
+
+            The use of ``expand=True`` in ``solver_options()`` may negate the parallelization benefits obtained
+            using ``map()``.
+
         :returns: A dictionary of options for the `map()` call used to evaluate constraints on every time stamp.
         """
         return {'mode': 'openmp'}
