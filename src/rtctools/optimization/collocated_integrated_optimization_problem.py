@@ -156,7 +156,7 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
         # TODO Fix these issue by performing index reduction and splitting DAE into ODE and algebraic parts.
         #      Theta then only applies to the ODE part.
         return 1.0
-    
+
     def map_options(self) -> Dict[str, Union[str, int]]:
         """
         Returns a dictionary of CasADi ``map()`` options.
