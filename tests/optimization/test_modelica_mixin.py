@@ -136,6 +136,14 @@ class ModelConstrained(Model):
         return [(f, 0.1, sys.float_info.max)]
 
 
+class ModelThreaded(Model):
+    def map_options(self):
+        options = super().map_options()
+        options["mode"] = "thread"
+        options["n_threads"] = 2
+        return options
+
+
 class ModelTrapezoidal(Model):
 
     @property
@@ -488,6 +496,21 @@ class TestModelicaMixinConstrained(TestCase):
         # x(t=2.0)=0.0, the unconstrained optimum, can never be reached.
         self.assertAlmostGreaterThan(self.problem.objective_value, 1e-2, 0)
         self.assertAlmostEqual(self.results["u"][-1], -2, 1e-6)
+
+
+class TestModelicaMixinThreaded(TestCase):
+
+    def setUp(self):
+        self.problem = ModelThreaded()
+        self.problem.optimize()
+        self.results = self.problem.extract_results()
+        self.tolerance = 1e-6
+
+    def test_objective_value(self):
+        objective_value_tol = 1e-6
+        self.assertAlmostLessThan(
+            abs(self.problem.objective_value), 0.0, objective_value_tol
+        )
 
 
 class TestModelicaMixinTrapezoidal(TestCase):

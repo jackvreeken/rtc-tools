@@ -2,6 +2,7 @@ import itertools
 import logging
 import warnings
 from abc import ABCMeta, abstractmethod
+from typing import Dict, Union
 
 import casadi as ca
 
@@ -155,6 +156,33 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
         # TODO Fix these issue by performing index reduction and splitting DAE into ODE and algebraic parts.
         #      Theta then only applies to the ODE part.
         return 1.0
+    
+    def map_options(self) -> Dict[str, Union[str, int]]:
+        """
+        Returns a dictionary of CasADi ``map()`` options.
+
+        +---------------+-----------+---------------+
+        | Option        | Type      | Default value |
+        +===============+===========+===============+
+        | ``mode``      | ``str`    | ``openmp``    |
+        +---------------+-----------+---------------+
+        | ``n_threads`` | ``int``   | ``None``      |
+        +---------------+-----------+---------------+
+
+        The ``mode`` option controls the mode of the ``map()`` call.  Valid values include ``openmp``,
+        ``thread``, and ``unroll``.  See the CasADi and documentation for detailed documentation on these
+        modes.
+
+        The ``n_threads`` option controls the number of threads used when in ``thread`` mode.
+
+        .. note::
+
+            Not every CasADi build has support for OpenMP enabled.  For such builds, the `thread` mode offers
+            an alternative parallelization mode.
+
+        :returns: A dictionary of options for the `map()` call used to evaluate constraints on every time stamp.
+        """
+        return {'mode': 'openmp'}
 
     def transcribe(self):
         # DAE residual
@@ -968,7 +996,16 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                     self.__func_accumulated_inputs,
                     [ca.vertcat(*accumulated_Y)],
                     function_options)
-                accumulation = accumulated.map(n_collocation_times - 1, 'openmp')
+                options = self.map_options()
+                if options["mode"] == "thread":
+                    accumulation = accumulated.map(
+                        n_collocation_times - 1,
+                        options["mode"],
+                        options["n_threads"])
+                else:
+                    accumulation = accumulated.map(
+                        n_collocation_times - 1,
+                        options["mode"])
         else:
             accumulation = None
 
