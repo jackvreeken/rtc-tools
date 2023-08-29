@@ -4,12 +4,6 @@ import casadi as ca
 
 logger = logging.getLogger("rtctools")
 
-try:
-    from casadi import interp1d
-except ImportError:
-    logger.warning('interp1d not available in this version of CasADi.  Linear interpolation will not work.')
-    interp1d = None
-
 
 def is_affine(e, v):
     try:
@@ -52,25 +46,10 @@ def substitute_in_external(expr, symbols, values):
 
 
 def interpolate(ts, xs, t, equidistant, mode=0):
-    if interp1d is not None:
-        if mode == 0:
-            mode_str = 'linear'
-        elif mode == 1:
-            mode_str = 'floor'
-        else:
-            mode_str = 'ceil'
-        return interp1d(ts, xs, t, mode_str, equidistant)
+    if mode == 0:
+        mode_str = 'linear'
+    elif mode == 1:
+        mode_str = 'floor'
     else:
-        if mode == 1:
-            xs = xs[:-1]  # block-forward
-        else:
-            xs = xs[1:]  # block-backward
-        t = ca.MX(t)
-        if t.size1() > 1:
-            t_ = ca.MX.sym('t')
-            xs_ = ca.MX.sym('xs', xs.size1())
-            f = ca.Function('interpolant', [t_, xs_], [ca.mtimes(ca.transpose((t_ >= ts[:-1]) * (t_ < ts[1:])), xs_)])
-            f = f.map(t.size1(), 'serial')
-            return ca.transpose(f(ca.transpose(t), ca.repmat(xs, 1, t.size1())))
-        else:
-            return ca.mtimes(ca.transpose((t >= ts[:-1]) * (t < ts[1:])), xs)
+        mode_str = 'ceil'
+    return ca.interp1d(ts, xs, t, mode_str, equidistant)
