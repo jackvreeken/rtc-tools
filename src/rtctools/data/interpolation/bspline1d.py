@@ -109,10 +109,10 @@ class BSpline1D(BSpline):
         # Objective Function
         xpt = SX.sym('xpt')
         ypt = SX.sym('ypt')
-        sq_diff = Function('sq_diff', [xpt, ypt], [
+        sq_diff = Function('sq_diff', [c, xpt, ypt], [
             (ypt - bspline(c, xpt))**2])
         sq_diff = sq_diff.map(N, 'serial')
-        f = sum2(sq_diff(SX(x), SX(y)))
+        f = sum2(sq_diff(c, SX(x), SX(y)))
 
         # Setup Curvature Constraints
         delta_c_max = np.full(num_knots - 1, inf)
