@@ -36,63 +36,31 @@ build:
   tags:
     - docker
 
-# test
-.job_template: &unittests
-  stage: test
+.python_tox_matrix:
+  image: python:${VERSION}
   script:
     - tox -vv
-
-py35:linux:
-  <<: *unittests
-  image: python:3.5-jessie
-  variables:
-    TOXENV: py35
+  parallel:
+    matrix:
+      - VERSION: ["3.5", "3.7", "3.8"]
   tags:
     - docker
 
-py37:linux:
-  <<: *unittests
-  image: python:3.7-stretch
+# test
+test:linux:
+  stage: test
+  extends: .python_tox_matrix
   variables:
-    TOXENV: py37
-  tags:
-    - docker
-
-py38:linux:
-  <<: *unittests
-  image: python:3.8-buster
-  variables:
-    TOXENV: py38
-  tags:
-    - docker
+    TOXENV: py
 
 # run examples (only for tags)
-.job_template: &examples
+examples:linux:
   stage: examples
-  script:
-    - tox -vv
+  extends: .python_tox_matrix
+  variables:
+    TOXENV: examples
   only:
     - tags
-  tags:
-    - docker
-
-examples35:linux:
-  <<: *examples
-  image: python:3.5-jessie
-  variables:
-    TOXENV: examples35
-
-examples37:linux:
-  <<: *examples
-  image: python:3.7-stretch
-  variables:
-    TOXENV: examples37
-
-examples38:linux:
-  <<: *examples
-  image: python:3.8-buster
-  variables:
-    TOXENV: examples38
 
 # coverage
 coverage:
