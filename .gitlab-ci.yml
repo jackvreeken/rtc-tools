@@ -1,3 +1,4 @@
+# Run by default on lowest supported Python version
 image: python:3.8
 
 include:
@@ -42,7 +43,7 @@ build:
     - tox -vv
   parallel:
     matrix:
-      - VERSION: ["3.5", "3.7", "3.8"]
+      - VERSION: ["3.8", "3.9", "3.10", "3.11"]
   tags:
     - docker
 
