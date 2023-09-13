@@ -98,7 +98,7 @@ def run_optimization_problem(optimization_problem_class,
         'HomotopyMixin',
         'MinAbsGoalProgrammingMixin', 'LinearizedOrderGoalProgrammingMixin',
         'SinglePassGoalProgrammingMixin', 'GoalProgrammingMixin',
-        'PIMixin', 'CSVMixin', 'ModelicaMixin',
+        'PIMixin', 'CSVMixin', 'ModelicaMixin', 'PlanningMixin',
         'ControlTreeMixin', 'CollocatedIntegratedOptimizationProblem', 'OptimizationProblem'])
     base_names = OrderedSet([b.__name__ for b in optimization_problem_class.__bases__])
     if suggested_order & base_names != base_names & suggested_order:

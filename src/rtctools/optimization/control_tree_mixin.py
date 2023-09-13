@@ -48,7 +48,28 @@ class ControlTreeMixin(OptimizationProblem):
 
         return options
 
+    def discretize_control(self, variable, ensemble_member, times, offset):
+        control_indices = np.zeros(len(times), dtype=np.int16)
+        for branch, members in self.__branches.items():
+            if ensemble_member not in members:
+                continue
+
+            branching_time_0 = self.__branching_times[len(branch) + 0]
+            branching_time_1 = self.__branching_times[len(branch) + 1]
+            els = np.logical_and(
+                times >= branching_time_0, times < branching_time_1)
+            nnz = np.count_nonzero(els)
+            try:
+                control_indices[els] = self.__discretize_controls_cache[(variable, branch)]
+            except KeyError:
+                control_indices[els] = list(range(offset, offset + nnz))
+                self.__discretize_controls_cache[(variable, branch)] = control_indices[els]
+                offset += nnz
+        return control_indices
+
     def discretize_controls(self, resolved_bounds):
+        self.__discretize_controls_cache = {}
+
         # Collect options
         options = self.control_tree_options()
 
@@ -56,14 +77,14 @@ class ControlTreeMixin(OptimizationProblem):
         # presence of these is assumed below.
         times = self.times()
         t0 = self.initial_time
-        branching_times = options['branching_times']
-        n_branching_times = len(branching_times)
+        self.__branching_times = options['branching_times']
+        n_branching_times = len(self.__branching_times)
         if n_branching_times > len(times) - 1:
             raise Exception("Too many branching points specified")
-        branching_times = np.concatenate(([t0], branching_times, [np.inf]))
+        self.__branching_times = np.concatenate(([t0], self.__branching_times, [np.inf]))
 
         logger.debug("ControlTreeMixin: Branching times:")
-        logger.debug(branching_times)
+        logger.debug(self.__branching_times)
 
         # Branches start at branching times, so that the tree looks like the following:
         #
@@ -88,8 +109,8 @@ class ControlTreeMixin(OptimizationProblem):
             distances = np.zeros((n_branch_members, n_branch_members))
 
             # Decide branching on a segment of the time horizon
-            branching_time_0 = branching_times[len(current_branch) + 1]
-            branching_time_1 = branching_times[len(current_branch) + 2]
+            branching_time_0 = self.__branching_times[len(current_branch) + 1]
+            branching_time_1 = self.__branching_times[len(current_branch) + 2]
 
             # Compute reverse ensemble member index-to-distance index map.
             reverse = {}
@@ -172,36 +193,10 @@ class ControlTreeMixin(OptimizationProblem):
 
         self.__branches = branches
 
-        # Map ensemble members to control inputs
-        # (variable, (ensemble member, step)) -> control_index
-        self.__control_indices = [{} for ensemble_member in range(self.ensemble_size)]
-        count = 0
-        for control_input in self.controls:
-            times = self.times(control_input)
-            for member in range(self.ensemble_size):
-                self.__control_indices[member][control_input] = np.zeros(
-                    len(times), dtype=np.int16)
-            for branch, members in branches.items():
-                if not members:
-                    # Avoid making free variables by skipping branches which have no members
-                    continue
-
-                branching_time_0 = branching_times[len(branch) + 0]
-                branching_time_1 = branching_times[len(branch) + 1]
-                els = np.logical_and(
-                    times >= branching_time_0, times < branching_time_1)
-                nnz = np.count_nonzero(els)
-                for member in members:
-                    self.__control_indices[member][control_input][els] = \
-                        list(range(count, count + nnz))
-                count += nnz
-
-        discrete = self._collint_get_discrete(count, self.__control_indices)
-        lbx, ubx = self._collint_get_lbx_ubx(count, self.__control_indices)
-        x0 = self._collint_get_x0(count, self.__control_indices)
-
-        # Return number of control variables
-        return count, discrete, lbx, ubx, x0, self.__control_indices
+        # By now, the tree branches have been set up.  We now rely
+        # on the default discretization logic to call discretize_control()
+        # for each (control variable, ensemble member) pair.
+        return super().discretize_controls(resolved_bounds)
 
     @property
     def control_tree_branches(self) -> Dict[Tuple[int], List[int]]:

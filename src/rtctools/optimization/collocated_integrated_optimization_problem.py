@@ -1792,27 +1792,31 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
 
         return discrete
 
-    def discretize_controls(self, bounds):
+    def discretize_control(self, variable, ensemble_member, times, offset):
         # Default implementation: One single set of control inputs for all
         # ensembles
-        count = 0
-        for variable in self.controls:
-            times = self.times(variable)
-            n_times = len(times)
+        try:
+            return self.__discretize_control_cache[variable]
+        except KeyError:
+            control_indices = slice(offset, offset + len(times))
+            self.__discretize_control_cache[variable] = control_indices
+            return control_indices
 
-            count += n_times
+    def discretize_controls(self, bounds):
+        self.__discretize_control_cache = {}
 
         indices = [{} for ensemble_member in range(self.ensemble_size)]
 
-        offset = 0
+        count = 0
         for variable in self.controls:
             times = self.times(variable)
-            n_times = len(times)
 
             for ensemble_member in range(self.ensemble_size):
-                indices[ensemble_member][variable] = slice(offset, offset + n_times)
-
-            offset += n_times
+                control_indices = self.discretize_control(variable, ensemble_member, times, count)
+                indices[ensemble_member][variable] = control_indices
+                control_indices_stop = control_indices.stop if isinstance(control_indices, slice) \
+                    else (int(np.max(control_indices)) + 1)  # indices need not be ordered
+                count = max(count, control_indices_stop)
 
         discrete = self._collint_get_discrete(count, indices)
         lbx, ubx = self._collint_get_lbx_ubx(count, indices)
