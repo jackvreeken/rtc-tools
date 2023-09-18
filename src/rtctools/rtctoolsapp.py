@@ -6,13 +6,12 @@ from pathlib import Path
 
 import rtctools
 
-logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s')
+logging.basicConfig(format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger("rtctools")
 logger.setLevel(logging.INFO)
 
 
 def copy_libraries(*args):
-
     if not args:
         args = sys.argv[1:]
 
@@ -38,25 +37,30 @@ def copy_libraries(*args):
             else:
                 if not os.path.exists(d):
                     shutil.copy2(s, d)
-                elif Path(s).name.lower() == 'package.mo':
+                elif Path(s).name.lower() == "package.mo":
                     # Pick the largest one, assuming that all plugin packages
                     # to not provide a meaningful package.mo
                     if os.stat(s).st_size > os.stat(d).st_size:
-                        logger.warning("Overwriting '{}' with '{}' as the latter is larger.".format(d, s))
+                        logger.warning(
+                            "Overwriting '{}' with '{}' as the latter is larger.".format(d, s)
+                        )
                         os.remove(d)
                         shutil.copy2(s, d)
                     else:
-                        logger.warning("Not copying '{}' to '{}' as the latter is larger.".format(s, d))
+                        logger.warning(
+                            "Not copying '{}' to '{}' as the latter is larger.".format(s, d)
+                        )
                 else:
                     raise OSError("Could not combine two folders")
 
     dst = Path(path)
 
     library_folders = []
-    for ep in pkg_resources.iter_entry_points(group='rtctools.libraries.modelica'):
+    for ep in pkg_resources.iter_entry_points(group="rtctools.libraries.modelica"):
         if ep.name == "library_folder":
             library_folders.append(
-                Path(pkg_resources.resource_filename(ep.module_name, ep.attrs[0])))
+                Path(pkg_resources.resource_filename(ep.module_name, ep.attrs[0]))
+            )
 
     tlds = {}
     for lf in library_folders:
@@ -78,7 +82,6 @@ def copy_libraries(*args):
 
 
 def download_examples(*args):
-
     if not args:
         args = sys.argv[1:]
 
@@ -97,24 +100,25 @@ def download_examples(*args):
     from zipfile import ZipFile
 
     # GitLab is blocking requests unless we specify a user agent
-    user_agent = 'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:47.0) Gecko/20100101 Firefox/47.0'
+    user_agent = "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:47.0) Gecko/20100101 Firefox/47.0"
 
     version = rtctools.__version__
-    rtc_full_name = 'rtc-tools-{}'.format(version)
+    rtc_full_name = "rtc-tools-{}".format(version)
     try:
-        url = 'https://gitlab.com/deltares/rtc-tools/-/archive/' \
-            '{}/{}.zip'.format(version, rtc_full_name)
+        url = "https://gitlab.com/deltares/rtc-tools/-/archive/" "{}/{}.zip".format(
+            version, rtc_full_name
+        )
 
         opener = urllib.request.build_opener()
-        opener.addheaders = [('User-agent', user_agent)]
+        opener.addheaders = [("User-agent", user_agent)]
         urllib.request.install_opener(opener)
         local_filename, _ = urllib.request.urlretrieve(url)
     except HTTPError:
         sys.exit("Could not found examples for RTC-Tools version {}.".format(version))
 
-    with ZipFile(local_filename, 'r') as z:
-        target = path / 'rtc-tools-examples'
-        prefix = '{}/examples/'.format(rtc_full_name)
+    with ZipFile(local_filename, "r") as z:
+        target = path / "rtc-tools-examples"
+        prefix = "{}/examples/".format(rtc_full_name)
         members = [x for x in z.namelist() if x.startswith(prefix)]
         z.extractall(members=members)
         shutil.move(prefix, target)

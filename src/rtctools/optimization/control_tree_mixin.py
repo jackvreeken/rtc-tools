@@ -41,10 +41,11 @@ class ControlTreeMixin(OptimizationProblem):
 
         options = {}
 
-        options['forecast_variables'] = [var.name()
-                                         for var in self.dae_variables['constant_inputs']]
-        options['branching_times'] = self.times()[1:]
-        options['k'] = 2
+        options["forecast_variables"] = [
+            var.name() for var in self.dae_variables["constant_inputs"]
+        ]
+        options["branching_times"] = self.times()[1:]
+        options["k"] = 2
 
         return options
 
@@ -56,8 +57,7 @@ class ControlTreeMixin(OptimizationProblem):
 
             branching_time_0 = self.__branching_times[len(branch) + 0]
             branching_time_1 = self.__branching_times[len(branch) + 1]
-            els = np.logical_and(
-                times >= branching_time_0, times < branching_time_1)
+            els = np.logical_and(times >= branching_time_0, times < branching_time_1)
             nnz = np.count_nonzero(els)
             try:
                 control_indices[els] = self.__discretize_controls_cache[(variable, branch)]
@@ -77,7 +77,7 @@ class ControlTreeMixin(OptimizationProblem):
         # presence of these is assumed below.
         times = self.times()
         t0 = self.initial_time
-        self.__branching_times = options['branching_times']
+        self.__branching_times = options["branching_times"]
         n_branching_times = len(self.__branching_times)
         if n_branching_times > len(times) - 1:
             raise Exception("Too many branching points specified")
@@ -119,23 +119,24 @@ class ControlTreeMixin(OptimizationProblem):
 
             # Compute distances between ensemble members, summed for all
             # forecast variables
-            for forecast_variable in options['forecast_variables']:
+            for forecast_variable in options["forecast_variables"]:
                 # We assume the time stamps of the forecasts in all ensemble
                 # members to be identical
-                timeseries = self.constant_inputs(ensemble_member=0)[
-                    forecast_variable]
+                timeseries = self.constant_inputs(ensemble_member=0)[forecast_variable]
                 els = np.logical_and(
-                    timeseries.times >= branching_time_0, timeseries.times < branching_time_1)
+                    timeseries.times >= branching_time_0, timeseries.times < branching_time_1
+                )
 
                 # Compute distance between ensemble members
                 for i, member_i in enumerate(branches[current_branch]):
-                    timeseries_i = self.constant_inputs(ensemble_member=member_i)[
-                        forecast_variable]
+                    timeseries_i = self.constant_inputs(ensemble_member=member_i)[forecast_variable]
                     for j, member_j in enumerate(branches[current_branch]):
                         timeseries_j = self.constant_inputs(ensemble_member=member_j)[
-                            forecast_variable]
-                        distances[
-                            i, j] += np.linalg.norm(timeseries_i.values[els] - timeseries_j.values[els])
+                            forecast_variable
+                        ]
+                        distances[i, j] += np.linalg.norm(
+                            timeseries_i.values[els] - timeseries_j.values[els]
+                        )
 
             # Keep track of ensemble members that have not yet been allocated
             # to a new branch
@@ -144,45 +145,51 @@ class ControlTreeMixin(OptimizationProblem):
             # We first select the scenario with the max distance to any other branch
             idx = np.argmax(np.amax(distances, axis=0))
 
-            for i in range(options['k']):
+            for i in range(options["k"]):
                 if idx >= 0:
-                    branches[current_branch +
-                             (i, )] = [branches[current_branch][idx]]
+                    branches[current_branch + (i,)] = [branches[current_branch][idx]]
 
                     available.remove(branches[current_branch][idx])
 
                     # We select the scenario with the max min distance to the other branches
-                    min_distances = np.array([
-                        min([np.inf] + [distances[j, k]
-                            for j, member_j in enumerate(branches[current_branch])
-                            if member_j not in available and member_k in available])
-                        for k, member_k in enumerate(branches[current_branch])
-                    ], dtype=np.float64)
+                    min_distances = np.array(
+                        [
+                            min(
+                                [np.inf]
+                                + [
+                                    distances[j, k]
+                                    for j, member_j in enumerate(branches[current_branch])
+                                    if member_j not in available and member_k in available
+                                ]
+                            )
+                            for k, member_k in enumerate(branches[current_branch])
+                        ],
+                        dtype=np.float64,
+                    )
                     min_distances[np.where(min_distances == np.inf)] = -np.inf
 
                     idx = np.argmax(min_distances)
                     if min_distances[idx] <= 0:
                         idx = -1
                 else:
-                    branches[current_branch + (i, )] = []
+                    branches[current_branch + (i,)] = []
 
             # Cluster remaining ensemble members to branches
             for member_i in available:
                 min_i = 0
                 min_distance = np.inf
-                for i in range(options['k']):
-                    branch2 = branches[current_branch + (i, )]
+                for i in range(options["k"]):
+                    branch2 = branches[current_branch + (i,)]
                     if len(branch2) > 0:
-                        distance = distances[
-                            reverse[member_i], reverse[branch2[0]]]
+                        distance = distances[reverse[member_i], reverse[branch2[0]]]
                         if distance < min_distance:
                             min_distance = distance
                             min_i = i
-                branches[current_branch + (min_i, )].append(member_i)
+                branches[current_branch + (min_i,)].append(member_i)
 
             # Recurse
-            for i in range(options['k']):
-                branch(current_branch + (i, ))
+            for i in range(options["k"]):
+                branch(current_branch + (i,))
 
         current_branch = ()
         branches[current_branch] = list(range(self.ensemble_size))

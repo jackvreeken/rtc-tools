@@ -13,7 +13,7 @@ class Example(CSVMixin, SimulationProblem):
     """
 
     def initialize(self):
-        self.set_var('P_control', 0.0)
+        self.set_var("P_control", 0.0)
         super().initialize()
 
     # Min and Max flow rate that the storage is capable of releasing
@@ -22,14 +22,13 @@ class Example(CSVMixin, SimulationProblem):
     # Here is an example of overriding the update() method to show how control
     # can be build into the python script
     def update(self, dt):
-
         # Get the time step
         if dt < 0:
             dt = self.get_time_step()
 
         # Get relevant model variables
-        volume = self.get_var('storage.V')
-        target = self.get_var('storage_V_target')
+        volume = self.get_var("storage.V")
+        target = self.get_var("storage_V_target")
 
         # Calucate error in storage.V
         error = target - volume
@@ -41,7 +40,7 @@ class Example(CSVMixin, SimulationProblem):
         bounded_control = min(max(control, self.min_release), self.max_release)
 
         # Set the control variable as the control for the next step of the simulation
-        self.set_var('P_control', bounded_control)
+        self.set_var("P_control", bounded_control)
 
         # Call the super class so that everything else continues as normal
         super().update(dt)

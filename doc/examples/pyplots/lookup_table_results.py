@@ -21,20 +21,16 @@ axarr[0].set_title("Water Volume and Discharge")
 axarr[0].set_ylabel("Water Volume [m³]")
 axarr[0].ticklabel_format(style="sci", axis="y", scilimits=(0, 0))
 axarr[0].plot(times, results["storage_v"], label="Storage", linewidth=2, color="b")
-axarr[0].plot(
-    times, results["v_max"], label="Storage Max", linewidth=2, color="r", linestyle="--"
-)
-axarr[0].plot(
-    times, results["v_min"], label="Storage Min", linewidth=2, color="g", linestyle="--"
-)
+axarr[0].plot(times, results["v_max"], label="Storage Max", linewidth=2, color="r", linestyle="--")
+axarr[0].plot(times, results["v_min"], label="Storage Min", linewidth=2, color="g", linestyle="--")
 
 # Lower Subplot
 axarr[1].set_ylabel("Flow Rate [m³/s]")
 axarr[1].scatter(times, results["q_in"], linewidth=1, color="g")
 axarr[1].scatter(times, results["q_release"], linewidth=1, color="r")
 # add horizontal lines to the left of these dots, to indicate that the value is attained over an entire timestep:
-axarr[1].step(times, results["q_in"], linewidth=2, where='pre', label="Inflow", color="g")
-axarr[1].step(times, results["q_release"], linewidth=1, where='pre', label="Release", color="r")
+axarr[1].step(times, results["q_in"], linewidth=2, where="pre", label="Inflow", color="g")
+axarr[1].step(times, results["q_release"], linewidth=1, where="pre", label="Release", color="r")
 
 # Format bottom axis label
 axarr[-1].xaxis.set_major_formatter(mdates.DateFormatter("%m/%d"))

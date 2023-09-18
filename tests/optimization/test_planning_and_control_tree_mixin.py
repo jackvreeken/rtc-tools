@@ -3,7 +3,7 @@ import logging
 import numpy as np
 
 from rtctools.optimization.collocated_integrated_optimization_problem import (
-    CollocatedIntegratedOptimizationProblem
+    CollocatedIntegratedOptimizationProblem,
 )
 from rtctools.optimization.control_tree_mixin import ControlTreeMixin
 from rtctools.optimization.modelica_mixin import ModelicaMixin
@@ -46,17 +46,11 @@ class Model(
     def constant_inputs(self, ensemble_member):
         # Constant inputs
         if ensemble_member == 0:
-            return {
-                "constant_input": Timeseries(self.times(), np.linspace(1.0, 0.0, 21))
-            }
+            return {"constant_input": Timeseries(self.times(), np.linspace(1.0, 0.0, 21))}
         elif ensemble_member == 1:
-            return {
-                "constant_input": Timeseries(self.times(), np.linspace(0.99, 0.5, 21))
-            }
+            return {"constant_input": Timeseries(self.times(), np.linspace(0.99, 0.5, 21))}
         else:
-            return {
-                "constant_input": Timeseries(self.times(), np.linspace(0.98, 1.0, 21))
-            }
+            return {"constant_input": Timeseries(self.times(), np.linspace(0.98, 1.0, 21))}
 
     def control_tree_options(self):
         return {
@@ -76,7 +70,7 @@ class Model(
     def objective(self, ensemble_member):
         # Quadratic penalty on state 'x' at final time
         xf = self.state_at("x", self.times("x")[-1], ensemble_member=ensemble_member)
-        return xf ** 2
+        return xf**2
 
     def constraints(self, ensemble_member):
         # No additional constraints
@@ -89,18 +83,18 @@ class Model(
     def compiler_options(self):
         compiler_options = super().compiler_options()
         compiler_options["cache"] = False
-        compiler_options['library_folders'] = []
+        compiler_options["library_folders"] = []
         return compiler_options
 
 
 class TestPlanningAndControlTreeMixin(TestCase):
-
     def setUp(self):
         self.problem = Model()
         self.problem.optimize()
         self.results = [
             self.problem.extract_results(ensemble_member)
-            for ensemble_member in range(self.problem.ensemble_size)]
+            for ensemble_member in range(self.problem.ensemble_size)
+        ]
 
     def test_planning_variables(self):
         self.assertTrue(self.results[0]["u"][0] == self.results[1]["u"][0])

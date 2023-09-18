@@ -1,7 +1,7 @@
 import itertools
 
 from rtctools.optimization.collocated_integrated_optimization_problem import (
-    CollocatedIntegratedOptimizationProblem
+    CollocatedIntegratedOptimizationProblem,
 )
 from rtctools.optimization.csv_mixin import CSVMixin
 from rtctools.optimization.goal_programming_mixin import GoalProgrammingMixin, StateGoal
@@ -67,7 +67,7 @@ class Example(
     def parameters(self, ensemble_member):
         p = super().parameters(ensemble_member)
         times = self.times()
-        p['step_size'] = times[1] - times[0]
+        p["step_size"] = times[1] - times[0]
         return p
 
     def path_goals(self):

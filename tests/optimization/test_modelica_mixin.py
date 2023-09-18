@@ -8,7 +8,7 @@ import numpy as np
 
 from rtctools._internal.alias_tools import AliasDict
 from rtctools.optimization.collocated_integrated_optimization_problem import (
-    CollocatedIntegratedOptimizationProblem
+    CollocatedIntegratedOptimizationProblem,
 )
 from rtctools.optimization.modelica_mixin import ModelicaMixin
 from rtctools.optimization.timeseries import Timeseries
@@ -22,10 +22,9 @@ logger.setLevel(logging.DEBUG)
 
 
 class Model(ModelicaMixin, CollocatedIntegratedOptimizationProblem):
-
     def __init__(self):
         print(data_path())
-        self._extra_variable = MX.sym('extra')
+        self._extra_variable = MX.sym("extra")
         super().__init__(
             input_folder=data_path(),
             output_folder=data_path(),
@@ -60,7 +59,7 @@ class Model(ModelicaMixin, CollocatedIntegratedOptimizationProblem):
     def objective(self, ensemble_member):
         # Quadratic penalty on state 'x' at final time
         xf = self.state_at("x", self.times("x")[-1], ensemble_member=ensemble_member)
-        return xf ** 2
+        return xf**2
 
     def constraints(self, ensemble_member):
         # No additional constraints
@@ -78,9 +77,7 @@ class Model(ModelicaMixin, CollocatedIntegratedOptimizationProblem):
 
     def path_constraints(self, ensemble_member):
         c = super().path_constraints(ensemble_member)[:]
-        c.append(
-            (self.state('x') - self._extra_variable, -np.inf, 0.0)
-        )
+        c.append((self.state("x") - self._extra_variable, -np.inf, 0.0))
         return c
 
     def post(self):
@@ -90,12 +87,11 @@ class Model(ModelicaMixin, CollocatedIntegratedOptimizationProblem):
     def compiler_options(self):
         compiler_options = super().compiler_options()
         compiler_options["cache"] = False
-        compiler_options['library_folders'] = []
+        compiler_options["library_folders"] = []
         return compiler_options
 
 
 class ModelNonConvex(Model):
-
     def __init__(self, u_seed):
         super().__init__()
 
@@ -104,7 +100,7 @@ class ModelNonConvex(Model):
     def objective(self, ensemble_member):
         # Make two local optima, at xf=1.0 and at xf=-1.0.
         xf = self.state_at("x", self.times()[-1], ensemble_member=ensemble_member)
-        return (xf ** 2 - 1.0) ** 2
+        return (xf**2 - 1.0) ** 2
 
     @property
     def initial_residual(self):
@@ -119,7 +115,6 @@ class ModelNonConvex(Model):
 
 
 class ModelScaled(Model):
-
     def variable_nominal(self, variable):
         if variable.startswith("x"):
             return 0.5
@@ -128,11 +123,10 @@ class ModelScaled(Model):
 
 
 class ModelConstrained(Model):
-
     def constraints(self, ensemble_member):
         # Constrain x(t=1.9)^2 >= 0.1.
         x = self.state_at("x", self.times()[-1] - 0.1, ensemble_member=ensemble_member)
-        f = x ** 2
+        f = x**2
         return [(f, 0.1, sys.float_info.max)]
 
 
@@ -145,20 +139,17 @@ class ModelThreaded(Model):
 
 
 class ModelTrapezoidal(Model):
-
     @property
     def theta(self):
         return 0.5
 
 
 class ModelShort(Model):
-
     def times(self, variable=None):
         return np.linspace(0.0, 1.0, 2)
 
 
 class ModelAggregation(Model):
-
     def times(self, variable=None):
         if variable == "u":
             return np.linspace(0.0, 1.0, 11)
@@ -167,7 +158,6 @@ class ModelAggregation(Model):
 
 
 class ModelEnsemble(Model):
-
     @property
     def ensemble_size(self):
         return 2
@@ -175,17 +165,12 @@ class ModelEnsemble(Model):
     def constant_inputs(self, ensemble_member):
         # Constant inputs
         if ensemble_member == 0:
-            return {
-                "constant_input": Timeseries(self.times(), np.linspace(1.0, 0.0, 21))
-            }
+            return {"constant_input": Timeseries(self.times(), np.linspace(1.0, 0.0, 21))}
         else:
-            return {
-                "constant_input": Timeseries(self.times(), np.linspace(1.0, 0.5, 21))
-            }
+            return {"constant_input": Timeseries(self.times(), np.linspace(1.0, 0.5, 21))}
 
 
 class ModelAlgebraic(ModelicaMixin, CollocatedIntegratedOptimizationProblem):
-
     def __init__(self):
         super().__init__(
             input_folder=data_path(),
@@ -224,12 +209,11 @@ class ModelAlgebraic(ModelicaMixin, CollocatedIntegratedOptimizationProblem):
     def compiler_options(self):
         compiler_options = super().compiler_options()
         compiler_options["cache"] = False
-        compiler_options['library_folders'] = []
+        compiler_options["library_folders"] = []
         return compiler_options
 
 
 class ModelMixedInteger(ModelicaMixin, CollocatedIntegratedOptimizationProblem):
-
     def __init__(self):
         super().__init__(
             input_folder=data_path(),
@@ -264,7 +248,7 @@ class ModelMixedInteger(ModelicaMixin, CollocatedIntegratedOptimizationProblem):
     def compiler_options(self):
         compiler_options = super().compiler_options()
         compiler_options["cache"] = False
-        compiler_options['library_folders'] = []
+        compiler_options["library_folders"] = []
         return compiler_options
 
 
@@ -272,19 +256,18 @@ class ModelHistory(Model):
     def history(self, ensemble_member):
         h = super().history(ensemble_member)
         # NOTE: We deliberately add histories of different lengths
-        h['x'] = Timeseries(np.array([-0.2, -0.1, 0.0]), np.array([0.7, 0.9, 1.1]))
-        h['w'] = Timeseries(np.array([-0.1, 0.0]), np.array([0.9, np.nan]))
+        h["x"] = Timeseries(np.array([-0.2, -0.1, 0.0]), np.array([0.7, 0.9, 1.1]))
+        h["w"] = Timeseries(np.array([-0.1, 0.0]), np.array([0.9, np.nan]))
         return h
 
     def variable_nominal(self, variable):
-        if variable in {'x', 'w'}:
+        if variable in {"x", "w"}:
             return 2.0
         else:
             return super().variable_nominal(variable)
 
 
 class ModelSymbolicParameters(ModelicaMixin, CollocatedIntegratedOptimizationProblem):
-
     def __init__(self):
         super().__init__(
             input_folder=data_path(),
@@ -307,17 +290,16 @@ class ModelSymbolicParameters(ModelicaMixin, CollocatedIntegratedOptimizationPro
     def objective(self, ensemble_member):
         # Quadratic penalty on state 'x' at final time
         xf = self.state_at("x", self.times("x")[-1], ensemble_member=ensemble_member)
-        return xf ** 2
+        return xf**2
 
     def compiler_options(self):
         compiler_options = super().compiler_options()
         compiler_options["cache"] = False
-        compiler_options['library_folders'] = []
+        compiler_options["library_folders"] = []
         return compiler_options
 
 
 class TestModelicaMixin(TestCase, unittest.TestCase):
-
     def setUp(self):
         self.problem = Model()
         self.problem.optimize()
@@ -326,9 +308,7 @@ class TestModelicaMixin(TestCase, unittest.TestCase):
 
     def test_objective_value(self):
         objective_value_tol = 1e-6
-        self.assertAlmostLessThan(
-            abs(self.problem.objective_value), 0.0, objective_value_tol
-        )
+        self.assertAlmostLessThan(abs(self.problem.objective_value), 0.0, objective_value_tol)
 
     def test_ifelse(self):
         print(self.results["switched"])
@@ -371,7 +351,7 @@ class TestModelicaMixin(TestCase, unittest.TestCase):
         self.assertAlmostLessThan(
             np.max(self.results["x"]),
             self.results[self.problem._extra_variable.name()],
-            self.tolerance
+            self.tolerance,
         )
 
     @unittest.skip
@@ -398,15 +378,11 @@ class TestModelicaMixin(TestCase, unittest.TestCase):
 
     def test_der(self):
         der = self.problem.der_at("x", 0.05)
-        verify = (
-            self.problem.state_at("x", 0.05) - self.problem.state_at("x", 0.0)
-        ) / 0.05
+        verify = (self.problem.state_at("x", 0.05) - self.problem.state_at("x", 0.0)) / 0.05
         self.assertEqual(repr(der), repr(verify))
 
         der = self.problem.der_at("x", 0.051)
-        verify = (
-            self.problem.state_at("x", 0.1) - self.problem.state_at("x", 0.05)
-        ) / 0.05
+        verify = (self.problem.state_at("x", 0.1) - self.problem.state_at("x", 0.05)) / 0.05
         self.assertEqual(repr(der), repr(verify))
 
     @unittest.skip("This test fails, because we use CasADi sumRows() now.")
@@ -417,10 +393,7 @@ class TestModelicaMixin(TestCase, unittest.TestCase):
         for i in range(len(knots) - 1):
             verify += (
                 0.5
-                * (
-                    self.problem.state_at("x", knots[i])
-                    + self.problem.state_at("x", knots[i + 1])
-                )
+                * (self.problem.state_at("x", knots[i]) + self.problem.state_at("x", knots[i + 1]))
                 * (knots[i + 1] - knots[i])
             )
         self.assertEqual(repr(integral), repr(verify))
@@ -434,10 +407,7 @@ class TestModelicaMixin(TestCase, unittest.TestCase):
         for i in range(len(knots) - 1):
             verify += (
                 0.5
-                * (
-                    self.problem.state_at("x", knots[i])
-                    + self.problem.state_at("x", knots[i + 1])
-                )
+                * (self.problem.state_at("x", knots[i]) + self.problem.state_at("x", knots[i + 1]))
                 * (knots[i + 1] - knots[i])
             )
         self.assertEqual(repr(integral), repr(verify))
@@ -448,17 +418,13 @@ class TestModelicaMixin(TestCase, unittest.TestCase):
         for i in range(len(knots) - 1):
             verify += (
                 0.5
-                * (
-                    self.problem.state_at("x", knots[i])
-                    + self.problem.state_at("x", knots[i + 1])
-                )
+                * (self.problem.state_at("x", knots[i]) + self.problem.state_at("x", knots[i + 1]))
                 * (knots[i + 1] - knots[i])
             )
         self.assertEqual(repr(integral), repr(verify))
 
 
 class TestModelicaMixinScaled(TestModelicaMixin):
-
     def setUp(self):
         self.problem = ModelScaled()
         self.problem.optimize()
@@ -467,7 +433,6 @@ class TestModelicaMixinScaled(TestModelicaMixin):
 
 
 class TestModelicaMixinNonConvex(TestCase):
-
     def setUp(self):
         self.tolerance = 1e-6
 
@@ -485,7 +450,6 @@ class TestModelicaMixinNonConvex(TestCase):
 
 
 class TestModelicaMixinConstrained(TestCase):
-
     def setUp(self):
         self.problem = ModelConstrained()
         self.problem.optimize()
@@ -499,7 +463,6 @@ class TestModelicaMixinConstrained(TestCase):
 
 
 class TestModelicaMixinThreaded(TestCase):
-
     def setUp(self):
         self.problem = ModelThreaded()
         self.problem.optimize()
@@ -508,13 +471,10 @@ class TestModelicaMixinThreaded(TestCase):
 
     def test_objective_value(self):
         objective_value_tol = 1e-6
-        self.assertAlmostLessThan(
-            abs(self.problem.objective_value), 0.0, objective_value_tol
-        )
+        self.assertAlmostLessThan(abs(self.problem.objective_value), 0.0, objective_value_tol)
 
 
 class TestModelicaMixinTrapezoidal(TestCase):
-
     def setUp(self):
         self.problem = ModelTrapezoidal()
         self.problem.optimize()
@@ -523,13 +483,10 @@ class TestModelicaMixinTrapezoidal(TestCase):
 
     def test_objective_value(self):
         objective_value_tol = 1e-6
-        self.assertAlmostLessThan(
-            abs(self.problem.objective_value), 0.0, objective_value_tol
-        )
+        self.assertAlmostLessThan(abs(self.problem.objective_value), 0.0, objective_value_tol)
 
 
 class TestModelicaMixinShort(TestCase):
-
     def setUp(self):
         self.problem = ModelShort()
         self.problem.optimize()
@@ -538,13 +495,10 @@ class TestModelicaMixinShort(TestCase):
 
     def test_objective_value(self):
         objective_value_tol = 1e-6
-        self.assertAlmostLessThan(
-            abs(self.problem.objective_value), 0.0, objective_value_tol
-        )
+        self.assertAlmostLessThan(abs(self.problem.objective_value), 0.0, objective_value_tol)
 
 
 class TestModelicaMixinAggregation(TestCase):
-
     def setUp(self):
         self.problem = ModelAggregation()
         self.problem.optimize()
@@ -553,9 +507,7 @@ class TestModelicaMixinAggregation(TestCase):
 
     def test_objective_value(self):
         objective_value_tol = 1e-6
-        self.assertAlmostLessThan(
-            abs(self.problem.objective_value), 0.0, objective_value_tol
-        )
+        self.assertAlmostLessThan(abs(self.problem.objective_value), 0.0, objective_value_tol)
 
     def test_result_length(self):
         self.assertEqual(len(self.results["u"]), 11)
@@ -563,7 +515,6 @@ class TestModelicaMixinAggregation(TestCase):
 
 
 class TestModelicaMixinEnsemble(TestCase):
-
     def setUp(self):
         self.problem = ModelEnsemble()
         self.problem.optimize()
@@ -572,13 +523,10 @@ class TestModelicaMixinEnsemble(TestCase):
 
     def test_objective_value(self):
         objective_value_tol = 1e-6
-        self.assertAlmostLessThan(
-            abs(self.problem.objective_value), 0.0, objective_value_tol
-        )
+        self.assertAlmostLessThan(abs(self.problem.objective_value), 0.0, objective_value_tol)
 
 
 class TestModelicaMixinAlgebraic(TestCase):
-
     def setUp(self):
         self.problem = ModelAlgebraic()
         self.problem.optimize()
@@ -594,7 +542,6 @@ class TestModelicaMixinAlgebraic(TestCase):
 
 
 class TestModelicaMixinMixedInteger(TestCase):
-
     def setUp(self):
         self.problem = ModelMixedInteger()
         self.problem.optimize()
@@ -602,15 +549,11 @@ class TestModelicaMixinMixedInteger(TestCase):
         self.tolerance = 1e-6
 
     def test_booleans(self):
-        self.assertAlmostEqual(
-            self.results["choice"], np.zeros(21, dtype=bool), self.tolerance
-        )
+        self.assertAlmostEqual(self.results["choice"], np.zeros(21, dtype=bool), self.tolerance)
         self.assertAlmostEqual(
             self.results["other_choice"], np.ones(21, dtype=bool), self.tolerance
         )
-        self.assertAlmostEqual(
-            self.results["y"], -1 * np.ones(21, dtype=bool), self.tolerance
-        )
+        self.assertAlmostEqual(self.results["y"], -1 * np.ones(21, dtype=bool), self.tolerance)
 
 
 class TestModelicaMixinHistory(TestCase, unittest.TestCase):
@@ -621,14 +564,12 @@ class TestModelicaMixinHistory(TestCase, unittest.TestCase):
         self.tolerance = 1e-6
 
     def test_initial_der_x(self):
-        self.assertNotEqual(self.problem.variable_nominal('x'), 1.0)
-        self.assertNotEqual(self.problem.variable_nominal('w'), 1.0)
+        self.assertNotEqual(self.problem.variable_nominal("x"), 1.0)
+        self.assertNotEqual(self.problem.variable_nominal("w"), 1.0)
 
+        self.assertAlmostEqual(self.results["initial_der(x)"], 2.0, self.tolerance)
         self.assertAlmostEqual(
-            self.results['initial_der(x)'], 2.0, self.tolerance
-        )
-        self.assertAlmostEqual(
-            self.results['initial_der(w)'], (self.results['w'][0] - 0.9) / 0.1, self.tolerance
+            self.results["initial_der(w)"], (self.results["w"][0] - 0.9) / 0.1, self.tolerance
         )
 
     def test_delayed_feedback(self):
@@ -636,44 +577,41 @@ class TestModelicaMixinHistory(TestCase, unittest.TestCase):
             self.results["x_delayed"],
             [0.9, 1.0, *self.results["x"][:-2]],
             rtol=self.tolerance,
-            atol=self.tolerance
+            atol=self.tolerance,
         )
         np.testing.assert_allclose(
             self.results["x_delayed_extra"],
             [0.85, 0.95, 1.05, *((self.results["x"][1:-2] + self.results["x"][:-3]) / 2)],
             rtol=self.tolerance,
-            atol=self.tolerance
+            atol=self.tolerance,
         )
 
 
 class TestModelicaMixinSymbolicParameters(TestCase, unittest.TestCase):
-
     def setUp(self):
         self.problem = ModelSymbolicParameters()
         self.tolerance = 1e-6
 
     def test_symbolic_seed(self):
-        self.assertTrue(np.all(self.problem.seed(0)['w'].values == 0.2))
+        self.assertTrue(np.all(self.problem.seed(0)["w"].values == 0.2))
 
     def test_symbolic_initial_state(self):
         history = self.problem.history(0)
-        self.assertEqual(history['x'].values[-1], 1.1)
+        self.assertEqual(history["x"].values[-1], 1.1)
         self.problem.optimize()
-        self.assertAlmostEqual(self.problem.extract_results()['x'][0], 1.1, self.tolerance)
+        self.assertAlmostEqual(self.problem.extract_results()["x"][0], 1.1, self.tolerance)
 
 
 class ModelAliasBounds(Model):
-
     def bounds(self):
         bounds = super().bounds()
-        bounds['negative_alias'] = (-2.0, 1.0)
+        bounds["negative_alias"] = (-2.0, 1.0)
         return bounds
 
 
 class TestAliasBounds(TestCase):
-
     def test_alias_bounds(self):
         problem = ModelAliasBounds()
         bounds = problem.bounds()
-        self.assertEqual(bounds['x'], (-1.0, 2.0))
-        self.assertEqual(bounds['negative_alias'], (-2.0, 1.0))
+        self.assertEqual(bounds["x"], (-1.0, 2.0))
+        self.assertEqual(bounds["negative_alias"], (-2.0, 1.0))

@@ -24,25 +24,24 @@ class Model(CSVMixin):
             input_folder=data_path(),
             output_folder=data_path(),
             model_name="Model",
-            model_folder=data_path()
+            model_folder=data_path(),
         )
         self.output = None
 
     def compiler_options(self):
         compiler_options = super().compiler_options()
         compiler_options["cache"] = False
-        compiler_options['library_folders'] = []
+        compiler_options["library_folders"] = []
         return compiler_options
 
     def read(self):
         super().read()
 
         # set some additional parameters
-        self.io.set_parameter('x_start', 1.02)
+        self.io.set_parameter("x_start", 1.02)
 
     def read_output(self):
-        """Read the output stored in timeseries_export.csv
-        """
+        """Read the output stored in timeseries_export.csv"""
         self.output = csv.load(
             os.path.join(data_path(), "timeseries_export.csv"),
             delimiter=",",
@@ -50,8 +49,7 @@ class Model(CSVMixin):
         )
 
     def get_reference_solution_first_timestep(self):
-        """Get a reference solution for the first time step
-        """
+        """Get a reference solution for the first time step"""
         time_index = 1
         time = self.times()[time_index]
         dt = self.get_time_step()
@@ -61,8 +59,8 @@ class Model(CSVMixin):
         # Time step uses the implicit Euler scheme.
         x = (x_start + dt * u) / (1 - dt * k)
         y = 3 - x
-        z = x ** 2 + math.sin(time)
-        return {'y': y, 'z': z}
+        z = x**2 + math.sin(time)
+        return {"y": y, "z": z}
 
 
 class TestCSVMixin(TestCase):
@@ -94,8 +92,7 @@ class TestCSVMixin(TestCase):
         self.assertAlmostEqual(initial_state["constant_input"], 1.0, self.tolerance)
 
     def test_write(self):
-        """Test writing output to the file timeseries_export.xml.
-        """
+        """Test writing output to the file timeseries_export.xml."""
         self.problem.initialize()
         self.problem.update(-1)
         self.problem.write()
@@ -103,5 +100,5 @@ class TestCSVMixin(TestCase):
         time_index = 1
         output = self.problem.output[time_index]
         ref = self.problem.get_reference_solution_first_timestep()
-        self.assertAlmostEqual(output['y'], ref['y'], tol=TOL)
-        self.assertAlmostEqual(output['z'], ref['z'], tol=TOL)
+        self.assertAlmostEqual(output["y"], ref["y"], tol=TOL)
+        self.assertAlmostEqual(output["z"], ref["z"], tol=TOL)
