@@ -220,7 +220,8 @@ class OptimizationProblem(DataStoreAccessor, metaclass=ABCMeta):
         return success
 
     def __check_bounds_control_input(self) -> None:
-        # Checks if at the control inputs have bounds, log warning when a control input is not bounded.
+        # Checks if at the control inputs have bounds, log warning when a control input is not
+        # bounded.
         bounds = self.bounds()
 
         for variable in self.dae_variables["control_inputs"]:
@@ -246,8 +247,11 @@ class OptimizationProblem(DataStoreAccessor, metaclass=ABCMeta):
         """
         Returns a dictionary of CasADi optimization problem solver options.
 
-        The default solver for continuous problems is `Ipopt <https://projects.coin-or.org/Ipopt/>`_.
-        The default solver for mixed integer problems is `Bonmin <http://projects.coin-or.org/Bonmin/>`_.
+        The default solver for continuous problems is `Ipopt
+        <https://projects.coin-or.org/Ipopt/>`_.
+
+        The default solver for mixed integer problems is `Bonmin
+        <http://projects.coin-or.org/Bonmin/>`_.
 
         :returns: A dictionary of solver options. See the CasADi and
                   respective solver documentation for details.
@@ -297,7 +301,8 @@ class OptimizationProblem(DataStoreAccessor, metaclass=ABCMeta):
         For example, this can happen when too many goals are specified, and
         lower priority goals cannot improve further on the current result.
 
-        :returns: A tuple indicating whether or not the solver has succeeded, and what level to log it with.
+        :returns: A tuple indicating whether or not the solver has succeeded, and what level to log
+            it with.
         """
         success = solver_stats["success"]
         log_level = logging.INFO if success else logging.ERROR
@@ -417,8 +422,8 @@ class OptimizationProblem(DataStoreAccessor, metaclass=ABCMeta):
 
     def delayed_feedback(self) -> List[Tuple[str, str, float]]:
         """
-        Returns the delayed feedback mappings.  These are given as a list of triples :math:`(x, y, \\tau)`,
-        to indicate that :math:`y = x(t - \\tau)`.
+        Returns the delayed feedback mappings.  These are given as a list of triples
+        :math:`(x, y, \\tau)`, to indicate that :math:`y = x(t - \\tau)`.
 
         :returns: A list of triples.
 
@@ -607,7 +612,8 @@ class OptimizationProblem(DataStoreAccessor, metaclass=ABCMeta):
 
         :param ensemble_member: The ensemble member index.
 
-        :returns: A dictionary of variable names and historical time series (up to and including t0).
+        :returns:
+            A dictionary of variable names and historical time series (up to and including t0).
         """
         return AliasDict(self.alias_relation)
 
@@ -664,7 +670,8 @@ class OptimizationProblem(DataStoreAccessor, metaclass=ABCMeta):
         """
         The objective function for the given ensemble member.
 
-        Call :func:`OptimizationProblem.state_at` to return a symbol representing a model variable at a given time.
+        Call :func:`OptimizationProblem.state_at` to return a symbol representing a model variable
+        at a given time.
 
         :param ensemble_member: The ensemble member index.
 
@@ -708,7 +715,8 @@ class OptimizationProblem(DataStoreAccessor, metaclass=ABCMeta):
         """
         Returns a list of constraints for the given ensemble member.
 
-        Call :func:`OptimizationProblem.state_at` to return a symbol representing a model variable at a given time.
+        Call :func:`OptimizationProblem.state_at` to return a symbol representing a model variable
+        at a given time.
 
         :param ensemble_member: The ensemble member index.
 
@@ -1267,9 +1275,8 @@ class OptimizationProblem(DataStoreAccessor, metaclass=ABCMeta):
         for vi in x_inds:
             if vi in var_index_assignment:
                 logger.info(
-                    "Variable '{}' has equal bounds (value = {}), but also the following equality constraints:".format(
-                        var_names[vi], lbx[vi]
-                    )
+                    "Variable '{}' has equal bounds (value = {}), "
+                    "but also the following equality constraints:".format(var_names[vi], lbx[vi])
                 )
                 for g_i in var_index_assignment[vi]:
                     logger.info("row {}: {} = {}".format(g_i, named_g[g_i], lbg[g_i]))

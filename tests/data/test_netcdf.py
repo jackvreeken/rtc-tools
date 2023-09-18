@@ -151,10 +151,8 @@ class TestInputDataset_requirements(TestCase):
                 if _variable != "ensemble":
                     self.assertTrue(
                         self.variable_found[_variable],
-                        """Variable '{}'
- was not found by its alias '{}' in file '{}.nc' .""".format(
-                            _variable, _variable_alias, filepaths[file_key]
-                        ),
+                        "Variable '{}' was not found by its alias '{}' in file '{}.nc' ."
+                        "".format(_variable, _variable_alias, filepaths[file_key]),
                     )
 
                 # check requirements of attributes for found variables
@@ -170,8 +168,8 @@ class TestInputDataset_requirements(TestCase):
                                 _attribute in self.ncdf_var[_variable].ncattrs()
                                 and getattr(self.ncdf_var[_variable], _attribute)
                                 == _attribute_requirement,
-                                """Variable '{}' with alias '{}' in '{}.nc' is missing attribute '{}'
- with value '{}'.""".format(
+                                "Variable '{}' with alias '{}' in '{}.nc' "
+                                "is missing attribute '{}' with value '{}'.".format(
                                     _variable,
                                     _variable_alias,
                                     filepaths[file_key],
@@ -188,8 +186,8 @@ class TestInputDataset_requirements(TestCase):
                                 self.assertIn(
                                     _dimension,
                                     self.ncdf_var[_variable].dimensions,
-                                    """
-                                 Variable '{}' should be associated to dimension {} in '{}.nc'. """.format(
+                                    "Variable '{}' should be associated to "
+                                    "dimension {} in '{}.nc'.".format(
                                         _variable_alias, _dimension, filepaths[file_key]
                                     ),
                                 )
@@ -401,8 +399,7 @@ class TestExportDataset(TestCase):
             self.assertEqual(
                 getattr(self.dataset.variables[_variable], _attribute),
                 _attribute_value,
-                """Attribute '{}'
- of variable '{}' does not match its expected value.""".format(
+                "Attribute '{}' of variable '{}' does not match its expected value.".format(
                     _attribute, _variable
                 ),
             )
@@ -415,10 +412,7 @@ class TestExportDataset(TestCase):
             self.assertEqual(
                 set(_variable_associated_dimensions),
                 set(_expected_dimensions),
-                """
-The dimensions of variable '{}' are not as expected.""".format(
-                    _variable
-                ),
+                "The dimensions of variable '{}' are not as expected.".format(_variable),
             )
 
     def test_global_attributes(self):
@@ -469,10 +463,8 @@ The dimensions of variable '{}' are not as expected.""".format(
             self.assertIn(
                 _dimension,
                 self.dataset.dimensions,
-                """Dimension '{}'
- is missing, but should be available to be able to identify the stations.""".format(
-                    _dimension
-                ),
+                "Dimension '{}' is missing, but should be available "
+                "to be able to identify the stations.".format(_dimension),
             )
         self.assertEqual(self.dataset.dimensions["station"].name, "station")
         self.assertEqual(self.dataset.dimensions["station"].size, 2)
@@ -488,10 +480,8 @@ The dimensions of variable '{}' are not as expected.""".format(
             self.assertIn(
                 _variable,
                 self.dataset.variables,
-                """Variable '{}' is missing,
- but should be available to be able to identify the stations.""".format(
-                    _variable
-                ),
+                "Variable '{}' is missing, but should be available "
+                "to be able to identify the stations.".format(_variable),
             )
         for _attribute in ("long_name", "cf_role"):
             self.assertIn(

@@ -177,11 +177,14 @@ class Goal(metaclass=ABCMeta):
         * The goal size determines how many goals there are.
         * The goal function has shape ``(goal size, 1)``.
         * The function is either minimized or has, possibly various, targets.
-        * Function nominal can either be an array with as many entries as the goal size or have a single value.
-        * Function ranges can either be an array with as many entries as the goal size or have a single value.
-        * In a goal, the target can either be an array with as many entries as the goal size or have a single value.
-        * In a path goal, the target can also be a Timeseries whose values are either a 1-dimensional vector or have
-          as many columns as the goal size.
+        * Function nominal can either be an array with as many entries as the goal size or have a
+          single value.
+        * Function ranges can either be an array with as many entries as the goal size or have a
+          single value.
+        * In a goal, the target can either be an array with as many entries as the goal size or
+          have a single value.
+        * In a path goal, the target can also be a Timeseries whose values are either a
+          1-dimensional vector or have as many columns as the goal size.
 
     **Examples**
 
@@ -369,9 +372,9 @@ class StateGoal(Goal):
 
         my_state_goal = MyStateGoal(optimization_problem)
 
-    Note that ``StateGoal`` is a helper class.  State goals can also be defined using ``Goal`` as direct base class,
-    by implementing the ``function`` method and providing the ``function_range`` and ``function_nominal``
-    class variables manually.
+    Note that ``StateGoal`` is a helper class.  State goals can also be defined using ``Goal`` as
+    direct base class, by implementing the ``function`` method and providing the
+    ``function_range`` and ``function_nominal`` class variables manually.
 
     """
 
@@ -664,9 +667,8 @@ class _GoalProgrammingMixinBase(OptimizationProblem, metaclass=ABCMeta):
                     )
                 if goal.violation_timeseries_id is not None:
                     raise Exception(
-                        "Violation timeseries id not allowed with `keep_soft_constraints` for goal {}".format(
-                            goal
-                        )
+                        "Violation timeseries id not allowed with "
+                        "`keep_soft_constraints` for goal {}".format(goal)
                     )
             else:
                 if goal.size > 1:
@@ -741,29 +743,25 @@ class _GoalProgrammingMixinBase(OptimizationProblem, metaclass=ABCMeta):
                 indices = np.where(np.isfinite(goal_m))
                 if np.any(goal_m[indices] <= goal_lb[indices]):
                     raise Exception(
-                        "Target minimum should be greater than the lower bound of the function range for goal {}".format(
-                            goal
-                        )
+                        "Target minimum should be greater than the lower bound "
+                        "of the function range for goal {}".format(goal)
                     )
                 if np.any(goal_m[indices] > goal_ub[indices]):
                     raise Exception(
-                        "Target minimum should not be greater than the upper bound of the function range for goal {}".format(
-                            goal
-                        )
+                        "Target minimum should not be greater than the upper bound "
+                        "of the function range for goal {}".format(goal)
                     )
             if goal.has_target_max and not goal.critical:
                 indices = np.where(np.isfinite(goal_M))
                 if np.any(goal_M[indices] >= goal_ub[indices]):
                     raise Exception(
-                        "Target maximum should be smaller than the upper bound of the function range for goal {}".format(
-                            goal
-                        )
+                        "Target maximum should be smaller than the upper bound "
+                        "of the function range for goal {}".format(goal)
                     )
                 if np.any(goal_M[indices] < goal_lb[indices]):
                     raise Exception(
-                        "Target maximum should not be smaller than the lower bound of the function range for goal {}".format(
-                            goal
-                        )
+                        "Target maximum should not be smaller than the lower bound "
+                        "of the function range for goal {}".format(goal)
                     )
 
             if goal.relaxation < 0.0:

@@ -59,9 +59,9 @@ axarr[1].set_ylabel("Flow Rate [m³/s]")
 # add dots to clarify where the decision variables are defined:
 axarr[1].scatter(times, record["Inflow_Q".lower()], linewidth=1, color="mediumorchid")
 # these dots were too big to be useful
-# axarr[1].scatter(times,  record["DrinkingWaterExtractionPump_Q_target".lower()], linewidth=1, color="lightskyblue")
 
-# add horizontal lines to the left of these dots, to indicate that the value is attained over an entire timestep:
+# add horizontal lines to the left of these dots, to indicate that the value is attained over an
+# entire timestep:
 axarr[1].step(
     times,
     record["Inflow_Q".lower()],
@@ -96,7 +96,8 @@ axarr[2].set_ylabel("Flow Rate [m³/s]")
 # the points:
 axarr[2].scatter(times, record["UpperControlStructure_Q".lower()], linewidth=1, color="darkred")
 axarr[2].scatter(times, record["LowerControlStructure_Q".lower()], linewidth=1, color="darkorange")
-# add horizontal lines to the left of these dots, to indicate that the value is attained over an entire timestep:
+# add horizontal lines to the left of these dots, to indicate that the value is attained over an
+# entire timestep:
 axarr[2].step(
     times,
     record["UpperControlStructure_Q".lower()],

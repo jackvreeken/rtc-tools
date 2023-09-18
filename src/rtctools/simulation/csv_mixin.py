@@ -17,7 +17,8 @@ class CSVMixin(IOMixin):
     During preprocessing, files named ``timeseries_import.csv``, ``initial_state.csv``,
     and ``parameters.csv`` are read from the ``input`` subfolder.
 
-    During postprocessing, a file named ``timeseries_export.csv`` is written to the ``output`` subfolder.
+    During postprocessing, a file named ``timeseries_export.csv`` is written to the ``output``
+    subfolder.
 
     :cvar csv_delimiter:           Column delimiter used in CSV files.  Default is ``,``.
     :cvar csv_validate_timeseries: Check consistency of timeseries.  Default is ``True``.

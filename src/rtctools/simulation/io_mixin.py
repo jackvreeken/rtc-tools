@@ -34,7 +34,8 @@ class IOMixin(SimulationProblem, metaclass=ABCMeta):
     @abstractmethod
     def read(self) -> None:
         """
-        Reads input data from files, storing it in the internal data store through the various set or add methods
+        Reads input data from files, storing it in the internal data store through the various set
+        or add methods
         """
         pass
 
@@ -45,7 +46,8 @@ class IOMixin(SimulationProblem, metaclass=ABCMeta):
     @abstractmethod
     def write(self) -> None:
         """
-        Writes output data to files, getting the data from the data store through the various get methods
+        Writes output data to files, getting the data from the data store through the various get
+        methods
         """
         pass
 
@@ -103,9 +105,8 @@ class IOMixin(SimulationProblem, metaclass=ABCMeta):
                 self.set_var(variable, value)
             else:
                 logger.debug(
-                    "IOMixin: Found bad value {} at index [{}] in timeseries aliased to input {}".format(
-                        value, t_idx, variable
-                    )
+                    "IOMixin: Found bad value {} at index [{}] "
+                    "in timeseries aliased to input {}".format(value, t_idx, variable)
                 )
 
     def update(self, dt):

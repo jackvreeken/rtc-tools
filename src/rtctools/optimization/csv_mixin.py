@@ -20,7 +20,8 @@ class CSVMixin(IOMixin):
     During preprocessing, files named ``timeseries_import.csv``, ``initial_state.csv``,
     and ``parameters.csv`` are read from the ``input`` subfolder.
 
-    During postprocessing, a file named ``timeseries_export.csv`` is written to the ``output`` subfolder.
+    During postprocessing, a file named ``timeseries_export.csv`` is written to the ``output``
+    subfolder.
 
     In ensemble mode, a file named ``ensemble.csv`` is read from the ``input`` folder.  This file
     contains two columns. The first column gives the name of the ensemble member, and the second
@@ -214,8 +215,8 @@ class CSVMixin(IOMixin):
                     if times[i + 1] - times[i] != dt:
                         raise Exception(
                             "CSVMixin: Expecting equidistant timeseries, the time step towards "
-                            "{} is not the same as the time step(s) before. Set csv_equidistant = False "
-                            "if this is intended.".format(times[i + 1])
+                            "{} is not the same as the time step(s) before. "
+                            "Set csv_equidistant = False if this is intended.".format(times[i + 1])
                         )
 
     def ensemble_member_probability(self, ensemble_member):

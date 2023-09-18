@@ -93,7 +93,8 @@ class SinglePassGoalProgrammingMixin(_GoalProgrammingMixinBase):
 
         if isinstance(self, GoalProgrammingMixin):
             raise Exception(
-                "Cannot be an instance of both GoalProgrammingMixin and SinglePassGoalProgrammingMixin"
+                "Cannot be an instance of both GoalProgrammingMixin "
+                "and SinglePassGoalProgrammingMixin"
             )
 
     @property
@@ -226,20 +227,22 @@ class SinglePassGoalProgrammingMixin(_GoalProgrammingMixinBase):
         If ``fix_minimized_values`` is set to ``True``, goal functions will be set to equal their
         optimized values in optimization problems generated during subsequent priorities. Otherwise,
         only an upper bound will be set. Use of this option is normally not required.
-        Note that the use of this option may add non-convex constraints to the optimization problem.
-        The default value for this parameter is ``True`` for the default solvers IPOPT/BONMIN. If any
-        other solver is used, the default value is ``False``.
+        Note that the use of this option may add non-convex constraints to the optimization
+        problem. The default value for this parameter is ``True`` for the default solvers
+        IPOPT/BONMIN. If any other solver is used, the default value is ``False``.
 
-        If ``check_monotonicity`` is set to ``True``, then it will be checked whether goals with the same
-        function key form a monotonically decreasing sequence with regards to the target interval.
+        If ``check_monotonicity`` is set to ``True``, then it will be checked whether goals with
+        the same function key form a monotonically decreasing sequence with regards to the target
+        interval.
 
-        The option ``equality_threshold`` controls when a two-sided inequality constraint is folded into
-        an equality constraint.
+        The option ``equality_threshold`` controls when a two-sided inequality constraint is folded
+        into an equality constraint.
 
-        If ``scale_by_problem_size`` is set to ``True``, the objective (i.e. the sum of the violation variables)
-        will be divided by the number of goals, and the path objective will be divided by the number
-        of path goals and the number of active time steps (per goal). This will make sure the objectives are always in
-        the range [0, 1], at the cost of solving each goal/time step less accurately.
+        If ``scale_by_problem_size`` is set to ``True``, the objective (i.e. the sum of the
+        violation variables) will be divided by the number of goals, and the path objective will
+        be divided by the number of path goals and the number of active time steps (per goal).
+        This will make sure the objectives are always in the range [0, 1], at the cost of solving
+        each goal/time step less accurately.
 
         :returns: A dictionary of goal programming options.
         """
@@ -582,7 +585,8 @@ class CachingQPSol:
                 if cache:
                     if not x.size1() == cache["A"].size2():
                         raise Exception(
-                            "Number of variables {} does not match cached constraint matrix dimensions {}".format(
+                            "Number of variables {} does not match "
+                            "cached constraint matrix dimensions {}".format(
                                 x.size1(), cache["A"].shape
                             )
                         )

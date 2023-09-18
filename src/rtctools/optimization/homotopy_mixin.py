@@ -76,13 +76,13 @@ class HomotopyMixin(OptimizationProblem):
         | ``homotopy_parameter`` | ``string`` | ``theta``     |
         +------------------------+------------+---------------+
 
-        The homotopy process is controlled by the homotopy parameter in the model, specified
-        by the option ``homotopy_parameter``.  The homotopy parameter is initialized to ``theta_start``,
-        and increases to a value of ``1.0`` with a dynamically changing step size.  This step
-        size is initialized with the value of the option ``delta_theta_0``.  If this step
-        size is too large, i.e., if the problem with the increased homotopy parameter fails to
-        converge, the step size is halved.  The process of halving terminates when the step size falls
-        below the minimum value specified by the option ``delta_theta_min``.
+        The homotopy process is controlled by the homotopy parameter in the model, specified by the
+        option ``homotopy_parameter``.  The homotopy parameter is initialized to ``theta_start``,
+        and increases to a value of ``1.0`` with a dynamically changing step size.  This step size
+        is initialized with the value of the option ``delta_theta_0``.  If this step size is too
+        large, i.e., if the problem with the increased homotopy parameter fails to converge, the
+        step size is halved.  The process of halving terminates when the step size falls below the
+        minimum value specified by the option ``delta_theta_min``.
 
         :returns: A dictionary of homotopy options.
         """

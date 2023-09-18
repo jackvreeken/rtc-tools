@@ -200,9 +200,9 @@ class CSVLookupTableMixin(OptimizationProblem):
     """
     Adds lookup tables to your optimization problem.
 
-    During preprocessing, the CSV files located inside the ``lookup_tables`` subfolder are read.
-    In every CSV file, the first column contains the output of the lookup table.  Subsequent columns contain
-    the input variables.
+    During preprocessing, the CSV files located inside the ``lookup_tables`` subfolder are read. In
+    every CSV file, the first column contains the output of the lookup table. Subsequent columns
+    contain the input variables.
 
     Cubic B-Splines are used to turn the data points into continuous lookup tables.
 
@@ -226,9 +226,11 @@ class CSVLookupTableMixin(OptimizationProblem):
         Currently only one-dimensional lookup tables are fully supported.  Support for two-
         dimensional lookup tables is experimental.
 
-    :cvar csv_delimiter:                 Column delimiter used in CSV files.  Default is ``,``.
-    :cvar csv_lookup_table_debug:        Whether to generate plots of the spline fits.  Default is ``false``.
-    :cvar csv_lookup_table_debug_points: Number of evaluation points for plots.  Default is ``100``.
+    :cvar csv_delimiter:  Column delimiter used in CSV files. Default is ``,``.
+    :cvar csv_lookup_table_debug:  Whether to generate plots of the spline fits.
+        Default is ``False``.
+    :cvar csv_lookup_table_debug_points:  Number of evaluation points for plots.
+        Default is ``100``.
     """
 
     #: Column delimiter used in CSV files
@@ -321,7 +323,8 @@ class CSVLookupTableMixin(OptimizationProblem):
             tck = None
             function = None
 
-            # If tck file is newer than the csv file, first try to load the cached values from the tck file
+            # If tck file is newer than the csv file, first try to load the cached values from
+            # the tck file
             tck_filename = filename.replace(".csv", ".tck")
             valid_cache = False
             if os.path.exists(tck_filename):

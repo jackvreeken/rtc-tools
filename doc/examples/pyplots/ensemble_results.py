@@ -55,7 +55,8 @@ for idx, forecast in enumerate(forecast_names):
         times, results["q_release"], linewidth=1, color=get_cmap(cmaps[idx])(shades[1])
     )
 
-    # add horizontal lines to the left of these dots, to indicate that the value is attained over an entire timestep:
+    # add horizontal lines to the left of these dots, to indicate that the value is attained over
+    # an entire timestep:
     axarr[1].step(
         times,
         results["q_in"],

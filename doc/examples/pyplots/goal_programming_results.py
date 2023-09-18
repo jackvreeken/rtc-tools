@@ -46,7 +46,8 @@ axarr[1].plot(
 axarr[2].set_ylabel("Flow Rate [m³/s]")
 axarr[2].scatter(times, results["q_orifice"], linewidth=1, color="g")
 axarr[2].scatter(times, results["q_pump"], linewidth=1, color="r")
-# add horizontal lines to the left of these dots, to indicate that the value is attained over an entire timestep:
+# add horizontal lines to the left of these dots, to indicate that the value is attained over an
+# entire timestep:
 axarr[2].step(times, results["q_orifice"], linewidth=2, where="pre", label="Orifice", color="g")
 axarr[2].step(times, results["q_pump"], linewidth=1, where="pre", label="Pump", color="r")
 

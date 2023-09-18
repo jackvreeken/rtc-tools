@@ -7,7 +7,8 @@ from .bspline import BSpline
 
 class BSpline1D(BSpline):
     """
-    Arbitrary order, one-dimensional, non-uniform B-Spline implementation using Cox-de Boor recursion.
+    Arbitrary order, one-dimensional, non-uniform B-Spline implementation using Cox-de Boor
+    recursion.
     """
 
     def __init__(self, t, w, k=3):

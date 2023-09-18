@@ -146,10 +146,11 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
 
         .. math::
 
-            x_{i+1} = x_i + \Delta t \left[\theta f(x_{i+1}, u_{i+1}) + (1 - \theta) f(x_i, u_i)\right]
+            x_{i+1} = x_i + \Delta t \left[\theta f(x_{i+1}, u_{i+1})
+            + (1 - \theta) f(x_i, u_i)\right]
 
-        The default is :math:`\theta = 1`, resulting in the implicit or backward Euler method.  Note that in this
-        case, the control input at the initial time step is not used.
+        The default is :math:`\theta = 1`, resulting in the implicit or backward Euler method. Note
+        that in this case, the control input at the initial time step is not used.
 
         Set :math:`\theta = 0` to use the explicit or forward Euler method.  Note that in this
         case, the control input at the final time step is not used.
@@ -168,8 +169,8 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
         # N.B.  Setting theta to any value strictly between 0 and 1 will cause
         #       algebraic equations to be solved in an average sense.  This may
         #       induce unexpected oscillations.
-        # TODO Fix these issue by performing index reduction and splitting DAE into ODE and algebraic parts.
-        #      Theta then only applies to the ODE part.
+        # TODO Fix these issue by performing index reduction and splitting DAE into ODE and
+        #      algebraic parts. Theta then only applies to the ODE part.
         return 1.0
 
     def map_options(self) -> Dict[str, Union[str, int]]:
@@ -184,23 +185,24 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
         | ``n_threads`` | ``int``   | ``None``      |
         +---------------+-----------+---------------+
 
-        The ``mode`` option controls the mode of the ``map()`` call.  Valid values include ``openmp``,
-        ``thread``, and ``unroll``.  See the CasADi and documentation for detailed documentation on these
-        modes.
+        The ``mode`` option controls the mode of the ``map()`` call.  Valid values include
+        ``openmp``, ``thread``, and ``unroll``.  See the CasADi and documentation for detailed
+        documentation on these modes.
 
         The ``n_threads`` option controls the number of threads used when in ``thread`` mode.
 
         .. note::
 
-            Not every CasADi build has support for OpenMP enabled.  For such builds, the `thread` mode offers
-            an alternative parallelization mode.
+            Not every CasADi build has support for OpenMP enabled.  For such builds, the `thread`
+            mode offers an alternative parallelization mode.
 
         .. note::
 
-            The use of ``expand=True`` in ``solver_options()`` may negate the parallelization benefits obtained
-            using ``map()``.
+            The use of ``expand=True`` in ``solver_options()`` may negate the parallelization
+            benefits obtained using ``map()``.
 
-        :returns: A dictionary of options for the `map()` call used to evaluate constraints on every time stamp.
+        :returns: A dictionary of options for the `map()` call used to evaluate constraints on
+            every time stamp.
         """
         return {"mode": "openmp"}
 
@@ -212,9 +214,9 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
         initial_residual = self.initial_residual
 
         logger.info(
-            "Transcribing problem with a DAE of {} equations, {} collocation points, and {} free variables".format(
-                dae_residual.size1(), len(self.times()), len(self.dae_variables["free_variables"])
-            )
+            f"Transcribing problem with a DAE of {dae_residual.size1()} equations, "
+            f"{len(self.times())} collocation points, "
+            f"and {len(self.dae_variables['free_variables'])} free variables"
         )
 
         # Reset dictionary of variables
@@ -591,10 +593,11 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                     init_der_variable.append(j)
 
                 except KeyError:
-                    # We do interpolation here instead of relying on der_at. This faster is because:
+                    # We do interpolation here instead of relying on der_at. This is faster because:
                     # 1. We can reuse the history variable.
                     # 2. We know that "variable" is a canonical state
-                    # 3. We know that we are only dealing with history (numeric values, not symbolics)
+                    # 3. We know that we are only dealing with history (numeric values, not
+                    #    symbolics)
                     try:
                         h = history[variable]
                         if h.times[0] == t0 or len(h.values) == 1:
@@ -966,14 +969,16 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
         ]
 
         # Initialize a Function for the path objective
-        # Note that we assume that the path objective expression is the same for all ensemble members
+        # Note that we assume that the path objective expression is the same for all ensemble
+        # members
         path_objective_function = ca.Function(
             "path_objective", self.__func_orig_inputs, [path_objective], function_options
         )
         path_objective_function = path_objective_function.expand()
 
         # Initialize a Function for the path constraints
-        # Note that we assume that the path constraint expression is the same for all ensemble members
+        # Note that we assume that the path constraint expression is the same for all ensemble
+        # members
         path_constraints_function = ca.Function(
             "path_constraints",
             self.__func_orig_inputs,
@@ -1066,9 +1071,9 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
             )
             accumulated_Y.append(integrated_states_1)
 
-            # Recompute finite differences with computed new state, for use in the collocation part below
-            # We don't use substititute() for this, as it becomes expensive
-            # over long integration horizons.
+            # Recompute finite differences with computed new state, for use in the collocation part
+            # below. We don't use substititute() for this, as it becomes expensive over long
+            # integration horizons.
             if len(collocated_variables) > 0:
                 integrated_finite_differences = (integrated_states_1 - integrated_states_0) / dt
         else:
@@ -1240,10 +1245,11 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
         self.__func_initial_inputs = []
 
         # Process the objectives and constraints for each ensemble member separately.
-        # Note that we don't use map here for the moment, so as to allow each ensemble member to define its own
-        # constraints and objectives.  Path constraints are applied for all ensemble members simultaneously
-        # at the moment.  We can get rid of map again, and allow every ensemble member to specify its own
-        # path constraints as well, once CasADi has some kind of loop detection.
+        # Note that we don't use map here for the moment, so as to allow each ensemble member to
+        # define its own constraints and objectives. Path constraints are applied for all ensemble
+        # members simultaneously at the moment. We can get rid of map again, and allow every
+        # ensemble member to specify its own path constraints as well, once CasADi has some kind
+        # of loop detection.
         for ensemble_member in range(self.ensemble_size):
             logger.info(
                 "Transcribing ensemble member {}/{}".format(ensemble_member + 1, self.ensemble_size)
@@ -1423,11 +1429,12 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                 interpolated_states[:, j] = interpolated[:-1]
                 interpolated_states[:, len(collocated_variables) + j] = interpolated[1:]
 
-            # We do not cache the Jacobians, as the structure may change from ensemble member to member,
-            # and from goal programming/homotopy run to run.
-            # We could, of course, pick the states apart into controls and states,
-            # and generate Jacobians for each set separately and for each ensemble member separately, but
-            # in this case the increased complexity may well offset the performance gained by caching.
+            # We do not cache the Jacobians, as the structure may change from ensemble member to
+            # member, and from goal programming/homotopy run to run.
+            # We could, of course, pick the states apart into controls and states, and generate
+            # Jacobians for each set separately and for each ensemble member separately, but in
+            # this case the increased complexity may well offset the performance gained by
+            # caching.
             accumulation_U[0] = reduce_matvec(interpolated_states, self.solver_input)
 
             for j, variable in enumerate(self.dae_variables["constant_inputs"]):
@@ -1583,7 +1590,8 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                     (np.array([]), *[history_series.times for history_series in history.values()])
                 )
             )
-            # By convention, the last timestep in history series is the initial time. We drop this index
+            # By convention, the last timestep in history series is the initial time. We drop this
+            # index
             history_times = history_times[:-1]
 
             # Find the historical values of states, extrapolating backward if necessary
@@ -1831,7 +1839,8 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                             lbg_constraint[i] = np.full(s, lbg_i)
                         elif lbg_i.shape[0] != g_i.shape[0]:
                             raise Exception(
-                                "Shape mismatch between constraint #{} ({},) and its lower bound ({},)".format(
+                                "Shape mismatch between constraint "
+                                "#{} ({},) and its lower bound ({},)".format(
                                     i, g_i.shape[0], lbg_i.shape[0]
                                 )
                             )
@@ -1840,7 +1849,8 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                             ubg_constraint[i] = np.full(s, ubg_i)
                         elif ubg_i.shape[0] != g_i.shape[0]:
                             raise Exception(
-                                "Shape mismatch between constraint #{} ({},) and its upper bound ({},)".format(
+                                "Shape mismatch between constraint "
+                                "#{} ({},) and its upper bound ({},)".format(
                                     i, g_i.shape[0], ubg_i.shape[0]
                                 )
                             )
@@ -1966,7 +1976,8 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
         """
         Configures the implicit function used for time step integration.
 
-        :returns: A dictionary of CasADi :class:`rootfinder` options.  See the CasADi documentation for details.
+        :returns: A dictionary of CasADi :class:`rootfinder` options.  See the CasADi documentation
+            for details.
         """
         return {}
 
@@ -2392,7 +2403,8 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
                     else:
                         if not extrapolate and (t < times[0] or t > times[-1]):
                             raise Exception(
-                                "Cannot interpolate for {}: Point {} outside of range [{}, {}]".format(
+                                "Cannot interpolate for {}: "
+                                "Point {} outside of range [{}, {}]".format(
                                     canonical, t, times[0], times[-1]
                                 )
                             )
@@ -2769,7 +2781,8 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
 
         # Check coefficient matrix
         logger.info(
-            "Sanity check on objective and constraints Jacobian matrix /constant coefficients values"
+            "Sanity check on objective and constraints Jacobian matrix"
+            "/constant coefficients values"
         )
 
         in_var = nlp["x"]
@@ -3026,9 +3039,8 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
 
             if exceedences:
                 logger.info(
-                    "Variables with at least one (absolute) state vector entry/entries larger than {}".format(
-                        tol_up
-                    )
+                    "Variables with at least one (absolute) state vector entry/entries "
+                    "larger than {}".format(tol_up)
                 )
 
             for k, v in exceedences:
@@ -3046,9 +3058,8 @@ class CollocatedIntegratedOptimizationProblem(OptimizationProblem, metaclass=ABC
             if next((v for k, v in exceedences if not ignore_all_zero or v > 0.0), None):
                 ignore_all_zero_string = " (but not all zero)" if ignore_all_zero else ""
                 logger.info(
-                    "Variables with all (absolute) state vector entry/entries smaller than {}{}".format(
-                        tol_down, ignore_all_zero_string
-                    )
+                    "Variables with all (absolute) state vector entry/entries "
+                    "smaller than {}{}".format(tol_down, ignore_all_zero_string)
                 )
 
             for k, v in exceedences:

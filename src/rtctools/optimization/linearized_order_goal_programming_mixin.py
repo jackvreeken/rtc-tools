@@ -12,7 +12,8 @@ from rtctools.optimization.goal_programming_mixin_base import _GoalConstraint
 
 class LinearizedOrderGoal(Goal):
     #: Override linearization of goal order. Related global goal programming
-    #: option is ``linearize_goal_order`` (see :py:meth:`LinearizedOrderGoalProgrammingMixin.goal_programming_options`).
+    #: option is ``linearize_goal_order``
+    #: (see :py:meth:`LinearizedOrderGoalProgrammingMixin.goal_programming_options`).
     #: The default value of None defers to the global option, but the user can
     #: explicitly override it per goal by setting this value to True or False.
     linearize_order = None

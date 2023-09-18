@@ -686,7 +686,8 @@ class Timeseries:
         self.__xml_root.set("version", "1.2")
         self.__xml_root.set(
             "xsi:schemaLocation",
-            "http://www.wldelft.nl/fews/PI http://fews.wldelft.nl/schemas/version1.0/pi-schemas/pi_timeseries.xsd",
+            "http://www.wldelft.nl/fews/PI "
+            "http://fews.wldelft.nl/schemas/version1.0/pi-schemas/pi_timeseries.xsd",
         )
 
     def __parse_date_time(self, el):
@@ -1076,7 +1077,8 @@ class Timeseries:
         :param variable:        Time series ID.
         :param ensemble_member: Ensemble member index.
 
-        :returns: A :string: containing the unit. If not set for the variable, returns 'unit_unknown'.
+        :returns: A :string: containing the unit. If not set for the variable,
+            returns 'unit_unknown'.
         """
         try:
             return self.__units[ensemble_member][variable]

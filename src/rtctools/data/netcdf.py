@@ -42,14 +42,17 @@ class Stations:
     @property
     def station_ids(self) -> Iterable:
         """
-        :return: An ordered iterable of the station ids (location ids) for which station data is available.
+        :return: An ordered iterable of the station ids (location ids) for which
+            station data is available.
+
         """
         return self.__attributes.keys()
 
     @property
     def attributes(self) -> OrderedDict:
         """
-        :return: An OrderedDict containing dicts containing the values for all station attributes of the input dataset.
+        :return: An OrderedDict containing dicts containing the values for all
+            station attributes of the input dataset.
         """
         return self.__attributes
 
@@ -84,7 +87,8 @@ class ImportDataset:
         if self.__time_variable is None:
             raise Exception(
                 "No time variable found in file " + self.__filename + ". "
-                'Please ensure the file contains a time variable with standard_name "time" and axis "T".'
+                "Please ensure the file contains a time variable with standard_name "
+                '"time" and axis "T".'
             )
 
         self.__ensemble_member_variable = self.__find_ensemble_member_variable()
@@ -124,7 +128,8 @@ class ImportDataset:
         Find the variable containing the ensemble member index in the given Dataset.
 
         :param dataset: The Dataset to be searched.
-        :return: a netCDF4.Variable object of the ensemble member index variable (or None if none found)
+        :return: a netCDF4.Variable object of the ensemble member index variable (or None
+                 if none found)
         """
         for variable in self.__dataset.variables.values():
             if "standard_name" in variable.ncattrs() and variable.standard_name == "realization":
@@ -166,9 +171,9 @@ class ImportDataset:
 
     def find_timeseries_variables(self) -> List[str]:
         """
-        Find the keys of all 2-D or 3-D variables with dimensions {station, time} or {station, time, realization}
-        where station is the dimension of the station_variable, time the dimension of the time_variable and
-        realization the dimension for ensemble_member_index.
+        Find the keys of all 2-D or 3-D variables with dimensions {station, time} or {station, time,
+        realization} where station is the dimension of the station_variable, time the dimension of
+        the time_variable and realization the dimension for ensemble_member_index.
 
         :param dataset:           The Dataset to be searched.
         :param station_variable:  The station id variable.
@@ -267,11 +272,11 @@ class ImportDataset:
 
 class ExportDataset:
     """
-    A class used to write data to a NetCDF file.
-    Creates a new file or overwrites an old file. The file metadata will be written upon initialization. Data such
-    as times, station data and timeseries data should be presented to the ExportDataset through the various methods.
-    When all data has been written, the close method must be called to flush the changes from local memory to the
-    actual file on disk.
+    A class used to write data to a NetCDF file. Creates a new file or overwrites an old file. The
+    file metadata will be written upon initialization. Data such as times, station data and
+    timeseries data should be presented to the ExportDataset through the various methods. When all
+    data has been written, the close method must be called to flush the changes from local memory
+    to the actual file on disk.
     """
 
     def __init__(self, folder: str, basename: str):
@@ -292,7 +297,8 @@ class ExportDataset:
         self.__dataset.Conventions = "CF-1.6"
         self.__dataset.featureType = "timeseries"
 
-        # dimensions are created when writing times and station data, must be created before writing variables
+        # dimensions are created when writing times and station data, must be created before
+        # writing variables
         self.__time_dim = None
         self.__station_dim = None
         self.__station_id_to_index_mapping = None
@@ -307,14 +313,17 @@ class ExportDataset:
         """
         Writes a time variable to the given dataset.
 
-        :param dataset:        The NetCDF4.Dataset object that the times will be written to (must have write permission)
+        :param dataset:        The NetCDF4.Dataset object that the times will be written to
+            (must have write permission)
         :param times:          The times that are to be written in seconds.
         :param forecast_time:  The forecast time in seconds corresponding to the forecast date
-        :param forecast_date:  The datetime corresponding with time in seconds at the forecast index.
+        :param forecast_date:  The datetime corresponding with time in seconds at the forecast
+                               index.
         """
 
         # in a NetCDF file times are written with respect to a reference date
-        # the written values for the times may never be negative, so use the earliest time as the reference date
+        # the written values for the times may never be negative, so use the earliest time as the
+        # reference date
         reference_date = forecast_date
         minimum_time = np.min(times)
         if minimum_time < 0:
@@ -346,7 +355,8 @@ class ExportDataset:
         Writes the station ids and additional station information to the given dataset.
 
         :param stations:           The stations data read from the input file.
-        :param output_station_ids: The set of station ids for which output will be written. Must be unique.
+        :param output_station_ids: The set of station ids for which output will be written. Must be
+            unique.
         """
         assert len(set(output_station_ids)) == len(output_station_ids)
 
@@ -361,7 +371,8 @@ class ExportDataset:
         station_id_var.long_name = "station identification code"
         station_id_var.cf_role = "timeseries_id"
 
-        # we must store the index we use for each station id, to be able to write the data at the correct index later
+        # we must store the index we use for each station id, to be able to write the data at the
+        # correct index later
         self.__station_id_to_index_mapping = {}
         for i, id in enumerate(output_station_ids):
             station_id_var[i, :] = list(id)
@@ -381,10 +392,11 @@ class ExportDataset:
     def create_variables(self, variable_names: List[str], ensemble_size: int) -> None:
         """
         Creates variables in the dataset for each of the provided parameter ids.
-        The write_times and write_station_data methods must be called first, to ensure the necessary dimensions have
-        already been created in the output NetCDF file.
+        The write_times and write_station_data methods must be called first, to ensure the necessary
+        dimensions have already been created in the output NetCDF file.
 
-        :param variable_names: The parameter ids for which variables must be created. Must be unique.
+        :param variable_names: The parameter ids for which variables must be created. Must be
+            unique.
         :param ensemble_size: the number of members in the ensemble
         """
         assert len(set(variable_names)) == len(variable_names)
@@ -392,9 +404,9 @@ class ExportDataset:
         assert (
             self.__time_dim is not None
         ), "First call write_times to ensure the time dimension has been created."
-        assert self.__station_dim is not None, (
-            "First call write_station_data to ensure " "the station dimension has been created"
-        )
+        assert (
+            self.__station_dim is not None
+        ), "First call write_station_data to ensure the station dimension has been created"
         assert (
             self.__station_id_to_index_mapping is not None
         )  # should also be created in write_station_data
@@ -402,7 +414,7 @@ class ExportDataset:
         if ensemble_size > 1:
             assert (
                 self.__ensemble_member_dim is not None
-            ), "First call write_ensemble_data to ensure the realization dimension has been created."
+            ), "First call write_ensemble_data to ensure the realization dimension has been created"
 
             for variable_name in variable_names:
                 self.__dataset.createVariable(
@@ -423,12 +435,13 @@ class ExportDataset:
         ensemble_size: int,
     ) -> None:
         """
-        Writes the given data to the dataset. The variable must have already been created through the
-        create_variables method. After all calls to write_output_values, the close method must be called to flush all
-        changes.
+        Writes the given data to the dataset. The variable must have already been created through
+        the create_variables method. After all calls to write_output_values, the close method must
+        be called to flush all changes.
 
         :param station_id: The id of the station the data is written for.
-        :param variable_name: The name of the variable the data is written to (must have already been created).
+        :param variable_name: The name of the variable the data is written to (must have already
+            been created).
         :param ensemble_member_index: The index associated to the ensemble member
         :param values:        The values that are to be written to the file
         :param ensemble_size: the number of members in the ensemble

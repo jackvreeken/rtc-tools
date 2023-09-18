@@ -14,7 +14,8 @@ class BSpline:
         :param k: Order of the basis function.
         :param i: Knot number.
 
-        :returns: The B-Spline basis function of the given order, at the given knot, evaluated at the given point.
+        :returns: The B-Spline basis function of the given order, at the given knot, evaluated at
+            the given point.
         """
         if k == 0:
             return if_else(logic_and(t[i] <= x, x < t[i + 1]), 1.0, 0.0)

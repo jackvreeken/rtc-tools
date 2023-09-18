@@ -36,9 +36,12 @@ def run_optimization_problem(
 
     1. That the ``base_folder`` contains subfolders ``input``, ``output``, and ``model``,
        containing input data, output data, and the model, respectively.
-    2. When using :class:`.CSVLookupTableMixin`, that the base folder contains a subfolder ``lookup_tables``.
-    3. When using :class:`.ModelicaMixin`, that the base folder contains a subfolder ``model``.
-    4. When using :class:`.ModelicaMixin`, that the toplevel Modelica model name equals the class name.
+    2. When using :class:`.CSVLookupTableMixin`, that the base folder contains
+       a subfolder ``lookup_tables``.
+    3. When using :class:`.ModelicaMixin`, that the base folder contains
+       a subfolder ``model``.
+    4. When using :class:`.ModelicaMixin`, that the toplevel Modelica model name
+       equals the class name.
 
     :param optimization_problem_class: Optimization problem class to solve.
     :param base_folder:                Base folder.
@@ -170,8 +173,8 @@ def run_simulation_problem(
     Sets up and runs a simulation problem.
 
     :param simulation_problem_class: Simulation problem class to solve.
-    :param base_folder:              Folder within which subfolders "input", "output", and "model" exist,
-                                     containing input and output data, and the model, respectively.
+    :param base_folder:              Folder within which subfolders "input", "output", and "model"
+        exist, containing input and output data, and the model, respectively.
     :param log_level:                The log level to use.
 
     :returns: :class:`SimulationProblem` instance.

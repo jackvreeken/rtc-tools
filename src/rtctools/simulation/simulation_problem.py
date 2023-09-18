@@ -28,7 +28,8 @@ class SimulationProblem(DataStoreAccessor):
 
     Base class for all Simulation problems. Loads the Modelica Model.
 
-    :cvar modelica_library_folders: Folders containing any referenced Modelica libraries. Default is an empty list.
+    :cvar modelica_library_folders: Folders containing any referenced Modelica libraries. Default
+        is an empty list.
 
     """
 
@@ -133,7 +134,8 @@ class SimulationProblem(DataStoreAccessor):
         for v in itertools.chain(self.__pymoca_model.states, self.__pymoca_model.alg_states):
             sym_name = v.symbol.name()
 
-            # If the nominal is 0.0 or 1.0 or -1.0, ignore: get_variable_nominal returns a default of 1.0
+            # If the nominal is 0.0 or 1.0 or -1.0, ignore: get_variable_nominal returns a default
+            # of 1.0
             # TODO: handle nominal vectors (update() will need to load them)
             if (
                 ca.MX(v.nominal).is_zero()
@@ -221,7 +223,8 @@ class SimulationProblem(DataStoreAccessor):
 
         # Set values of parameters defined in the model into the state vector
         for var in self.__pymoca_model.parameters:
-            # First check to see if parameter is already set (this allows child classes to override model defaults)
+            # First check to see if parameter is already set (this allows child classes to override
+            # model defaults)
             if np.isfinite(self.get_var(var.symbol.name())):
                 continue
 
@@ -283,9 +286,9 @@ class SimulationProblem(DataStoreAccessor):
                 start_val = None
 
             if start_val == 0.0 and not var.fixed:
-                # To make initialization easier, we allow setting initial states by providing timeseries
-                # with names that match a symbol in the model. We only check for this matching if the start
-                # and fixed attributes were left as default
+                # To make initialization easier, we allow setting initial states by providing
+                # timeseries with names that match a symbol in the model. We only check for this
+                # matching if the start and fixed attributes were left as default
                 try:
                     start_val = self.initial_state()[var_name]
                 except KeyError:
@@ -293,17 +296,16 @@ class SimulationProblem(DataStoreAccessor):
                 else:
                     # An initial state was found- add it to the constrained residuals
                     logger.debug(
-                        "Initialize: Added {} = {} to initial equations (found matching timeseries).".format(
-                            var_name, start_val
-                        )
+                        "Initialize: Added {} = {} to initial equations "
+                        "(found matching timeseries).".format(var_name, start_val)
                     )
                     # Set var to be fixed
                     var.fixed = True
 
             if not var.fixed:
-                # To make initialization easier, we allow setting initial guesses by providing timeseries
-                # with names that match a symbol in the model. We only check for this matching if the start
-                # and fixed attributes were left as default
+                # To make initialization easier, we allow setting initial guesses by providing
+                # timeseries with names that match a symbol in the model. We only check for this
+                # matching if the start and fixed attributes were left as default
                 try:
                     start_val = self.seed()[var_name]
                 except KeyError:
@@ -311,9 +313,8 @@ class SimulationProblem(DataStoreAccessor):
                 else:
                     # An initial state was found- add it to the constrained residuals
                     logger.debug(
-                        "Initialize: Added {} = {} as initial guess (found matching timeseries).".format(
-                            var_name, start_val
-                        )
+                        "Initialize: Added {} = {} as initial guess "
+                        "(found matching timeseries).".format(var_name, start_val)
                     )
 
             # Attempt to set start_val in the state vector. Default to zero if unknown.
@@ -321,9 +322,8 @@ class SimulationProblem(DataStoreAccessor):
                 self.set_var(var_name, start_val if start_val is not None else 0.0)
             except KeyError:
                 logger.warning(
-                    "Initialize: {} not found in state vector. Initial value of {} not set.".format(
-                        var_name, start_val
-                    )
+                    "Initialize: {} not found in state vector. "
+                    "Initial value of {} not set.".format(var_name, start_val)
                 )
 
             # Add a residual for the difference between the state and its starting expression
@@ -422,7 +422,8 @@ class SimulationProblem(DataStoreAccessor):
             (evaluated_bounds[:offset, :], delay_bounds, evaluated_bounds[offset:, :])
         )
 
-        # Construct arrays of state bounds (used in the initialize() nlp, but not in __do_step rootfinder)
+        # Construct arrays of state bounds (used in the initialize() nlp, but not in __do_step
+        # rootfinder)
         self.__lbx = evaluated_bounds[:, 0]
         self.__ubx = evaluated_bounds[:, 1]
 
@@ -484,7 +485,8 @@ class SimulationProblem(DataStoreAccessor):
 
         # Construct the rootfinder
 
-        # Assemble some symbolics, including those needed for a backwards Euler derivative approximation
+        # Assemble some symbolics, including those needed for a backwards Euler derivative
+        # approximation
         dt = ca.MX.sym("delta_t")
         parameters = ca.vertcat(*self.__mx["parameters"])
         if n_parameters > 0:
@@ -530,15 +532,15 @@ class SimulationProblem(DataStoreAccessor):
 
         if X.size1() != dae_residual.size1():
             logger.error(
-                "Formulation Error: Number of states ({}) does not equal number of equations ({})".format(
-                    X.size1(), dae_residual.size1()
-                )
+                "Formulation Error: Number of states ({}) "
+                "does not equal number of equations ({})".format(X.size1(), dae_residual.size1())
             )
 
         # Construct a function res_vals that returns the numerical residuals of a numerical state
         self.__res_vals = ca.Function("res_vals", [X, dt, constants], [dae_residual]).expand()
 
-        # Use rootfinder() to make a function that takes a step forward in time by trying to zero res_vals()
+        # Use rootfinder() to make a function that takes a step forward in time by trying to zero
+        # res_vals()
         options = {
             "nlpsol": "ipopt",
             "nlpsol_options": self.solver_options(),
@@ -560,7 +562,8 @@ class SimulationProblem(DataStoreAccessor):
 
     def setup_experiment(self, start, stop, dt):
         """
-        Method for subclasses (PIMixin, CSVMixin, or user classes) to set timing information for a simulation run.
+        Method for subclasses (PIMixin, CSVMixin, or user classes) to set timing information for a
+        simulation run.
 
         :param start: Start time for the simulation.
         :param stop:  Final time for the simulation.
@@ -604,7 +607,7 @@ class SimulationProblem(DataStoreAccessor):
 
         if not rootfinder_stats["success"]:
             message = (
-                "Simulation has failed to converge at time {}. " "Solver failed with status {}"
+                "Simulation has failed to converge at time {}. Solver failed with status {}"
             ).format(self.get_current_time(), rootfinder_stats["nlpsol"]["return_status"])
             logger.error(message)
             raise Exception(message)
@@ -843,7 +846,8 @@ class SimulationProblem(DataStoreAccessor):
         """
         Returns a dictionary of CasADi root_finder() solver options.
 
-        :returns: A dictionary of CasADi :class:`root_finder` options.  See the CasADi documentation for details.
+        :returns: A dictionary of CasADi :class:`root_finder` options.  See the CasADi
+            documentation for details.
         """
         return {
             "ipopt.fixed_variable_treatment": "make_parameter",
@@ -923,9 +927,11 @@ class SimulationProblem(DataStoreAccessor):
     @cached
     def compiler_options(self):
         """
-        Subclasses can configure the `pymoca <http://github.com/pymoca/pymoca>`_ compiler options here.
+        Subclasses can configure the `pymoca <http://github.com/pymoca/pymoca>`_ compiler options
+        here.
 
-        :returns: A dictionary of pymoca compiler options.  See the pymoca documentation for details.
+        :returns:
+            A dictionary of pymoca compiler options.  See the pymoca documentation for details.
         """
 
         # Default options

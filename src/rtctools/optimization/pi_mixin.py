@@ -14,11 +14,13 @@ class PIMixin(IOMixin):
     <https://publicwiki.deltares.nl/display/FEWSDOC/The+Delft-Fews+Published+Interface>`_
     I/O to your optimization problem.
 
-    During preprocessing, files named ``rtcDataConfig.xml``, ``timeseries_import.xml``, ``rtcParameterConfig.xml``,
-    and ``rtcParameterConfig_Numerical.xml`` are read from the ``input`` subfolder.  ``rtcDataConfig.xml`` maps
-    tuples of FEWS identifiers, including location and parameter ID, to RTC-Tools time series identifiers.
+    During preprocessing, files named ``rtcDataConfig.xml``, ``timeseries_import.xml``,
+    ``rtcParameterConfig.xml``, and ``rtcParameterConfig_Numerical.xml`` are read from the
+    ``input`` subfolder.  ``rtcDataConfig.xml`` maps tuples of FEWS identifiers, including
+    location and parameter ID, to RTC-Tools time series identifiers.
 
-    During postprocessing, a file named ``timeseries_export.xml`` is written to the ``output`` subfolder.
+    During postprocessing, a file named ``timeseries_export.xml`` is written to the ``output``
+    subfolder.
 
     :cvar pi_binary_timeseries:
         Whether to use PI binary timeseries format. Default is ``False``.

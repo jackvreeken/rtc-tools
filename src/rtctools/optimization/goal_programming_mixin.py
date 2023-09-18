@@ -258,9 +258,9 @@ class GoalProgrammingMixin(_GoalProgrammingMixinBase):
         1. Minimization goals do not get ``constraint_relaxation`` applied when
            ``fix_minimized_values`` is True.
 
-        2. Because of the constraints it generates, when ``keep_soft_constraints`` is True, the option
-           ``fix_minimized_values`` needs to be set to False for the ``constraint_relaxation`` to
-           be applied at all.
+        2. Because of the constraints it generates, when ``keep_soft_constraints`` is True, the
+            option ``fix_minimized_values`` needs to be set to False for the
+            ``constraint_relaxation`` to be applied at all.
 
         A goal is considered to be violated if the violation, scaled between 0 and 1, is greater
         than the specified tolerance. Violated goals are fixed.  Use of this option is normally not
@@ -274,37 +274,42 @@ class GoalProgrammingMixin(_GoalProgrammingMixinBase):
         If ``fix_minimized_values`` is set to ``True``, goal functions will be set to equal their
         optimized values in optimization problems generated during subsequent priorities. Otherwise,
         only an upper bound will be set. Use of this option is normally not required.
-        Note that a non-zero goal relaxation overrules this option; a non-zero relaxation will always
-        result in only an upper bound being set.
-        Also note that the use of this option may add non-convex constraints to the optimization problem.
-        The default value for this parameter is ``True`` for the default solvers IPOPT/BONMIN. If any
-        other solver is used, the default value is ``False``.
+        Note that a non-zero goal relaxation overrules this option; a non-zero relaxation will
+        always result in only an upper bound being set.
+        Also note that the use of this option may add non-convex constraints to the optimization
+        problem.
+        The default value for this parameter is ``True`` for the default solvers IPOPT/BONMIN. If
+        any other solver is used, the default value is ``False``.
 
-        If ``check_monotonicity`` is set to ``True``, then it will be checked whether goals with the same
-        function key form a monotonically decreasing sequence with regards to the target interval.
+        If ``check_monotonicity`` is set to ``True``, then it will be checked whether goals with
+        the same function key form a monotonically decreasing sequence with regards to the target
+        interval.
 
-        The option ``equality_threshold`` controls when a two-sided inequality constraint is folded into
-        an equality constraint.
+        The option ``equality_threshold`` controls when a two-sided inequality constraint is folded
+        into an equality constraint.
 
-        The option ``interior_distance`` controls the distance from the scaled target bounds, starting
-        from which the function value is considered to lie in the interior of the target space.
+        The option ``interior_distance`` controls the distance from the scaled target bounds,
+        starting from which the function value is considered to lie in the interior of the target
+        space.
 
-        If ``scale_by_problem_size`` is set to ``True``, the objective (i.e. the sum of the violation variables)
-        will be divided by the number of goals, and the path objective will be divided by the number
-        of path goals and the number of active time steps (per goal). This will make sure the objectives are always in
-        the range [0, 1], at the cost of solving each goal/time step less accurately.
+        If ``scale_by_problem_size`` is set to ``True``, the objective (i.e. the sum of the
+        violation variables) will be divided by the number of goals, and the path objective will
+        be divided by the number of path goals and the number of active time steps (per goal).
+        This will make sure the objectives are always in the range [0, 1], at the cost of solving
+        each goal/time step less accurately.
 
-        The option ``keep_soft_constraints`` controls how the epsilon variables introduced in the target
-        goals are dealt with in subsequent priorities.
-        If ``keep_soft_constraints`` is set to False, each epsilon is replaced by its computed value and
-        those are used to derive a new set of constraints.
-        If ``keep_soft_constraints`` is set to True, the epsilons are kept as variables and the constraints
-        are not modified. To ensure the goal programming philosophy, i.e., Pareto optimality, a single
-        constraint is added to enforce that the objective function must always be at most the objective
-        value. This method allows for a larger solution space, at the cost of having a (possibly) more complex
-        optimization problem. Indeed, more variables are kept around throughout the optimization and any
-        objective function is turned into a constraint for the subsequent priorities (while in the False
-        option this was the case only for the function of minimization goals).
+        The option ``keep_soft_constraints`` controls how the epsilon variables introduced in the
+        target goals are dealt with in subsequent priorities.
+        If ``keep_soft_constraints`` is set to False, each epsilon is replaced by its computed
+        value and those are used to derive a new set of constraints.
+        If ``keep_soft_constraints`` is set to True, the epsilons are kept as variables and the
+        constraints are not modified. To ensure the goal programming philosophy, i.e., Pareto
+        optimality, a single constraint is added to enforce that the objective function must
+        always be at most the objective value. This method allows for a larger solution space, at
+        the cost of having a (possibly) more complex optimization problem. Indeed, more variables
+        are kept around throughout the optimization and any objective function is turned into a
+        constraint for the subsequent priorities (while in the False option this was the case only
+        for the function of minimization goals).
 
         :returns: A dictionary of goal programming options.
         """
@@ -564,9 +569,9 @@ class GoalProgrammingMixin(_GoalProgrammingMixinBase):
                 self.__subproblem_path_soft_constraints[ensemble_member]
             )
 
-        # Extract information about the objective value, this is used for the Pareto optimality constraint.
-        # We only retain information about the objective functions defined through the goal framework as user
-        # define objective functions may relay on local variables.
+        # Extract information about the objective value, this is used for the Pareto optimality
+        # constraint. We only retain information about the objective functions defined through the
+        # goal framework as user define objective functions may relay on local variables.
         subproblem_objectives = self.__subproblem_objectives.copy()
         subproblem_path_objectives = self.__subproblem_path_objectives.copy()
 
@@ -628,7 +633,8 @@ class GoalProgrammingMixin(_GoalProgrammingMixinBase):
         # Validate (in)compatible options
         if options["keep_soft_constraints"] and options["violation_relaxation"]:
             raise Exception(
-                "The option 'violation_relaxation' cannot be used when 'keep_soft_constraints' is set."
+                "The option 'violation_relaxation' cannot be used "
+                "when 'keep_soft_constraints' is set."
             )
 
         # Validate goal definitions

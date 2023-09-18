@@ -105,7 +105,7 @@ def download_examples(*args):
     version = rtctools.__version__
     rtc_full_name = "rtc-tools-{}".format(version)
     try:
-        url = "https://gitlab.com/deltares/rtc-tools/-/archive/" "{}/{}.zip".format(
+        url = "https://gitlab.com/deltares/rtc-tools/-/archive/{}/{}.zip".format(
             version, rtc_full_name
         )
 

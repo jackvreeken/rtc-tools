@@ -61,8 +61,8 @@ class InitialStateEstimationMixin(GoalProgrammingMixin):
 
     def initial_state_measurements(self) -> List[Union[Tuple[str, str], Tuple[str, str, float]]]:
         """
-        List of pairs ``(state, measurement_id)`` or triples ``(state, measurement_id, max_deviation)``,
-        relating states to measurement time series IDs.
+        List of pairs ``(state, measurement_id)`` or triples ``(state, measurement_id,
+        max_deviation)``, relating states to measurement time series IDs.
 
         The default maximum deviation is ``1.0``.
         """

@@ -63,9 +63,10 @@ def load(fname, delimiter=",", with_time=False):
             # counting separator.
             sample_csvfile = csvfile.readline()
             n_semicolon = sample_csvfile.count(b";")
-            # We actually only need one number to evaluate if commas are used as decimal separator, but
-            # certain csv writers don't use a decimal when the value has no meaningful decimal
-            # (e.g. 12.0 becomes 12) so we read the next 1024 bytes to make sure we catch a number.
+            # We actually only need one number to evaluate if commas are used as decimal
+            # separator, but certain csv writers don't use a decimal when the value has
+            # no meaningful decimal(e.g. 12.0 becomes 12) so we read the next 1024 bytes
+            # to make sure we catch a number.
             sample_csvfile = csvfile.read(1024)
             # Count the commas
             n_comma_decimal = sample_csvfile.count(b",")
@@ -101,9 +102,9 @@ def load(fname, delimiter=",", with_time=False):
         else:
             data = np.genfromtxt(fname, delimiter=delimiter, deletechars="", dtype=None, names=True)
             return _boolean_to_nan(data, fname)
-    except (
-        ValueError
-    ):  # can occur when delimiter changes after first 1024 bytes of file, or delimiter is not , or ;
+    except ValueError:
+        # can occur when delimiter changes after first 1024 bytes of file,
+        # or delimiter is not , or ;
         type, value, traceback = sys.exc_info()
         logger.error("CSV: Value reader of csv reader failed on {}: {}".format(fname, value))
         raise ValueError(

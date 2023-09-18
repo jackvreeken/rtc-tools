@@ -77,9 +77,11 @@ class TestCheckMatrixCoefficients(TestCase):
             "__debug_check_transcribe_linear_coefficients"
         )
         if kwargs:
-            problem._debug_check_options = {
-                "CollocatedIntegratedOptimizationProblem.__debug_check_transcribe_linear_coefficients": kwargs
-            }
+            check_name = "{}.{}".format(
+                "CollocatedIntegratedOptimizationProblem",
+                "__debug_check_transcribe_linear_coefficients",
+            )
+            problem._debug_check_options = {check_name: kwargs}
 
         with self.assertLogs("rtctools", level="INFO") as cm:
             problem.optimize()

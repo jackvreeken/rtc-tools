@@ -126,7 +126,8 @@ class DataStore:
             # loosened in the future.
             if self.reference_datetime not in self.__timeseries_datetimes:
                 raise Exception(
-                    "Reference datetime {} should be equal to one of the timeseries datetimes {}".format(
+                    "Reference datetime {} should be equal to "
+                    "one of the timeseries datetimes {}".format(
                         self.reference_datetime, self.__timeseries_datetimes
                     )
                 )
@@ -152,7 +153,7 @@ class DataStore:
         :param values:           The values to be stored.
         :param ensemble_member:  The ensemble member index.
         :param check_duplicates: If True, a warning will be given when overwriting values.
-                                 If False, existing values can be silently overwritten with new values.
+                                 If False, existing values are silently overwritten with new values.
         """
         datetimes = list(datetimes)
 
@@ -218,7 +219,7 @@ class DataStore:
         :param values:           The values to be stored.
         :param ensemble_member:  The ensemble member index.
         :param check_duplicates: If True, a warning will be given when overwriting values.
-                                 If False, existing values can be silently overwritten with new values.
+                                 If False, existing values are silently overwritten with new values.
         """
         self._datetimes_to_seconds()
 
@@ -282,7 +283,7 @@ class DataStore:
         :param value:            The values to be stored.
         :param ensemble_member:  The ensemble member index.
         :param check_duplicates: If True, a warning will be given when overwriting values.
-                                 If False, existing values can be silently overwritten with new values.
+                                 If False, existing values are silently overwritten with new values.
         """
         if ensemble_member >= self.__ensemble_size:
             self.__update_ensemble_size(ensemble_member + 1)

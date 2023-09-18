@@ -28,7 +28,8 @@ class ModelicaMixin(OptimizationProblem):
     During preprocessing, the Modelica files located inside the ``model`` subfolder are loaded.
 
     :cvar modelica_library_folders:
-        Folders in which any referenced Modelica libraries are to be found. Default is an empty list.
+        Folders in which any referenced Modelica libraries are to be found.
+        Default is an empty list.
     """
 
     # Folders in which the referenced Modelica libraries are found
@@ -148,9 +149,11 @@ class ModelicaMixin(OptimizationProblem):
     @cached
     def compiler_options(self) -> Dict[str, Union[str, bool]]:
         """
-        Subclasses can configure the `pymoca <http://github.com/pymoca/pymoca>`_ compiler options here.
+        Subclasses can configure the `pymoca <http://github.com/pymoca/pymoca>`_ compiler options
+        here.
 
-        :returns: A dictionary of pymoca compiler options.  See the pymoca documentation for details.
+        :returns:
+            A dictionary of pymoca compiler options.  See the pymoca documentation for details.
         """
 
         # Default options
