@@ -92,7 +92,7 @@ class DataStore:
 
     @property
     def datetimes(self) -> List[datetime]:
-        """"
+        """
         Returns the timeseries times in seconds.
 
         :returns: timeseries datetimes, or None if there has been no call
@@ -102,7 +102,7 @@ class DataStore:
 
     @property
     def times_sec(self) -> np.ndarray:
-        """"
+        """
         Returns the timeseries times in seconds.
 
         Note that once this method is called, it is no longer allowed to

@@ -54,7 +54,7 @@ class IOMixin(OptimizationProblem, metaclass=ABCMeta):
 
     @abstractmethod
     def write(self) -> None:
-        """"
+        """
         Writes output data to files
         """
         pass

@@ -44,7 +44,7 @@ class IOMixin(SimulationProblem, metaclass=ABCMeta):
 
     @abstractmethod
     def write(self) -> None:
-        """"
+        """
         Writes output data to files, getting the data from the data store through the various get methods
         """
         pass
