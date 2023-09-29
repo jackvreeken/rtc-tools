@@ -42,7 +42,7 @@ class SingleReservoir(
     GoalProgrammingMixin,
     CSVMixin,
     ModelicaMixin,
-    CollocatedIntegratedOptimizationProblem
+    CollocatedIntegratedOptimizationProblem,
 ):
     """
     An optimization problem involving a single reservoir.
