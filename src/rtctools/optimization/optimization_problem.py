@@ -807,8 +807,8 @@ class OptimizationProblem(DataStoreAccessor, metaclass=ABCMeta):
         :param f_right: Function value right of rightmost time stamp.
         :param mode:    Interpolation mode.
 
-        Note that it is assumed that `ts` is sorted. No such assumption is made for `t`
-.
+        Note that it is assumed that `ts` is sorted. No such assumption is made for `t`.
+
         :returns: The interpolated value.
         """
 
