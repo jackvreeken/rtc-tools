@@ -181,6 +181,11 @@ class SimulationProblem(DataStoreAccessor):
 
         self.__dae_residual = self.__pymoca_model.dae_residual_function(*function_arguments)
 
+        if self.__dae_residual is None:
+            # DAE is empty, that can happen if we add the only (non-aliasing) equations
+            # in Python.
+            self.__dae_residual = ca.MX()
+
         self.__initial_residual = self.__pymoca_model.initial_residual_function(*function_arguments)
         if self.__initial_residual is None:
             self.__initial_residual = ca.MX()
@@ -441,7 +446,11 @@ class SimulationProblem(DataStoreAccessor):
                 minimized_residuals.append(d)
 
         # Make minimized_residuals into a single symbolic object
-        minimized_residual = ca.vertcat(*minimized_residuals)
+        if minimized_residuals:
+            minimized_residual = ca.vertcat(*minimized_residuals)
+        else:
+            # DAE is empty
+            minimized_residual = ca.MX(0)
 
         # Assemble symbolics needed to make a function describing the initial condition of the model
         # We constrain every entry in this MX to zero
