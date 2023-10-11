@@ -855,7 +855,7 @@ class SimulationProblem(DataStoreAccessor):
 
         :returns: An ordered dictionary of all variables supported by the model.
         """
-        return self.__sym_dict
+        return AliasDict(self.alias_relation, self.__sym_dict)
 
     @cached
     def get_state_variables(self):

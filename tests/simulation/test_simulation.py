@@ -1,8 +1,8 @@
-﻿import collections
-import re
+﻿import re
 
 import numpy as np
 
+from rtctools._internal.alias_tools import AliasDict
 from rtctools.simulation.simulation_problem import SimulationProblem
 
 from test_case import TestCase
@@ -42,7 +42,7 @@ class TestSimulation(TestCase):
 
     def test_get_variables(self):
         all_variables = self.problem.get_variables()
-        self.assertIsInstance(all_variables, collections.OrderedDict)
+        self.assertIsInstance(all_variables, AliasDict)
 
         self.assertEqual(
             set(all_variables),
