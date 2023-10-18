@@ -3,7 +3,7 @@ import itertools
 import logging
 import math
 from collections import OrderedDict
-from typing import Union
+from typing import List, Union
 
 import casadi as ca
 
@@ -20,6 +20,31 @@ from rtctools._internal.debug_check_helpers import DebugLevel
 from rtctools.data.storage import DataStoreAccessor
 
 logger = logging.getLogger("rtctools")
+
+
+class Variable:
+    """
+    Modeled after the Variable class in pymoca.backends.casadi.model, with modifications to make it
+    easier for the common case in RTC-Tools to instantiate them.
+
+    That means:
+    - pass in name instead of ca.MX symbol
+    - only scalars are allowed (shape = (1, 1))
+    - no aliases
+    - no "python_type"
+    - able to specify nominal/min/max in constructor
+    """
+
+    def __init__(self, name, /, min=-np.inf, max=np.inf, nominal=1.0):
+        self.name = name
+        self.min = min
+        self.max = max
+        self.nominal = nominal
+        self._symbol = ca.MX.sym(name)
+
+    @property
+    def symbol(self):
+        return self._symbol
 
 
 class SimulationProblem(DataStoreAccessor):
@@ -133,6 +158,10 @@ class SimulationProblem(DataStoreAccessor):
                 )
             )
 
+        # Get the extra variables that are user defined
+        self.__extra_variables = self.extra_variables()
+        self.__extra_variables_symbols = [v.symbol for v in self.__extra_variables]
+
         # Store the types in an AliasDict
         self.__python_types = AliasDict(self.alias_relation)
         model_variable_types = [
@@ -172,6 +201,9 @@ class SimulationProblem(DataStoreAccessor):
                         )
                     )
 
+        for v in self.__extra_variables:
+            self.__nominals[v.name] = v.nominal
+
         # Initialize DAE and initial residuals
         variable_lists = ["states", "der_states", "alg_states", "inputs", "constants", "parameters"]
         function_arguments = [self.__pymoca_model.time] + [
@@ -195,6 +227,7 @@ class SimulationProblem(DataStoreAccessor):
             self.__mx["states"]
             + self.__mx["algebraics"]
             + self.__mx["derivatives"]
+            + self.__extra_variables_symbols
             + self.__mx["time"]
             + self.__mx["constant_inputs"]
             + self.__mx["parameters"]
@@ -204,9 +237,12 @@ class SimulationProblem(DataStoreAccessor):
         i_start = np.array([0, *(i_end[:-1])])
         self.__state_vector = np.full(n_elements.sum(), np.nan)
 
-        # Useful indices
+        # A very handy index
         self.__n_state_symbols = (
-            len(self.__mx["states"]) + len(self.__mx["algebraics"]) + len(self.__mx["derivatives"])
+            len(self.__mx["states"])
+            + len(self.__mx["algebraics"])
+            + len(self.__mx["derivatives"])
+            + len(self.__extra_variables)
         )
         self.__n_states = i_end[self.__n_state_symbols - 1]
 
@@ -452,9 +488,14 @@ class SimulationProblem(DataStoreAccessor):
             # DAE is empty
             minimized_residual = ca.MX(0)
 
+        # Extra equations
+        extra_equations = self.extra_equations()
+
         # Assemble symbolics needed to make a function describing the initial condition of the model
         # We constrain every entry in this MX to zero
-        equality_constraints = ca.vertcat(self.__dae_residual, self.__initial_residual)
+        equality_constraints = ca.vertcat(
+            self.__dae_residual, self.__initial_residual, *extra_equations
+        )
 
         # Make a list of unscaled symbols and a list of their scaled equivalent
         unscaled_symbols = []
@@ -488,7 +529,9 @@ class SimulationProblem(DataStoreAccessor):
             self.__pymoca_model.states
             + self.__pymoca_model.alg_states
             + self.__pymoca_model.der_states
+            + self.__extra_variables
         )
+
         symbolic_bounds = ca.vertcat(*[ca.horzcat(v.min, v.max) for v in bound_vars])
         bound_evaluator = ca.Function("bound_evaluator", self.__mx["parameters"], [symbolic_bounds])
 
@@ -620,7 +663,10 @@ class SimulationProblem(DataStoreAccessor):
 
         # Append residuals for derivative approximations
         dae_residual = ca.vertcat(
-            self.__dae_residual, *derivative_approximation_residuals, *delay_equations
+            self.__dae_residual,
+            *derivative_approximation_residuals,
+            *delay_equations,
+            *extra_equations,
         )
 
         # TODO: implement lookup_tables
@@ -1038,6 +1084,12 @@ class SimulationProblem(DataStoreAccessor):
         parameters.update({p.symbol.name(): p.value for p in self.__pymoca_model.parameters})
 
         return parameters
+
+    def extra_variables(self) -> List[Variable]:
+        return []
+
+    def extra_equations(self) -> List[ca.MX]:
+        return []
 
     @property
     @cached

@@ -285,3 +285,49 @@ class TestSimulationDelay(TestCase):
         self.assertAlmostEqual(z1[-1], z1_ref, 1e-6)
         self.assertAlmostEqual(z2[-1], z2_ref, 1e-6)
         self.assertAlmostEqual(z3[-1], z3_ref, 1e-6)
+
+
+class SimulationModelCustomEquation(SimulationProblem):
+    def __init__(self):
+        super().__init__(
+            input_folder=data_path(),
+            output_folder=data_path(),
+            model_name="Model_custom_equation",
+            model_folder=data_path(),
+        )
+
+    def extra_equations(self):
+        variables = self.get_variables()
+
+        y = variables["y"]
+        x = variables["x"]
+
+        constraint_nominal = (
+            self.get_variable_nominal("x") * self.get_variable_nominal("y")
+        ) ** 0.5
+
+        return [(y - (-2 * x)) / constraint_nominal]
+
+
+class TestSimulationCustomEquation(TestCase):
+    def setUp(self):
+        self.problem = SimulationModelCustomEquation()
+
+    def test_model_custom_equation(self):
+        start = 0.0
+        stop = 1.0
+        dt = 0.5
+        x = []
+        y = []
+        self.problem.setup_experiment(start, stop, dt)
+        self.problem.initialize()
+        x.append(self.problem.get_var("x"))
+        y.append(self.problem.get_var("y"))
+        i = 0
+        while i < int(stop / dt):
+            self.problem.update(dt)
+            x.append(self.problem.get_var("x"))
+            y.append(self.problem.get_var("y"))
+            i += 1
+        x_ref = [2.0, 1.0, 0.5]
+        self.assertAlmostEqual(x[-1], x_ref[-1], 1e-6)
