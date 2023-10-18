@@ -1,3 +1,5 @@
+.. _tracking a setpoint:
+
 Tracking a Setpoint
 ~~~~~~~~~~~~~~~~~~~
 
