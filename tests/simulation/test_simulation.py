@@ -1,9 +1,11 @@
-﻿import re
+import re
+
+import casadi as ca
 
 import numpy as np
 
 from rtctools._internal.alias_tools import AliasDict
-from rtctools.simulation.simulation_problem import SimulationProblem
+from rtctools.simulation.simulation_problem import SimulationProblem, Variable
 
 from test_case import TestCase
 
@@ -331,3 +333,61 @@ class TestSimulationCustomEquation(TestCase):
             i += 1
         x_ref = [2.0, 1.0, 0.5]
         self.assertAlmostEqual(x[-1], x_ref[-1], 1e-6)
+
+
+class SimpleModelCustomEquationLinearInterpolation(SimulationProblem):
+    x_grid = np.linspace(-1, 1, 6)
+    values = [-1, -1, -2, -3, 0, 2]
+
+    def __init__(self):
+        super().__init__(
+            input_folder=data_path(),
+            output_folder=data_path(),
+            model_name="Model_custom_equation",
+            model_folder=data_path(),
+        )
+
+    def extra_variables(self):
+        return [Variable("z", nominal=10.0, min=-10.0, max=10.0)]
+
+    def extra_equations(self):
+        variables = self.get_variables()
+
+        x = variables["x"]
+        y = variables["y"]
+        z = variables["z"]
+
+        eq_1 = y - (-2 / 3600 * x)
+
+        # Interpolation example
+        lookup_table = ca.interpolant("lookup_table", "linear", [self.x_grid], self.values)
+        eq_2 = lookup_table(y) - z
+
+        return [eq_1, eq_2]
+
+
+class TestSimulationLinearInterpolation(TestCase):
+    def setUp(self):
+        self.problem = SimpleModelCustomEquationLinearInterpolation()
+
+    def test_model_custom_equation_linear_interpolation(self):
+        start = 0.0
+        stop = 1.0
+        dt = 0.5
+        y = []
+        z = []
+        self.problem.setup_experiment(start, stop, dt)
+        self.problem.initialize()
+        y.append(self.problem.get_var("y"))
+        z.append(self.problem.get_var("z"))
+        i = 0
+        while i < int(stop / dt):
+            self.problem.update(dt)
+            y.append(self.problem.get_var("y"))
+            z.append(self.problem.get_var("z"))
+            i += 1
+
+        np.testing.assert_allclose(
+            z,
+            np.interp(y, self.problem.x_grid, self.problem.values),
+        )

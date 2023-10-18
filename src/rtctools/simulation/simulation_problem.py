@@ -584,12 +584,24 @@ class SimulationProblem(DataStoreAccessor):
             equality_constraints, const_and_par, const_and_par_values
         )
 
-        expand_f_g = ca.Function("f", [X], [objective_function, equality_constraints]).expand()
-        X_sx = ca.SX.sym("X", X.shape)
-        objective_function_sx, equality_constraints_sx = expand_f_g(X_sx)
-
         # Construct nlp and solver to find initial state using ipopt
-        nlp = {"x": X_sx, "f": objective_function_sx, "g": equality_constraints_sx}
+        # Note that some operations cannot be expanded, e.g. ca.interpolant. So
+        # we _try_ to expand, but fall back on ca.MX evaluation if we cannot.
+        try:
+            expand_f_g = ca.Function("f", [X], [objective_function, equality_constraints]).expand()
+        except RuntimeError as e:
+            if "eval_sx" not in str(e):
+                raise
+            else:
+                logger.info(
+                    "Cannot expand objective/constraints to SX, falling back to MX evaluation"
+                )
+                nlp = {"x": X, "f": objective_function, "g": equality_constraints}
+        else:
+            X_sx = ca.SX.sym("X", X.shape)
+            objective_function_sx, equality_constraints_sx = expand_f_g(X_sx)
+            nlp = {"x": X_sx, "f": objective_function_sx, "g": equality_constraints_sx}
+
         solver = ca.nlpsol("solver", "ipopt", nlp, self.solver_options())
 
         # Construct guess
@@ -689,7 +701,14 @@ class SimulationProblem(DataStoreAccessor):
             )
 
         # Construct a function res_vals that returns the numerical residuals of a numerical state
-        self.__res_vals = ca.Function("res_vals", [X, dt, constants], [dae_residual]).expand()
+        self.__res_vals = ca.Function("res_vals", [X, dt, constants], [dae_residual])
+        try:
+            self.__res_vals = self.__res_vals.expand()
+        except RuntimeError as e:
+            if "eval_sx" not in str(e):
+                raise
+            else:
+                pass
 
         # Use rootfinder() to make a function that takes a step forward in time by trying to zero
         # res_vals()
