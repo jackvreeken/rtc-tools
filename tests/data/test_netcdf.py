@@ -105,13 +105,13 @@ class TestInputDataset_requirements(TestCase):
         self._variable_associated_dimensions[0] = {
             var: [pd] for (var, pd) in zip(self._variables[0], self._dimensions[0])
         }
-        self._variable_associated_attribute_requirements[0] = {
-            var: atr_reqs
-            for (var, atr_reqs) in zip(
+        self._variable_associated_attribute_requirements[0] = dict(
+            zip(
                 self._variables[0],
                 ({"axis": "T", "standard_name": "time"}, {"cf_role": "timeseries_id"}, None),
             )
-        }
+        )
+
         # secondary requirements
         self._dimensions[1] = ["char_leng_id"]
         self._variables[1] = ["station"]
