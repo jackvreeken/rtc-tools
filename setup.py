@@ -3,9 +3,11 @@
 RTC-Tools is the Deltares toolbox for control and optimization of water systems.
 
 """
-from setuptools import setup, find_packages
-import versioneer
 import sys
+
+from setuptools import find_packages, setup
+
+import versioneer
 
 if sys.version_info < (3, 8):
     sys.exit("Sorry, Python 3.8 or newer is required.")
