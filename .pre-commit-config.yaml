@@ -1,6 +1,7 @@
 exclude: |
   (?x)^(
     src/rtctools/_version\.py|
+    src/rtctools/data/interpolation/__init__\.py|
     versioneer.py
   )$
 repos:
@@ -9,9 +10,8 @@ repos:
     rev: 23.9.1
     hooks:
       - id: black
-  - repo: https://github.com/PyCQA/flake8
-    rev: 5.0.4
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.1.3
     hooks:
-      - id: flake8
-        additional_dependencies:
-          [flake8-bugbear==23.1.20, flake8-comprehensions==3.10, flake8-import-order==0.18]
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
