@@ -16,21 +16,18 @@ stages:
   - deploy
 
 # style
-flake8:
+style:
   stage: style
-  script:
-    - tox -vv
   variables:
-    TOXENV: flake8
-  tags:
-    - docker
-
-black:
-  stage: style
+    PRE_COMMIT_HOME: ${CI_PROJECT_DIR}/.cache/pre-commit
+  cache:
+    paths:
+      - ${PRE_COMMIT_HOME}
+  before_script:
+    - apt update && apt install -y --no-install-recommends git
+    - pip install pre-commit
   script:
-    - tox -vv
-  variables:
-    TOXENV: black
+    - pre-commit run --all-files --show-diff-on-failure
   tags:
     - docker
 

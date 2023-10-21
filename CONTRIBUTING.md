@@ -77,3 +77,9 @@ Commit messages should have the following structure:
 - short description: describes what is changed in the commit with a single sentence.
 - complete description: explain in detail what is done in the commit and why.
     This can take up multiple paragraphs.
+
+To ensure that your code meets our standards, we recommend using pre-commit.
+To install pre-commit, run `pip install pre-commit` in your terminal. Once
+installed, run `pre-commit install` to set up the pre-commit hook. This will
+automatically check your code for formatting and linting issues before each
+commit.
