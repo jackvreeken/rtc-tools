@@ -22,4 +22,4 @@ class TestDiag(TestCase):
         diag_lines = self.diag.get(self.diag.INFO)
         for child in diag_lines:
             print(child.tag)
-        self.diag.has_errors
+        self.assertTrue(self.diag.has_errors)
