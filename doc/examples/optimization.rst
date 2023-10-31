@@ -15,3 +15,4 @@ This section provides examples demonstrating key features of RTC-Tools optimizat
    optimization/goal_programming
    optimization/lookup_table
    optimization/mixed_integer
+   optimization/pumped_hydropower_system
