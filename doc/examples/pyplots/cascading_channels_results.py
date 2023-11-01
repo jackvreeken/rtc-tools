@@ -2,9 +2,7 @@ from datetime import datetime
 
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
-
 import numpy as np
-
 
 # Import Data
 data_path = "../../../examples/cascading_channels/output/timeseries_export.csv"

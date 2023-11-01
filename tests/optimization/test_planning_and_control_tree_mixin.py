@@ -1,7 +1,6 @@
 import logging
 
 import numpy as np
-
 from rtctools.optimization.collocated_integrated_optimization_problem import (
     CollocatedIntegratedOptimizationProblem,
 )
@@ -9,7 +8,6 @@ from rtctools.optimization.control_tree_mixin import ControlTreeMixin
 from rtctools.optimization.modelica_mixin import ModelicaMixin
 from rtctools.optimization.planning_mixin import PlanningMixin
 from rtctools.optimization.timeseries import Timeseries
-
 from test_case import TestCase
 
 from .data_path import data_path

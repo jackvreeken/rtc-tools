@@ -3,7 +3,6 @@ from pathlib import Path
 
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
-
 import numpy as np
 
 # Map output_dir

@@ -3,11 +3,8 @@ import logging
 from typing import Dict, Union
 
 import casadi as ca
-
 import numpy as np
-
 import pkg_resources
-
 import pymoca
 import pymoca.backends.casadi.api
 

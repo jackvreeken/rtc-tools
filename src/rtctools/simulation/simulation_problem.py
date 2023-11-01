@@ -6,11 +6,8 @@ from collections import OrderedDict
 from typing import List, Union
 
 import casadi as ca
-
 import numpy as np
-
 import pkg_resources
-
 import pymoca
 import pymoca.backends.casadi.api
 

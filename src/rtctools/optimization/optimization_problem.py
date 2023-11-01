@@ -3,7 +3,6 @@ from abc import ABCMeta, abstractmethod, abstractproperty
 from typing import Any, Dict, Iterator, List, Tuple, Union
 
 import casadi as ca
-
 import numpy as np
 
 from rtctools._internal.alias_tools import AliasDict

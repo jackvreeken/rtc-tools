@@ -1,7 +1,6 @@
 from typing import Union
 
 import casadi as ca
-
 import numpy as np
 
 

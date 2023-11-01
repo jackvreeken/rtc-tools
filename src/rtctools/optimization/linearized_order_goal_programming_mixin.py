@@ -1,13 +1,12 @@
 import casadi as ca
-
 import numpy as np
 
 from rtctools.optimization.goal_programming_mixin_base import (
     Goal,
     StateGoal,
+    _GoalConstraint,
     _GoalProgrammingMixinBase,
 )
-from rtctools.optimization.goal_programming_mixin_base import _GoalConstraint
 
 
 class LinearizedOrderGoal(Goal):

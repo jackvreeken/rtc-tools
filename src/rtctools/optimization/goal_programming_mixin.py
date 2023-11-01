@@ -4,16 +4,17 @@ from collections import OrderedDict
 from typing import Dict, Union
 
 import casadi as ca
-
 import numpy as np
 
 from rtctools._internal.alias_tools import AliasDict
 
-from .goal_programming_mixin_base import Goal, StateGoal, _GoalProgrammingMixinBase  # noqa: F401
-from .goal_programming_mixin_base import (
+from .goal_programming_mixin_base import (  # noqa: F401
+    Goal,
+    StateGoal,
     _EmptyEnsembleList,
     _EmptyEnsembleOrderedDict,
     _GoalConstraint,
+    _GoalProgrammingMixinBase,
 )
 from .timeseries import Timeseries
 

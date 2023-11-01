@@ -1,9 +1,7 @@
 import unittest
 
 import casadi as ca
-
 import numpy as np
-
 from rtctools.optimization.timeseries import Timeseries
 
 

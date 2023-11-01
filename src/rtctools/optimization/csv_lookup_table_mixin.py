@@ -6,17 +6,15 @@ import pickle
 from typing import Iterable, List, Tuple, Union
 
 import casadi as ca
-
 import numpy as np
+from scipy.interpolate import bisplev, bisplrep, splev
+from scipy.optimize import brentq
 
 import rtctools.data.csv as csv
 from rtctools._internal.caching import cached
 from rtctools.data.interpolation.bspline1d import BSpline1D
 from rtctools.data.interpolation.bspline2d import BSpline2D
 from rtctools.optimization.timeseries import Timeseries
-
-from scipy.interpolate import bisplev, bisplrep, splev
-from scipy.optimize import brentq
 
 from .optimization_problem import LookupTable as LookupTableBase
 from .optimization_problem import OptimizationProblem

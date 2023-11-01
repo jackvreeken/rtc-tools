@@ -4,16 +4,12 @@ import os
 from copy import deepcopy
 from datetime import datetime, timedelta
 
-from netCDF4 import Dataset
-
 import numpy as np
-
 import rtctools.data.netcdf as netcdf
-
+from netCDF4 import Dataset
 from test_case import TestCase
 
 from .data_path import data_path
-
 
 logging.basicConfig(
     format="%(asctime)-15s [%(levelname)s] %(funcName)s: %(message)s", level=logging.DEBUG

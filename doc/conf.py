@@ -20,10 +20,8 @@
 import os
 import re
 
-from rtctools._version import get_versions
-
 import sphinx_rtd_theme
-
+from rtctools._version import get_versions
 
 # -- General configuration ------------------------------------------------
 

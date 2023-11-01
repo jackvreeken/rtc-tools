@@ -2,7 +2,6 @@ from rtctools.simulation.csv_mixin import CSVMixin as SimulationCSVMixin
 from rtctools.simulation.io_mixin import IOMixin as SimulationIOMixin
 from rtctools.simulation.pi_mixin import PIMixin as SimulationPIMixin
 from rtctools.util import run_optimization_problem
-
 from test_case import TestCase
 
 

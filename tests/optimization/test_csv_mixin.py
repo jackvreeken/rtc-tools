@@ -1,13 +1,11 @@
 import logging
 
 import numpy as np
-
 from rtctools.optimization.collocated_integrated_optimization_problem import (
     CollocatedIntegratedOptimizationProblem,
 )
 from rtctools.optimization.csv_mixin import CSVMixin
 from rtctools.optimization.modelica_mixin import ModelicaMixin
-
 from test_case import TestCase
 
 from .data_path import data_path

@@ -3,9 +3,7 @@ from pathlib import Path
 
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
-
 import numpy as np
-
 
 # Import Data
 output_dir = Path("../../../examples/channel_wave_damping/output/").resolve()

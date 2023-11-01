@@ -5,7 +5,6 @@ from abc import ABCMeta, abstractmethod
 from typing import Dict, Union
 
 import casadi as ca
-
 import numpy as np
 
 from rtctools._internal.alias_tools import AliasDict

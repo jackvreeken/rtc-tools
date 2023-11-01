@@ -4,9 +4,7 @@ from datetime import datetime, timedelta
 from unittest import TestCase
 
 import casadi as ca
-
 import numpy as np
-
 from rtctools.optimization.collocated_integrated_optimization_problem import (
     CollocatedIntegratedOptimizationProblem,
 )

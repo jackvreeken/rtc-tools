@@ -2,7 +2,6 @@ import datetime
 from unittest import TestCase
 
 import numpy as np
-
 import rtctools.data.pi as pi
 import rtctools.data.rtc as rtc
 

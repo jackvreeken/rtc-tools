@@ -4,7 +4,6 @@ import warnings
 from abc import ABCMeta, abstractmethod
 
 import casadi as ca
-
 import numpy as np
 
 from rtctools._internal.caching import cached

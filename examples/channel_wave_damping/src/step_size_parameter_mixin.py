@@ -1,5 +1,4 @@
 import numpy as np
-
 from rtctools.optimization.optimization_problem import OptimizationProblem
 
 

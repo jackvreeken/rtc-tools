@@ -1,11 +1,9 @@
 import os
 from unittest import TestCase
 
-from netCDF4 import Dataset, chartostring
-
 import numpy as np
 import numpy.ma as ma
-
+from netCDF4 import Dataset, chartostring
 from rtctools.optimization.collocated_integrated_optimization_problem import (
     CollocatedIntegratedOptimizationProblem,
 )

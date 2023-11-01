@@ -3,9 +3,7 @@ from itertools import permutations
 from unittest import TestCase
 
 import casadi as ca
-
 import numpy as np
-
 from rtctools.optimization.collocated_integrated_optimization_problem import (
     CollocatedIntegratedOptimizationProblem,
 )

@@ -6,7 +6,6 @@ from collections import OrderedDict
 from typing import Callable, Dict, List, Union
 
 import casadi as ca
-
 import numpy as np
 
 from .optimization_problem import OptimizationProblem

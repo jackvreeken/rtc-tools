@@ -5,12 +5,16 @@ from enum import Enum
 from typing import Dict, Union
 
 import casadi as ca
-
 import numpy as np
 
 from .goal_programming_mixin import GoalProgrammingMixin
-from .goal_programming_mixin_base import Goal, StateGoal, _GoalProgrammingMixinBase  # noqa: F401
-from .goal_programming_mixin_base import _EmptyEnsembleList, _EmptyEnsembleOrderedDict
+from .goal_programming_mixin_base import (  # noqa: F401
+    Goal,
+    StateGoal,
+    _EmptyEnsembleList,
+    _EmptyEnsembleOrderedDict,
+    _GoalProgrammingMixinBase,
+)
 from .timeseries import Timeseries
 
 logger = logging.getLogger("rtctools")

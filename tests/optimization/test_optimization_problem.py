@@ -1,7 +1,6 @@
 import unittest
 
 import numpy as np
-
 from rtctools.optimization.optimization_problem import OptimizationProblem
 from rtctools.optimization.timeseries import Timeseries
 

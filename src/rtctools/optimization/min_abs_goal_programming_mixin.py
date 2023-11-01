@@ -3,15 +3,16 @@ import itertools
 from typing import List
 
 import casadi as ca
-
 import numpy as np
 
 from .goal_programming_mixin import GoalProgrammingMixin
-from .goal_programming_mixin_base import Goal, StateGoal, _GoalProgrammingMixinBase
 from .goal_programming_mixin_base import (
+    Goal,
+    StateGoal,
     _EmptyEnsembleList,
     _EmptyEnsembleOrderedDict,
     _GoalConstraint,
+    _GoalProgrammingMixinBase,
 )
 from .single_pass_goal_programming_mixin import SinglePassGoalProgrammingMixin
 from .timeseries import Timeseries

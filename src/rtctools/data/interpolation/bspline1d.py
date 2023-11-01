@@ -1,6 +1,5 @@
-from casadi import Function, SX, if_else, inf, jacobian, logic_and, nlpsol, sum2, vertcat
-
 import numpy as np
+from casadi import SX, Function, if_else, inf, jacobian, logic_and, nlpsol, sum2, vertcat
 
 from .bspline import BSpline
 

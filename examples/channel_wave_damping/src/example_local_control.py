@@ -5,9 +5,7 @@ from rtctools.optimization.csv_mixin import CSVMixin
 from rtctools.optimization.homotopy_mixin import HomotopyMixin
 from rtctools.optimization.modelica_mixin import ModelicaMixin
 from rtctools.util import run_optimization_problem
-
 from steady_state_initialization_mixin import SteadyStateInitializationMixin
-
 from step_size_parameter_mixin import StepSizeParameterMixin
 
 
