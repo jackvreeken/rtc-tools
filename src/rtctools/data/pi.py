@@ -855,7 +855,7 @@ class Timeseries:
 
                 variable = self.__data_config.variable(header)
 
-                miss_val = float(header.find("pi:missVal", ns).text)
+                miss_val = header.find("pi:missVal", ns).text
                 values = self.__values[ensemble_member][variable]
 
                 # Update the header, which may have changed
@@ -868,11 +868,8 @@ class Timeseries:
                     self.__xml_root.remove(series)
                     continue
 
-                # Replace NaN with missing value
-                nans = np.isnan(values)
-                values[nans] = miss_val
-
                 # Write output
+                nans = np.isnan(values)
                 if self.__binary:
                     f.write(values.astype(self.__pi_dtype).tobytes())
                 else:
@@ -897,7 +894,10 @@ class Timeseries:
                         event = ET.Element("pi:event")
                         event.set("date", t.strftime("%Y-%m-%d"))
                         event.set("time", t.strftime("%H:%M:%S"))
-                        event.set("value", str(values[i]))
+                        if nans[i]:
+                            event.set("value", miss_val)
+                        else:
+                            event.set("value", str(values[i]))
                         series.append(event)
                         if self.dt:
                             t += self.dt
@@ -906,9 +906,6 @@ class Timeseries:
                     if len(events) > len(values):
                         for i in range(len(values), len(events)):
                             series.remove(events[i])
-
-                # Restore NaN
-                values[nans] = np.nan
 
         if self.__binary:
             f.close()
