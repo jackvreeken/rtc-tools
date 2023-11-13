@@ -354,6 +354,27 @@ class TestModelicaMixin(TestCase, unittest.TestCase):
             self.tolerance,
         )
 
+    def test_ode(self):
+        times = self.problem.times()
+        parameters = self.problem.parameters(0)
+        self.assertAlmostEqual(
+            (self.results["x"][1:] - self.results["x"][:-1]) / (times[1:] - times[:-1]),
+            parameters["k"] * self.results["x"][1:] + self.results["u"][1:],
+            self.tolerance,
+        )
+        self.assertAlmostEqual(
+            (self.results["w"][1:] - self.results["w"][:-1]) / (times[1:] - times[:-1]),
+            self.results["x"][1:],
+            self.tolerance,
+        )
+
+    def test_algebraic_variables(self):
+        self.assertAlmostEqual(
+            self.results["x"] + self.results["y"],
+            3.0,
+            self.tolerance,
+        )
+
     @unittest.skip
     def test_states_in(self):
         states = list(self.problem.states_in("x", 0.05, 0.95))
