@@ -610,7 +610,15 @@ class SimulationProblem(DataStoreAccessor):
         # If unsuccessful, stop.
         return_status = solver.stats()["return_status"]
         if return_status not in {"Solve_Succeeded", "Solved_To_Acceptable_Level"}:
-            raise Exception('Initialization Failed with return status "{}"'.format(return_status))
+            if return_status == "Infeasible_Problem_Detected":
+                message = (
+                    "Initialization Failed with return status: {}. ".format(return_status)
+                    + "This means no initial state could be found "
+                    + "that satisfies all equations and constraints."
+                )
+            else:
+                message = "Initialization Failed with return status: {}. ".format(return_status)
+            raise Exception(message)
 
         # Update state vector with initial conditions
         self.__state_vector[: self.__n_states] = initial_state["x"][: self.__n_states].T
