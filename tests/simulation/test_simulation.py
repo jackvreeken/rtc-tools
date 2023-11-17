@@ -159,28 +159,6 @@ class TestSimulation(TestCase):
         self.assertEqual(seed["z"], 1.0)
 
 
-class FailingSimulationModel(SimulationProblem):
-    def __init__(self):
-        super().__init__(
-            input_folder=data_path(),
-            output_folder=data_path(),
-            model_name="Model",
-            model_folder=data_path(),
-        )
-
-    def compiler_options(self):
-        compiler_options = super().compiler_options()
-        compiler_options["cache"] = False
-        compiler_options["library_folders"] = []
-        return compiler_options
-
-
-class TestFailingSimulation(TestCase):
-    def test_delay_equation_without_fixed_dt_exception(self):
-        with self.assertRaisesRegex(ValueError, "fixed_dt should be set"):
-            self.problem = FailingSimulationModel()
-
-
 class SimulationModelBase(SimulationProblem):
     _force_zero_delay = True
 
@@ -252,14 +230,14 @@ class SimulationModelDelay(SimulationProblem):
 
 
 class TestSimulationDelay(TestCase):
-    def setUp(self):
-        self.dt = 0.1
-        self.problem_delay = SimulationModelDelay(fixed_dt=self.dt)
+    def set_problem(self, dt=None):
+        self.problem_delay = SimulationModelDelay(fixed_dt=dt)
 
     def test_model_delay(self):
         start = 0.0
         stop = 1.0
-        dt = self.dt
+        dt = 0.1
+        self.set_problem(dt)
         x_start = 1.0
         x = []
         z1 = []
@@ -284,6 +262,10 @@ class TestSimulationDelay(TestCase):
         self.assertAlmostEqual(z1[-1], z1_ref, 1e-6)
         self.assertAlmostEqual(z2[-1], z2_ref, 1e-6)
         self.assertAlmostEqual(z3[-1], z3_ref, 1e-6)
+
+    def test_delay_equation_without_fixed_dt_exception(self):
+        with self.assertRaisesRegex(ValueError, "fixed_dt should be set"):
+            self.set_problem()
 
 
 class SimulationModelCustomEquation(SimulationProblem):
