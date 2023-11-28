@@ -17,6 +17,9 @@ src/*.egg-info
 .tox
 .coverage
 
+# Example output
+examples/**/output/**/*.csv
+
 # Model caches
 *.pymoca_cache
 

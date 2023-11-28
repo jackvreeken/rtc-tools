@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Import Data
-output_dir = Path("../../../examples/channel_wave_damping/output/").resolve()
+output_dir = Path("../../../examples/channel_wave_damping/reference_output/").resolve()
 record_local_control = np.recfromcsv(
     output_dir / "timeseries_export_local_control.csv", encoding=None
 )

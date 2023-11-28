@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Import Data
-data_path = "../../../examples/pumped_hydropower_system/output/timeseries_export.csv"
+data_path = "../../../examples/pumped_hydropower_system/reference_output/timeseries_export.csv"
 import_data_path = "../../../examples/pumped_hydropower_system/input//timeseries_import.csv"
 results = np.recfromcsv(data_path, encoding=None)
 inputs = np.recfromcsv(import_data_path, encoding=None)

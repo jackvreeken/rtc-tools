@@ -6,7 +6,7 @@ import numpy as np
 from pylab import get_cmap
 
 forecast_names = ["forecast1", "forecast2"]
-dir_template = "../../../examples/ensemble/output/{}/timeseries_export.csv"
+dir_template = "../../../examples/ensemble/reference_output/{}/timeseries_export.csv"
 
 # Import Data
 forcasts = {}

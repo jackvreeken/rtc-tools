@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Import Data
-data_path = "../../../examples/goal_programming/output/timeseries_export.csv"
+data_path = "../../../examples/goal_programming/reference_output/timeseries_export.csv"
 results = np.recfromcsv(data_path, encoding=None)
 
 # Get times as datetime objects

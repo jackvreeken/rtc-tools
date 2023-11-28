@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Map output_dir
-output_dir = Path("../../../examples/channel_pulse/output/").resolve()
+output_dir = Path("../../../examples/channel_pulse/reference_output/").resolve()
 
 # Import Data
 rtc_tools_record = np.recfromcsv(output_dir / "timeseries_export_inertial_wave.csv", encoding=None)
