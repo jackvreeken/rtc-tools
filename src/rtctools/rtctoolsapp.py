@@ -99,9 +99,6 @@ def download_examples(*args):
     from urllib.error import HTTPError
     from zipfile import ZipFile
 
-    # GitLab is blocking requests unless we specify a user agent
-    user_agent = "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:47.0) Gecko/20100101 Firefox/47.0"
-
     version = rtctools.__version__
     rtc_full_name = "rtc-tools-{}".format(version)
     try:
@@ -110,7 +107,6 @@ def download_examples(*args):
         )
 
         opener = urllib.request.build_opener()
-        opener.addheaders = [("User-agent", user_agent)]
         urllib.request.install_opener(opener)
         local_filename, _ = urllib.request.urlretrieve(url)
     except HTTPError:
