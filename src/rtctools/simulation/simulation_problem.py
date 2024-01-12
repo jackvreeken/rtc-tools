@@ -477,6 +477,11 @@ class SimulationProblem(DataStoreAccessor):
             if var.fixed:
                 # Set bounds to be equal to each other, such that IPOPT can
                 # turn the decision variable into a parameter.
+                if var.min != -np.inf or var.max != np.inf:
+                    logger.info(
+                        "Initialize: bounds of {} will be overwritten".format(var_name)
+                        + " by the start value given by {}.".format(source_description)
+                    )
                 var.min = start_expr
                 var.max = start_expr
             else:
