@@ -455,6 +455,15 @@ class SimulationProblem(DataStoreAccessor):
                 # minimize residual
                 minimized_residuals.append((var.symbol - start_expr) / var_nominal)
 
+            # Check that the start_value is in between the variable bounds.
+            if start_val is not None:
+                if not (var.min <= start_val and start_val <= var.max):
+                    logger.warning(
+                        "Initialize: start value {} = {}".format(var_name, start_val)
+                        + " is not in between bounds {} and {}".format(var.min, var.max)
+                        + " and will be adjusted."
+                    )
+
         # Default start var for ders is zero
         for der_var in self.__mx["derivatives"]:
             self.set_var(der_var.name(), 0.0)
