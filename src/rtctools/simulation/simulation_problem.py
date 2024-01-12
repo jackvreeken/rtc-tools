@@ -393,29 +393,34 @@ class SimulationProblem(DataStoreAccessor):
         for var in itertools.chain(self.__pymoca_model.states, self.__pymoca_model.alg_states):
             var_name = var.symbol.name()
             var_nominal = self.get_variable_nominal(var_name)
+            start_values = {}
 
             # Attempt to cast var.start to python type
             mx_start = ca.MX(var.start)
             if mx_start.is_constant():
                 # cast var.start to python type
-                start_val = var.python_type(mx_start.to_DM())
+                start_value_modelica = var.python_type(mx_start.to_DM())
+                if start_value_modelica is not None and start_value_modelica != 0:
+                    start_values["modelica"] = start_value_modelica
             else:
                 # var.start is a symbolic expression with unknown value
-                start_val = None
+                start_value_modelica = None
 
-            if start_val == 0.0 and not var.fixed:
+            if not var.fixed:
                 # To make initialization easier, we allow setting initial states by providing
                 # timeseries with names that match a symbol in the model. We only check for this
                 # matching if the start and fixed attributes were left as default
                 try:
-                    start_val = self.initial_state()[var_name]
+                    start_values["initial_state"] = self.initial_state()[var_name]
                 except KeyError:
                     pass
                 else:
                     # An initial state was found- add it to the constrained residuals
                     logger.debug(
                         "Initialize: Added {} = {} to initial equations "
-                        "(found matching timeseries).".format(var_name, start_val)
+                        "(found matching timeseries).".format(
+                            var_name, start_values["initial_state"]
+                        )
                     )
                     # Set var to be fixed
                     var.fixed = True
@@ -425,15 +430,38 @@ class SimulationProblem(DataStoreAccessor):
                 # timeseries with names that match a symbol in the model. We only check for this
                 # matching if the start and fixed attributes were left as default
                 try:
-                    start_val = self.seed()[var_name]
+                    start_values["seed"] = self.seed()[var_name]
                 except KeyError:
                     pass
                 else:
                     # An initial state was found- add it to the constrained residuals
                     logger.debug(
                         "Initialize: Added {} = {} as initial guess "
-                        "(found matching timeseries).".format(var_name, start_val)
+                        "(found matching timeseries).".format(var_name, start_values["seed"])
                     )
+
+            # Set the start value based on the different inputs.
+            if "seed" in start_values:
+                input_source = "seed"
+                source_description = "seed method"
+            elif "modelica" in start_values:
+                input_source = "modelica"
+                source_description = "modelica file"
+            elif "initial_state" in start_values:
+                input_source = "initial_state"
+                source_description = "initial_state method"
+            else:
+                start_values["modelica"] = start_value_modelica
+                input_source = "modelica"
+                source_description = "modelica file or default value"
+            start_val = start_values.get(input_source, None)
+            if len(start_values) > 1:
+                logger.warning(
+                    "Initialize: Multiple initial values for {} are provided: {}.".format(
+                        var_name, start_values
+                    )
+                    + " Value from {} will be used to continue.".format(source_description)
+                )
 
             # Attempt to set start_val in the state vector. Default to zero if unknown.
             try:
