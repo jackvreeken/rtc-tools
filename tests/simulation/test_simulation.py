@@ -494,6 +494,22 @@ class TestSimulationInfeasibleInitialValue(TestCase):
         x = problem.get_var("x")
         self.assertAlmostEqual(x, 20.0, 1e-6)
 
+    def test_conflict_initial_values_with_symbol_in_model(self):
+        """Test that the correct value is set when there is a conflict in initial values."""
+        problem = SimulationModelInfeasibleInitialValueCSV("ModelWithSymbolicStart")
+        problem.read()
+        with self.assertLogs("rtctools", "WARNING") as context_manager:
+            problem.initialize()
+        warning_pattern = (
+            "Initialize: Multiple initial values for x are provided:"
+            + " {'modelica': MX.*, 'initial_state': 30.0}."
+            + " Value from modelica file will be used to continue."
+        )
+        self.assertTrue(contains_regex(warning_pattern, context_manager.output))
+        # y = value in .mo file, not value in initial_state.csv.
+        x = problem.get_var("x")
+        self.assertAlmostEqual(x, 20.0, 1e-6)
+
     def test_conflict_initial_values_with_zero_in_model(self):
         """Test that the correct value is set when there is a conflict in initial values."""
         # If the initial value is set in the .mo file and is zero,

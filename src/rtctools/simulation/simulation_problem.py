@@ -396,15 +396,16 @@ class SimulationProblem(DataStoreAccessor):
             start_values = {}
 
             # Attempt to cast var.start to python type
+            start_value_is_symbolic = False
             mx_start = ca.MX(var.start)
             if mx_start.is_constant():
                 # cast var.start to python type
-                start_value_modelica = var.python_type(mx_start.to_DM())
-                if start_value_modelica is not None and start_value_modelica != 0:
-                    start_values["modelica"] = start_value_modelica
+                start_value_pymoca = var.python_type(mx_start.to_DM())
+                if start_value_pymoca is not None and start_value_pymoca != 0:
+                    start_values["modelica"] = start_value_pymoca
             else:
-                # var.start is a symbolic expression with unknown value
-                start_value_modelica = None
+                start_value_is_symbolic = True
+                start_values["modelica"] = mx_start
 
             if not var.fixed:
                 # To make initialization easier, we allow setting initial states by providing
@@ -451,10 +452,12 @@ class SimulationProblem(DataStoreAccessor):
                 input_source = "initial_state"
                 source_description = "initial_state method"
             else:
-                start_values["modelica"] = start_value_modelica
+                start_values["modelica"] = start_value_pymoca
                 input_source = "modelica"
                 source_description = "modelica file or default value"
             start_val = start_values.get(input_source, None)
+            is_numeric = start_val is not None and not start_value_is_symbolic
+            numeric_start_val = start_val if is_numeric else 0.0
             if len(start_values) > 1:
                 logger.warning(
                     "Initialize: Multiple initial values for {} are provided: {}.".format(
@@ -465,15 +468,15 @@ class SimulationProblem(DataStoreAccessor):
 
             # Attempt to set start_val in the state vector. Default to zero if unknown.
             try:
-                self.set_var(var_name, start_val if start_val is not None else 0.0)
+                self.set_var(var_name, numeric_start_val)
             except KeyError:
                 logger.warning(
                     "Initialize: {} not found in state vector. "
-                    "Initial value of {} not set.".format(var_name, start_val)
+                    "Initial value of {} not set.".format(var_name, numeric_start_val)
                 )
 
             # Add a residual for the difference between the state and its starting expression
-            start_expr = start_val if start_val is not None else var.start
+            start_expr = start_val
             if var.fixed:
                 # Set bounds to be equal to each other, such that IPOPT can
                 # turn the decision variable into a parameter.
@@ -489,7 +492,7 @@ class SimulationProblem(DataStoreAccessor):
                 minimized_residuals.append((var.symbol - start_expr) / var_nominal)
 
             # Check that the start_value is in between the variable bounds.
-            if start_val is not None:
+            if start_val is not None and is_numeric:
                 if not (var.min <= start_val and start_val <= var.max):
                     logger.warning(
                         "Initialize: start value {} = {}".format(var_name, start_val)
