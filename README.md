@@ -1,10 +1,38 @@
-This is RTC-Tools 2, a toolbox for control and optimization of water systems.
-
-Visit our website at:
-	https://oss.deltares.nl/web/rtc-tools/home
+# Deltares RTC-Tools
 
 [![Pipeline](https://gitlab.com/deltares/rtc-tools/badges/master/pipeline.svg)](https://gitlab.com/deltares/rtc-tools/commits/master)
 [![Coverage](https://codecov.io/gl/deltares/rtc-tools/branch/master/graph/badge.svg)](https://codecov.io/gl/deltares/rtc-tools)
+
+
+RTC-Tools is an open-source Python package for simulation and optimization of cyber-physical systems.  It can be used for model-predictive control and operational decision making of water and energy systems.  It is developed and maintained by Deltares, in collaboration with partners.
+
+RTC-Tools offers the following functionalities:
+
+- **Model building using extensible libraries**: Build complex system models using extensible libraries of model components. Modelers can also implement their custom modeling components, for instance, using the [Modelica language](https://modelica.org/language/) or Python script.
+
+    RTC-Tools can be used with the following libraries and packages for specific applications:
+    - [rtc-tools-channel-flow](https://gitlab.com/deltares/rtc-tools-channel-flow): water system models
+    - [rtc-tools-hydraulic-structures](https://gitlab.com/deltares/rtc-tools-channel-flow): hydraulic assets, such as weirs and pumps
+    - [rtc-tools-heat-network](https://github.com/Nieuwe-Warmte-Nu/rtc-tools-heat-network): heat networks
+
+Please note that this list is not exhaustive. Users can also create libraries for other types of applications.
+
+- **Running simulations**: Simulate a given model.
+
+- **Specifying and solving optimization problems**: Define optimization goals, constraints and decision variables to specify the optimization problem for a given model. RTC-Tools supports both open-source solvers (CBC, HiGHS, Ipopt) and commercial solvers (Gurobi, CPLEX) for solving several types of optimization problems:
+
+    - **Linear, non-linear**:  RTC-Tools supports both linear and non-linear optimization problems.
+
+    - **Continuous and discrete**:  RTC-Tools can handle both continuous and discrete decision variables. This makes it suitable for optimizing systems with a mix of continuous controls (such as pump speeds or gate positions) and discrete decisions (such as on/off states of equipment).
+
+    - **Goal programming**: When multiple, and perhaps conflicting, objectives are to be considered (e.g., minimize operational costs while minimizing deviations of water levels from a given range), RTC-Tools offers two approaches to multi-objective optimization: The **Weighting Method**, which assigns weights to each objective and optimizes them simultaneously, and the **Lexicographic Goal Programming method**, which optimizes different objectives sequentially. 
+
+    - **Optimization under uncertainty**: RTC-Tools supports the use of ensemble forecasts for optimization under uncertainty. To reduce the size of the optimization problem, ensemble members can be automatically aggregated using a scenario tree reduction method.
+
+To streamline the integration with user interfaces and data management systems (such as Delft-FEWS), RTC-Tools supports CSV and XML file formats for reading/writing timeseries and other model parameters. Support for other formats can be implemented using mixins.
+
+RTC-Tools uses [CasADi](https://web.casadi.org/) as a symbolic framework for algorithmic differentiation, as well as for interfacing with numerical optimization solvers.
+
 
 ## Install
 
@@ -12,12 +40,14 @@ Visit our website at:
 pip install rtc-tools
 ```
 
-Typically one also wants to use RTC-Tools with the RTC-Tools Channel Flow library, in which case the installation command is
-
-```bash
-pip install rtc-tools rtc-tools-channel-flow
-```
-
 ## Documentation
 
 Documentation and examples can be found on [readthedocs](https://rtc-tools.readthedocs.io).
+
+
+## License
+RTC-Tools is licensed under the **[GNU Lesser General Public License v3.0](https://gitlab.com/deltares/rtc-tools/-/blob/guidelines_contributions/COPYING)**, and can be used free of charge. Deltares offers support packages for users who require assistance.
+
+
+## Acknowledgment
+If you use RTC-Tools in your work, please acknowledge it in any resulting publications. You can do this by citing RTC-Tools and providing a link to our [website](https://oss.deltares.nl/web/rtc-tools/home) or [Gitlab repository](https://gitlab.com/deltares/rtc-tools).
