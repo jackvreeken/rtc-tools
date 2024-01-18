@@ -388,3 +388,32 @@ class TestSimulationLinearInterpolation(TestCase):
             z,
             np.interp(y, self.problem.x_grid, self.problem.values),
         )
+
+
+class SimulationModelWithFastNewton(SimulationModelBase):
+    def rootfinder_options(self):
+        return {"solver": "fast_newton", "solver_options": {"error_on_fail": False}}
+
+
+class TestRootFinderOption(TestCase):
+    def setUp(self):
+        self.problem = SimulationModelWithFastNewton()
+
+    def test_root_finder_option(self):
+        start = 0.0
+        stop = 1.0
+        dt = 0.1
+        z = []
+        z_ref = []
+        self.problem.setup_experiment(start, stop, dt)
+        self.problem.set_var("x", 1.1 * start)
+        self.problem.initialize()
+        i = 0
+        while i < int(stop / dt):
+            t = self.problem.get_var("time")
+            self.problem.set_var("x", 1.1 * t)
+            self.problem.update(dt)
+            z_ref.append(1.1)
+            z.append(self.problem.get_var("z"))
+            i += 1
+        self.assertAlmostEqual(np.array(z[1:]), np.array(z_ref[1:]), 1e-6)

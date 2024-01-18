@@ -708,8 +708,11 @@ class SimulationProblem(DataStoreAccessor):
                 pass
 
         # Use rootfinder() to make a function that takes a step forward in time by trying to zero
-        # res_vals().
-        self.__do_step = ca.rootfinder("next_state", "fast_newton", self.__res_vals)
+        # res_vals()
+        options = self.rootfinder_options()
+        solver = options["solver"]
+        solver_options = options["solver_options"]
+        self.__do_step = ca.rootfinder("next_state", solver, self.__res_vals, solver_options)
 
     def pre(self):
         """
@@ -1021,9 +1024,9 @@ class SimulationProblem(DataStoreAccessor):
 
     def solver_options(self):
         """
-        Returns a dictionary of CasADi root_finder() solver options.
+        Returns a dictionary of CasADi nlpsol() solver options.
 
-        :returns: A dictionary of CasADi :class:`root_finder` options.  See the CasADi
+        :returns: A dictionary of CasADi :class:`nlpsol` options. See the CasADi
             documentation for details.
         """
         return {
@@ -1031,6 +1034,26 @@ class SimulationProblem(DataStoreAccessor):
             "ipopt.print_level": 0,
             "print_time": False,
             "error_on_fail": False,
+        }
+
+    def rootfinder_options(self):
+        """
+        Returns a dictionary of CasADi rootfinder() options.
+
+        The dictionary has the following items:
+        * solver: the solver used for rootfinding, e.g. nlpsol, fast_newton, etc.
+        * solver_options: options for the solver
+        See the CasADi documentation for details on solvers and solver options.
+
+        :returns: A dictionary of CasADi :class:`rootfinder` options.
+        """
+        return {
+            "solver": "nlpsol",
+            "solver_options": {
+                "nlpsol": "ipopt",
+                "nlpsol_options": self.solver_options(),
+                "error_on_fail": False,
+            },
         }
 
     def get_variable_nominal(self, variable) -> Union[float, ca.MX]:
