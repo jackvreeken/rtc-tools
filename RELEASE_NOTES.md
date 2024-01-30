@@ -1,5 +1,23 @@
 # Release Notes
 
+## 2.6
+
+### Features
+
+- Update to Casadi 3.6. This also enables users to use the HiGHS solver.
+- Optimization: Add parallellization mode options for collocated integration.
+- Optimization: Add a planning mixin (PlanningMixin) that holds marked control variables consistent
+    across ensemble members.
+- Simulation: Enable using delay equations.
+- Simulation: Enable adding custom equations to the model using a python script.
+- Simulation: Enable using lookup tables in the model.
+- Simulation: Enable selecting a solver for the implicit timestep scheme.
+
+### Fixes / Improvements
+
+- Optimization: Fix and modernise DAE integration for collocoated integration.
+- Simulation: support models with an empty DAE.
+
 ## 2.5
 
 ### Features
