@@ -2,7 +2,6 @@ import configparser
 import glob
 import logging
 import os
-import pickle
 from typing import Iterable, List, Tuple, Union
 
 import casadi as ca
@@ -323,7 +322,7 @@ class CSVLookupTableMixin(OptimizationProblem):
 
             # If tck file is newer than the csv file, first try to load the cached values from
             # the tck file
-            tck_filename = filename.replace(".csv", ".tck")
+            tck_filename = filename.replace(".csv", ".npz")
             valid_cache = False
             if os.path.exists(tck_filename):
                 if no_curvefit_options:
@@ -338,11 +337,13 @@ class CSVLookupTableMixin(OptimizationProblem):
                             output
                         )
                     )
-                    with open(tck_filename, "rb") as f:
-                        try:
-                            tck, function = pickle.load(f)
-                        except Exception:
-                            valid_cache = False
+                    try:
+                        with np.load(filename.replace(".csv", ".npz")) as data:
+                            tck = (data["arr_0"], data["arr_1"], int(data["arr_2"]))
+                        function = ca.Function.load(filename.replace(".csv", ".ca"))
+                    except Exception:
+                        valid_cache = False
+
             if not valid_cache:
                 logger.info("CSVLookupTableMixin: Recalculating tck values for {}".format(output))
 
@@ -446,11 +447,8 @@ class CSVLookupTableMixin(OptimizationProblem):
                 )
 
             if not valid_cache:
-                pickle.dump(
-                    (tck, function),
-                    open(filename.replace(".csv", ".tck"), "wb"),
-                    protocol=pickle.HIGHEST_PROTOCOL,
-                )
+                np.savez(filename.replace(".csv", ".npz"), *tck)
+                function.save(filename.replace(".csv", ".ca"))
 
     def lookup_tables(self, ensemble_member):
         # Call parent class first for default values.
