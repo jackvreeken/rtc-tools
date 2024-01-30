@@ -450,7 +450,7 @@ class SimulationProblem(DataStoreAccessor):
                 source_description = "modelica file"
             elif "initial_state" in start_values:
                 input_source = "initial_state"
-                source_description = "initial_state method"
+                source_description = "initial_state method (typically reads initial_state.csv)"
             else:
                 start_values["modelica"] = start_value_pymoca
                 input_source = "modelica"
