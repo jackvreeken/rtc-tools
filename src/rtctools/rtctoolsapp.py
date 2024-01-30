@@ -108,7 +108,8 @@ def download_examples(*args):
 
         opener = urllib.request.build_opener()
         urllib.request.install_opener(opener)
-        local_filename, _ = urllib.request.urlretrieve(url)
+        # The security warning can be dismissed as the url variable is hardcoded to a remote.
+        local_filename, _ = urllib.request.urlretrieve(url)  # nosec
     except HTTPError:
         sys.exit("Could not found examples for RTC-Tools version {}.".format(version))
 
