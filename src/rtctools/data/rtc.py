@@ -1,7 +1,8 @@
 import logging
 import os
-import xml.etree.ElementTree as ET
 from collections import namedtuple
+
+import defusedxml.ElementTree as DefusedElementTree
 
 ts_ids = namedtuple("ids", "location_id parameter_id qualifier_id")
 p_ids = namedtuple("ids", "model_id location_id parameter_id")
@@ -31,7 +32,7 @@ class DataConfig:
 
         path = os.path.join(folder, "rtcDataConfig.xml")
         try:
-            tree = ET.parse(path)
+            tree = DefusedElementTree.parse(path)
             root = tree.getroot()
 
             timeseriess1 = root.findall("./*/fews:timeSeries", ns)

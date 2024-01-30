@@ -49,6 +49,7 @@ setup(
         "scipy >= 1.0.0, <1.11",
         "pymoca == 0.9.1",
         "rtc-tools-channel-flow >= 1.1.0",
+        "defusedxml >= 0.7.0",
     ],
     tests_require=["pytest", "pytest-runner", "netCDF4"],
     extras_require={

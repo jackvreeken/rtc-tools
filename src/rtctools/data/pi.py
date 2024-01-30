@@ -5,6 +5,7 @@ import logging
 import os
 import xml.etree.ElementTree as ET
 
+import defusedxml.ElementTree as DefusedElementTree
 import numpy as np
 
 ns = {"fews": "http://www.wldelft.nl/fews", "pi": "http://www.wldelft.nl/fews/PI"}
@@ -30,7 +31,7 @@ class Diag:
         """
         self.__path_xml = os.path.join(folder, basename + ".xml")
 
-        self.__tree = ET.parse(self.__path_xml)
+        self.__tree = DefusedElementTree.parse(self.__path_xml)
         self.__xml_root = self.__tree.getroot()
 
     def get(self, level=ERROR_FATAL):
@@ -87,7 +88,7 @@ class DiagHandler(logging.Handler):
         self.__path_xml = os.path.join(folder, basename + ".xml")
 
         try:
-            self.__tree = ET.parse(self.__path_xml)
+            self.__tree = DefusedElementTree.parse(self.__path_xml)
             self.__xml_root = self.__tree.getroot()
         except Exception:
             self.__xml_root = ET.Element("{%s}Diag" % (ns["pi"],))
@@ -135,7 +136,7 @@ class ParameterConfig:
             basename = basename + ".xml"
         self.__path_xml = os.path.join(folder, basename)
 
-        self.__tree = ET.parse(self.__path_xml)
+        self.__tree = DefusedElementTree.parse(self.__path_xml)
         self.__xml_root = self.__tree.getroot()
 
     def get(self, group_id, parameter_id, location_id=None, model=None):
@@ -300,9 +301,8 @@ class ParameterConfig:
                 # get table contenstart_datetime
                 el_row = child.findall("pi:row", ns)
                 table = {
-                    columnId[key]: np.empty(len(el_row), columnType[key])  # initialize table
-                    for key in columnId
-                }
+                    columnId[key]: np.empty(len(el_row), columnType[key]) for key in columnId
+                }  # initialize table
 
                 i_row = 0
                 for row in el_row:
@@ -378,7 +378,7 @@ class Timeseries:
         if self.make_new_file:
             self.__reset_xml_tree()
         else:
-            self.__tree = ET.parse(self.__path_xml)
+            self.__tree = DefusedElementTree.parse(self.__path_xml)
             self.__xml_root = self.__tree.getroot()
 
         self.__values = [{}]
