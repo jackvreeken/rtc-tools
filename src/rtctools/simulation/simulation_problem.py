@@ -319,6 +319,17 @@ class SimulationProblem(DataStoreAccessor):
         """
         Initialize state vector with default values
 
+        Initial values are first read from the given Modelica files.
+        If an initial value equals zero or is not provided by a Modelica file,
+        and the variable is not marked as fixed,
+        then the initial value is tried to be set with the initial_state method.
+        When using CSVMixin, this method by default looks for initial values
+        in an initial_state.csv file.
+        Furthermore, if a variable is not marked as fixed
+        and no initial value is given by the initial_state method,
+        the initial value can be overwritten using the seed method.
+        When a variable is marked as fixed, the initial value is only read from the Modelica file.
+
         :param config_file: Path to an initialization file.
         """
         if config_file:
