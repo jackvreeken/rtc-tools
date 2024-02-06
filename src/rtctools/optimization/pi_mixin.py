@@ -277,3 +277,16 @@ class PIMixin(IOMixin):
         :class:`pi.Timeseries` object for holding the output data.
         """
         return self.__timeseries_export
+
+    def set_unit(self, variable: str, unit: str):
+        """
+        Set the unit of a time series.
+
+        :param variable:        Time series ID.
+        :param unit:            Unit.
+        """
+        assert hasattr(
+            self, "_PIMixin__timeseries_import"
+        ), "set_unit can only be called after read() in pre() has finished."
+        self.__timeseries_import.set_unit(variable, unit, 0)
+        self.__timeseries_export.set_unit(variable, unit, 0)
