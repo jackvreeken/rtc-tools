@@ -1,8 +1,11 @@
+import os
 import re
+from typing import List
 
 import casadi as ca
 import numpy as np
 from rtctools._internal.alias_tools import AliasDict
+from rtctools.simulation.csv_mixin import CSVMixin
 from rtctools.simulation.simulation_problem import SimulationProblem, Variable
 from test_case import TestCase
 
@@ -399,3 +402,143 @@ class TestRootFinderOption(TestCase):
             z.append(self.problem.get_var("z"))
             i += 1
         self.assertAlmostEqual(np.array(z[1:]), np.array(z_ref[1:]), 1e-6)
+
+
+class SimulationModelInfeasibleInitialValue(SimulationProblem):
+    def __init__(self, model):
+        data_folder = os.path.join(data_path(), "infeasible_initial_value")
+        super().__init__(
+            input_folder=data_folder,
+            output_folder=data_folder,
+            model_name=model,
+            model_folder=data_folder,
+        )
+
+
+class SimulationModelInfeasibleInitialValueWithSeed(SimulationModelInfeasibleInitialValue):
+    def seed(self):
+        return {"x": 25.0}
+
+
+class SimulationModelInfeasibleInitialValueCSV(CSVMixin, SimulationProblem):
+    def __init__(self, model, input_series=None):
+        data_folder = os.path.join(data_path(), "infeasible_initial_value")
+        if input_series is not None:
+            self.timeseries_import_basename = input_series
+        super().__init__(
+            input_folder=data_folder,
+            output_folder=data_folder,
+            model_name=model,
+            model_folder=data_folder,
+        )
+
+
+def contains_regex(regex: re.Pattern, messages: List[str]):
+    """
+    Check that a list of messages contains a given regex
+
+    :param regex: a regular expression
+    :param messages: a list of strings
+    :returns: True if any of the messages contains the given regex.
+    """
+    for message in messages:
+        if re.search(regex, message):
+            return True
+    return False
+
+
+class TestSimulationInfeasibleInitialValue(TestCase):
+    def test_initial_value_out_of_bounds(self):
+        """Test that the correct initial value is set, when the given value is out of bounds."""
+        problem = SimulationModelInfeasibleInitialValue("ModelOutOfBounds")
+        problem.setup_experiment(start=0.0, stop=1.0, dt=0.1)
+        with self.assertLogs("rtctools", "WARNING") as context_manager:
+            problem.initialize()
+        warning_pattern = (
+            "Initialize: start value x = 20.0 is not in between bounds -inf and 10.0"
+            + " and will be adjusted."
+        )
+        self.assertTrue(contains_regex(warning_pattern, context_manager.output))
+        # x = max, not start in .mo file.
+        x = problem.get_var("x")
+        self.assertAlmostEqual(x, 10.0, 1e-6)
+
+    def test_initial_value_csv_out_of_bounds(self):
+        """Test that the correct initial value is set, when the given value is out of bounds."""
+        problem = SimulationModelInfeasibleInitialValueCSV("ModelWithBounds")
+        problem.read()
+        with self.assertLogs("rtctools", "INFO") as context_manager:
+            problem.initialize()
+        warning_pattern = (
+            "Initialize: bounds of x will be overwritten"
+            + " by the start value given by initial_state method."
+        )
+        self.assertTrue(contains_regex(warning_pattern, context_manager.output))
+        # x = value in initial_state.csv, not max in .mo file.
+        x = problem.get_var("x")
+        self.assertAlmostEqual(x, 30.0, 1e-6)
+
+    def test_conflict_initial_values(self):
+        """Test that the correct value is set when there is a conflict in initial values."""
+        problem = SimulationModelInfeasibleInitialValueCSV("ModelWithStart")
+        problem.read()
+        with self.assertLogs("rtctools", "WARNING") as context_manager:
+            problem.initialize()
+        warning_pattern = (
+            "Initialize: Multiple initial values for x are provided:"
+            + " {'modelica': 20.0, 'initial_state': 30.0}."
+            + " Value from modelica file will be used to continue."
+        )
+        self.assertTrue(contains_regex(warning_pattern, context_manager.output))
+        # x = value in .mo file, not value in initial_state.csv.
+        x = problem.get_var("x")
+        self.assertAlmostEqual(x, 20.0, 1e-6)
+
+    def test_conflict_initial_values_with_zero_in_model(self):
+        """Test that the correct value is set when there is a conflict in initial values."""
+        # If the initial value is set in the .mo file and is zero,
+        # then the value in the initial_state.csv will be used.
+        # No warning is given, since rtc-tools does not know if the zero value
+        # is set by the user or is given as default value by pymoca.
+        problem = SimulationModelInfeasibleInitialValueCSV("ModelWithZeroStart")
+        problem.read()
+        problem.initialize()
+        # x = value in initial_state.csv, not value in .mo file.
+        x = problem.get_var("x")
+        self.assertAlmostEqual(x, 30.0, 1e-6)
+
+    def test_conflict_initial_values_with_seed(self):
+        """Test that the correct value is set when there is a conflict in initial values."""
+        problem = SimulationModelInfeasibleInitialValueWithSeed("ModelWithStart")
+        problem.setup_experiment(start=0.0, stop=1.0, dt=0.1)
+        with self.assertLogs("rtctools", "WARNING") as context_manager:
+            problem.initialize()
+        warning_pattern = (
+            "Initialize: Multiple initial values for x are provided:"
+            + " {'modelica': 20.0, 'seed': 25.0}."
+            + " Value from seed method will be used to continue."
+        )
+        self.assertTrue(contains_regex(warning_pattern, context_manager.output))
+        # x = value in seed method, not value in .mo file.
+        x = problem.get_var("x")
+        self.assertAlmostEqual(x, 25.0, 1e-6)
+
+    def test_conflict_initial_values_input_files(self):
+        """Test that the correct value is set when there is a conflict in input files."""
+        problem = SimulationModelInfeasibleInitialValueCSV("ModelWithInputSeries")
+        problem.read()
+        problem.initialize()
+        x = problem.get_var("x")
+        f_in = problem.get_var("f_in")
+        # x = value in initial_state.csv, not value in timeseries_import.csv.
+        self.assertAlmostEqual(x, 30.0, 1e-6)
+        # f_in = value in timeseries_import.csv, not value in initial_state.csv.
+        self.assertAlmostEqual(f_in, 40.0, 1e-6)
+
+    def test_initial_value_infeasible(self):
+        """Test that a correct exception is raised when no initial value can be found."""
+        exception_pattern = "no initial state could be found"
+        with self.assertRaisesRegex(Exception, exception_pattern):
+            problem = SimulationModelInfeasibleInitialValue("ModelInfeasible")
+            problem.setup_experiment(start=0.0, stop=1.0, dt=0.1)
+            problem.initialize()
