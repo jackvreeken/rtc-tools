@@ -838,6 +838,8 @@ class SimulationProblem(DataStoreAccessor):
         self.set_var("time", self.get_current_time() + dt)
 
         # take a step
+        if np.isnan(self.__state_vector).any():
+            logger.error("Found a nan in the state vector (before making the step)")
         guess = self.__state_vector[: self.__n_states]
         if len(self.__mx["parameters"]) > 0:
             next_state = self.__do_step(
@@ -845,6 +847,23 @@ class SimulationProblem(DataStoreAccessor):
             )
         else:
             next_state = self.__do_step(guess, dt, self.__state_vector)
+
+        try:
+            if np.isnan(next_state).any():
+                index_to_name = {index[0]: name for name, index in self.__indices.items()}
+                named_next_state = {
+                    index_to_name[i]: float(next_state[i]) for i in range(0, next_state.shape[0])
+                }
+                variables_with_nan = [
+                    name for name, value in named_next_state.items() if np.isnan(value)
+                ]
+                if variables_with_nan:
+                    logger.error(
+                        f"Found nan(s) in the next_state vector for:\n\t {variables_with_nan}"
+                    )
+        except (KeyError, IndexError, TypeError):
+            logger.warning("Something went wrong while checking for nans in the next_state vector")
+
         # Check convergence of rootfinder
         rootfinder_stats = self.__do_step.stats()
 
