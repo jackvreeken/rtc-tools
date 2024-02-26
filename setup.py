@@ -47,7 +47,7 @@ setup(
         "casadi >= 3.6.3, == 3.6.*",
         "numpy >= 1.16.0, <1.26",
         "scipy >= 1.0.0, <1.11",
-        "pymoca == 0.9.1",
+        "pymoca >= 0.9.1, == 0.9.*",
         "rtc-tools-channel-flow >= 1.1.0",
         "defusedxml >= 0.7.0",
     ],
