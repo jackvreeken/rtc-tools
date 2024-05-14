@@ -463,6 +463,16 @@ class TestSimulationInfeasibleInitialValue(TestCase):
         x = problem.get_var("x")
         self.assertAlmostEqual(x, 10.0, 1e-6)
 
+    def test_initial_value_out_of_symbolic_bounds(self):
+        """Test that the correct initial value is set, when the given value is out of bounds."""
+        problem = SimulationModelInfeasibleInitialValue("ModelOutOfSymbolicBounds")
+        problem.setup_experiment(start=0.0, stop=1.0, dt=0.1)
+        # No warning is given, because the upper bound is a symbolic expression.
+        problem.initialize()
+        # x = max, not start in .mo file.
+        x = problem.get_var("x")
+        self.assertAlmostEqual(x, 10.0, 1e-6)
+
     def test_initial_value_csv_out_of_bounds(self):
         """Test that the correct initial value is set, when the given value is out of bounds."""
         problem = SimulationModelInfeasibleInitialValueCSV("ModelWithBounds")

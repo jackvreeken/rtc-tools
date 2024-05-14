@@ -419,7 +419,6 @@ class SimulationProblem(DataStoreAccessor):
             start_values = {}
 
             # Attempt to cast var.start to python type
-            start_value_is_symbolic = False
             mx_start = ca.MX(var.start)
             if mx_start.is_constant():
                 # cast var.start to python type
@@ -427,7 +426,6 @@ class SimulationProblem(DataStoreAccessor):
                 if start_value_pymoca is not None and start_value_pymoca != 0:
                     start_values["modelica"] = start_value_pymoca
             else:
-                start_value_is_symbolic = True
                 start_values["modelica"] = mx_start
 
             if not var.fixed:
@@ -479,8 +477,8 @@ class SimulationProblem(DataStoreAccessor):
                 input_source = "modelica"
                 source_description = "modelica file or default value"
             start_val = start_values.get(input_source, None)
-            is_numeric = start_val is not None and not start_value_is_symbolic
-            numeric_start_val = start_val if is_numeric else 0.0
+            start_is_numeric = start_val is not None and not isinstance(start_val, ca.MX)
+            numeric_start_val = start_val if start_is_numeric else 0.0
             if len(start_values) > 1:
                 logger.warning(
                     "Initialize: Multiple initial values for {} are provided: {}.".format(
@@ -500,10 +498,12 @@ class SimulationProblem(DataStoreAccessor):
 
             # Add a residual for the difference between the state and its starting expression
             start_expr = start_val
+            min_is_symbolic = isinstance(var.min, ca.MX)
+            max_is_symbolic = isinstance(var.max, ca.MX)
             if var.fixed:
                 # Set bounds to be equal to each other, such that IPOPT can
                 # turn the decision variable into a parameter.
-                if var.min != -np.inf or var.max != np.inf:
+                if min_is_symbolic or max_is_symbolic or var.min != -np.inf or var.max != np.inf:
                     logger.info(
                         "Initialize: bounds of {} will be overwritten".format(var_name)
                         + " by the start value given by {}.".format(source_description)
@@ -515,7 +515,7 @@ class SimulationProblem(DataStoreAccessor):
                 minimized_residuals.append((var.symbol - start_expr) / var_nominal)
 
             # Check that the start_value is in between the variable bounds.
-            if start_val is not None and is_numeric:
+            if start_is_numeric and not min_is_symbolic and not max_is_symbolic:
                 if not (var.min <= start_val and start_val <= var.max):
                     logger.warning(
                         "Initialize: start value {} = {}".format(var_name, start_val)
