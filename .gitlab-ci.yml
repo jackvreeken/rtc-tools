@@ -28,8 +28,6 @@ style:
     - pip install pre-commit
   script:
     - pre-commit run --all-files --show-diff-on-failure
-  tags:
-    - docker
 
 # build
 build:
@@ -40,8 +38,6 @@ build:
     paths:
       - dist/
     expire_in: 1 week
-  tags:
-    - docker
 
 .python_tox_matrix:
   image: python:${VERSION}
@@ -50,8 +46,6 @@ build:
   parallel:
     matrix:
       - VERSION: ["3.8", "3.9", "3.10", "3.11"]
-  tags:
-    - docker
 
 # test
 test:linux:
@@ -78,8 +72,6 @@ coverage:
     - codecov --token=$CODECOV_TOKEN
   variables:
     TOXENV: coverage
-  tags:
-    - docker
 
 # deploy
 deploy:
@@ -96,5 +88,3 @@ deploy:
     # If a branch happens to start with "2.", skip it as we only want to
     # deploy tags.
     - branches
-  tags:
-    - docker
