@@ -110,7 +110,7 @@ power of 4. For this example the class is defined as follows.
   :pyobject: TargetGoal
   :lineno-match:
 
-The ``MaxRevenueGoal`` maximizes the state varibable. To achive this, we minimize the negative of the 
+The ``MaxRevenueGoal`` maximizes the state variable. To achieve this, we minimize the negative of the 
 state. For this example the class is defined as follows.
 
 .. literalinclude:: ../../../examples/pumped_hydropower_system/src/example.py
@@ -131,11 +131,11 @@ classes.
 
 .. literalinclude:: ../../../examples/pumped_hydropower_system/src/example.py
   :language: python
-  :lines: 52-59
+  :lines: 51-59
   :lineno-match:
 
 The pre-processing is called before any goals are added. Here we define a power_nominal.
-This is the the avergae of the ``Target_Power`` timeseries and is unsed to improve the scaling 
+This is the average of the ``Target_Power`` timeseries and is used to improve the scaling 
 of the model. 
 
 .. literalinclude:: ../../../examples/pumped_hydropower_system/src/example.py
@@ -143,10 +143,10 @@ of the model.
   :pyobject: PumpStorage.pre
   :lineno-match:
 
-Constraints can be declared by declaring the ``path_constraints()`` method.
+Constraints can be declared by the ``path_constraints()`` method.
 Path constraints are constraints that are applied every timestep. To set a
 constraint at an individual timestep, define it inside the ``constraints``
-method. Four constraints are added using the Big-M formualtion to ensure the pumps and Turbine 
+method. Four constraints are added using the Big-M formulation to ensure the pumps and Turbine 
 joining the upper and lower reservoirs cannot be used at the same time. 
 
 .. literalinclude:: ../../../examples/pumped_hydropower_system/src/example.py
@@ -154,9 +154,9 @@ joining the upper and lower reservoirs cannot be used at the same time.
   :pyobject: PumpStorage.path_constraints
   :lineno-match:
 
-Variable nominals can be set in the modelica model file, or via the varaible_nominal definition. 
-This can be useful if you want you variable nominal to depend on a non-fixed value. Here the 
-power_nominal caluclated in the ``pre`` is set to be the nominal for the staes ``TotalGeneratingPower``
+Variable nominals can be set in the OpenModelica model file, or via the variable_nominal definition. 
+This can be useful when a variable nominal depends on a non-fixed value. Here the 
+power_nominal caluclated in the ``pre`` is set to be the nominal for the states ``TotalGeneratingPower``
 and ``TurbinePower``.
 
 .. literalinclude:: ../../../examples/pumped_hydropower_system/src/example.py
@@ -180,7 +180,7 @@ The optimization objectives are added in ``path_goals``. There are four goal in 
 
 * Priority 30
 
-  * Maximize the revenue generated form using turbines at the upper and lower reservoir
+  * Maximize the revenue generated from using turbines at the upper and lower reservoir
 
 .. literalinclude:: ../../../examples/pumped_hydropower_system/src/example.py
   :language: python
@@ -188,7 +188,7 @@ The optimization objectives are added in ``path_goals``. There are four goal in 
   :lineno-match:
 
 We want to apply some additional configuration, choosing the HiGHS solver over the 
-default choice of bonmin for solving the mxed integer optimization problem. :
+default choice of bonmin for solving the mixed integer optimization problem. :
 
 .. literalinclude:: ../../../examples/pumped_hydropower_system/src/example.py
   :language: python
@@ -246,4 +246,4 @@ Observations
 ------------
 
 The target power is met and to do so, the upper reservoir (pumped storage) is used. 
-As we want to minimise the cost of using the pump, the pump is used only when the cost is low.
+As we want to minimize the cost of using the pump, the pump is used only when the cost is low.
