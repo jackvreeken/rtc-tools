@@ -45,16 +45,16 @@ model Example
   Deltares.ChannelFlow.Hydraulic.Structures.DischargeControlledStructure dam_upstream annotation(Placement(visible = true, transformation(origin = {-30, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
 
   // Inputs
-  input Modelica.SIunits.Position Level_H(fixed = true) = Level.H;
-  input Modelica.SIunits.VolumeFlowRate Inflow_Q(fixed = true) = Discharge.Q;
+  input Modelica.Units.SI.Position Level_H(fixed = true) = Level.H;
+  input Modelica.Units.SI.VolumeFlowRate Inflow_Q(fixed = true) = Discharge.Q;
 
   // Outputs
-  output Modelica.SIunits.Position H_middle = middle.H[middle.n_level_nodes];
-  output Modelica.SIunits.Position H_upstream = upstream.H[upstream.n_level_nodes];
-  output Modelica.SIunits.VolumeFlowRate Q_in = Inflow_Q;
+  output Modelica.Units.SI.Position H_middle = middle.H[middle.n_level_nodes];
+  output Modelica.Units.SI.Position H_upstream = upstream.H[upstream.n_level_nodes];
+  output Modelica.Units.SI.VolumeFlowRate Q_in = Inflow_Q;
 
   // Parameters
-  parameter Modelica.SIunits.Duration step_size;
+  parameter Modelica.Units.SI.Duration step_size;
   parameter Real theta;
 equation
   connect(dam_middle.HQDown, downstream.HQUp) annotation(Line(points = {{38, 0}, {50, 0}}, color = {0, 0, 255}));

@@ -10,10 +10,10 @@ model Example
     Placement(visible = true, transformation(origin = {2, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Deltares.ChannelFlow.SimpleRouting.BoundaryConditions.Terminal outflow annotation(
     Placement(visible = true, transformation(origin = {42, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  input Modelica.SIunits.VolumeFlowRate Q_in(fixed = true);
-  input Modelica.SIunits.VolumeFlowRate Q_out(fixed = true);
-  input Modelica.SIunits.VolumeFlowRate Q_control(fixed = false);
-  output Modelica.SIunits.Volume V_integrator;
+  input Modelica.Units.SI.VolumeFlowRate Q_in(fixed = true);
+  input Modelica.Units.SI.VolumeFlowRate Q_out(fixed = true);
+  input Modelica.Units.SI.VolumeFlowRate Q_control(fixed = false);
+  output Modelica.Units.SI.Volume V_integrator;
 equation
   // connect(control_inflow.QOut, integrator.QIn);
   connect(control_inflow.QOut, delay_component.QIn) annotation(

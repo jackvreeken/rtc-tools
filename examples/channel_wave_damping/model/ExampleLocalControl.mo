@@ -19,6 +19,6 @@ model ExampleLocalControl
     feed_forward = 100.0,
     control_action = dam_middle.Q
   );
-  output Modelica.SIunits.VolumeFlowRate Q_dam_upstream = dam_upstream.Q;
-  output Modelica.SIunits.VolumeFlowRate Q_dam_middle = dam_middle.Q;
+  output Modelica.Units.SI.VolumeFlowRate Q_dam_upstream = dam_upstream.Q;
+  output Modelica.Units.SI.VolumeFlowRate Q_dam_middle = dam_middle.Q;
 end ExampleLocalControl;

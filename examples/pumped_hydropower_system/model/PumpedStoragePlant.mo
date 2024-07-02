@@ -1,5 +1,5 @@
 model PumpedStoragePlant
-  import SI = Modelica.SIunits;
+  import SI = Modelica.Units.SI;
   // Declare Model Elements
   Deltares.ChannelFlow.SimpleRouting.BoundaryConditions.Inflow Inflow annotation(
     Placement(visible = true, transformation(origin = {-68, -4}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));

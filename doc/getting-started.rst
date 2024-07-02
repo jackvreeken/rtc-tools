@@ -98,8 +98,10 @@ RTC-Tools uses the Modelica language to describe the mathematics of the system
 we wish to optimize. There are several editors for Modelica models, but the
 OpenModelica Connection Editor, or OMEdit, is a free and open-source graphical
 connection editor that can be used to construct RTC-Tools models. We recommend
-to use the 12.1 release. To download it for windows, click here:
-https://build.openmodelica.org/omc/builds/windows/releases/1.12/final/
+to use the 1.22 release. To download it for windows, click here:
+https://build.openmodelica.org/omc/builds/windows/releases/1.22/
+
+
 
 Once installed, you can start OMEdit by clicking::
 
@@ -108,6 +110,10 @@ Once installed, you can start OMEdit by clicking::
 With OMEdit installed, you can start using it by following along with the basic
 example, :doc:`examples/optimization/basic`.
 
+.. note::
+    
+        The example models are based on version 4.0 of the modelica standard library.
+        Make sure you load this library when editing the models in OMEdit.
 
 .. _running-rtc-tools:
 
