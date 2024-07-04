@@ -369,8 +369,6 @@ class Timeseries:
         self.__folder = folder
         self.__basename = basename
 
-        self.__path_xml = os.path.join(self.__folder, basename + ".xml")
-
         self.__internal_dtype = np.float64
         self.__pi_dtype = np.float32
 
@@ -378,7 +376,7 @@ class Timeseries:
         if self.make_new_file:
             self.__reset_xml_tree()
         else:
-            self.__tree = DefusedElementTree.parse(self.__path_xml)
+            self.__tree = DefusedElementTree.parse(self.path)
             self.__xml_root = self.__tree.getroot()
 
         self.__values = [{}]
@@ -801,13 +799,20 @@ class Timeseries:
         # Add series to xml
         self.__xml_root.append(series)
 
-    def write(self):
+    def write(self, output_folder=None, output_filename=None) -> None:
         """
         Writes the time series data to disk.
+
+        :param output_folder:   The folder in which the output file is located.
+                                If None, the original folder is used.
+        :param output_filename: The name of the output file without extension.
+                                If None, the original filename is used.
         """
+        xml_path = self.output_path(output_folder, output_filename)
+        binary_path = self.output_binary_path(output_folder, output_filename)
 
         if self.__binary:
-            f = io.open(self.binary_path, "wb")
+            f = io.open(binary_path, "wb")
 
         if self.make_new_file:
             # Force reinitialization in case write() is called more than once
@@ -911,7 +916,7 @@ class Timeseries:
             f.close()
 
         self.format_xml_data()
-        self.__tree.write(self.__path_xml)
+        self.__tree.write(xml_path)
 
     def format_xml_data(self):
         """
@@ -1170,15 +1175,44 @@ class Timeseries:
         self.__end_datetime = end_datetime
 
     @property
-    def path(self):
-        return self.__path_xml
+    def path(self) -> str:
+        """
+        The path to the original xml file.
+        """
+        return os.path.join(self.__folder, self.__basename + ".xml")
 
     @property
-    def binary_path(self):
+    def binary_path(self) -> str:
         """
-        The path for the binary data .bin file.
+        The path to the original binary data .bin file.
         """
         return os.path.join(self.__folder, self.__basename + ".bin")
+
+    def _output_path_without_extension(self, output_folder=None, output_filename=None) -> str:
+        """
+        Get the output path without file extension.
+        """
+        if output_folder is None:
+            output_folder = self.__folder
+        if output_filename is None:
+            output_filename = self.__basename
+        return os.path.join(output_folder, output_filename)
+
+    def output_path(self, output_folder=None, output_filename=None) -> str:
+        """
+        Get the path to the output xml file.
+
+        The optional arguments are the same as in :py:method:`write`.
+        """
+        return self._output_path_without_extension(output_folder, output_filename) + ".xml"
+
+    def output_binary_path(self, output_folder=None, output_filename=None) -> str:
+        """
+        Get the path to the output binary file.
+
+        The optional arguments are the same as in :py:method:`write`.
+        """
+        return self._output_path_without_extension(output_folder, output_filename) + ".bin"
 
     def items(self, ensemble_member=0):
         """

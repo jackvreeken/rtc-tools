@@ -1,4 +1,5 @@
 import datetime
+import pathlib
 from unittest import TestCase
 
 import numpy as np
@@ -46,6 +47,25 @@ class TestPI(TestCase):
         self.assertEqual(timeseries.get("S")[2], 2.0)
 
         timeseries.set("S", timeseries.get("S"))
+
+        # Check writing to a different file.
+        timeseries = pi.Timeseries(self.data_config, data_path(), "timeseries_import", binary=False)
+        timeseries.write(output_filename="timeseries_import_copy")
+        ts_copy = pi.Timeseries(
+            self.data_config, data_path(), "timeseries_import_copy", binary=False
+        )
+        self.assertEqual(ts_copy.get("S")[2], 2.0)
+        output_file = ts_copy.output_path(output_filename="timeseries_import_copy")
+        self.assertEqual(pathlib.Path(output_file).name, "timeseries_import_copy.xml")
+
+        timeseries = pi.Timeseries(self.data_config, data_path(), "timeseries_import", binary=True)
+        timeseries.write(output_filename="timeseries_import_copy")
+        ts_copy = pi.Timeseries(
+            self.data_config, data_path(), "timeseries_import_copy", binary=True
+        )
+        self.assertEqual(ts_copy.get("S")[2], 2.0)
+        output_file = ts_copy.output_binary_path(output_filename="timeseries_import_copy")
+        self.assertEqual(pathlib.Path(output_file).name, "timeseries_import_copy.bin")
 
     def test_ensemble(self):
         timeseries = pi.Timeseries(
