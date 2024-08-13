@@ -889,8 +889,10 @@ class Timeseries:
                         events[i].set("date", t.strftime("%Y-%m-%d"))
                         events[i].set("time", t.strftime("%H:%M:%S"))
 
-                        # Set the value
-                        events[i].set("value", str(values[i]))
+                        if nans[i]:
+                            events[i].set("value", miss_val)
+                        else:
+                            events[i].set("value", str(values[i]))
                         if self.dt:
                             t += self.dt
                     for i in range(len(events), len(values)):
