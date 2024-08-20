@@ -693,8 +693,10 @@ class GoalProgrammingMixin(_GoalProgrammingMixinBase):
             self.priority_started(priority)
 
             if self.skip_priority:
-                logger.info("priority {} was removed in priority_started. No optimization problem \
-                            is solved that this priority. ".format(priority))
+                logger.info(
+                    "priority {} was removed in priority_started. No optimization problem "
+                    "is solved at this priority.".format(priority)
+                )
                 continue
 
             (
